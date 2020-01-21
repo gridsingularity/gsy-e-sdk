@@ -39,8 +39,8 @@ def compile():
 def sync():
     """Ensure installed packages match requirements"""
     _pre_check()
-    # with hide('running', 'stdout'):
-    puts(green("Syncing requirements to local packages."), show_prefix=True)
-    local('pip-sync requirements/base.txt')
-    local('pip install git+https://github.com/gridsingularity/d3a-interface.git@feature/D3ASIM-1867')
-    local('pip install --no-deps -e .')
+    with hide('running', 'stdout'):
+        puts(green("Syncing requirements to local packages."), show_prefix=True)
+        local('pip-sync requirements/base.txt')
+        local('pip install git+https://github.com/gridsingularity/d3a-interface.git@feature/D3ASIM-1867')
+        local('pip install --no-deps -e .')

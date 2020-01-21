@@ -41,19 +41,45 @@ class RedisClient:
             self.register(is_blocking=False)
 
     def _subscribe_to_response_channels(self):
-        command_response_subscriptions = {
+        channel_subs = {
             f"{self._command_topics[k]}/response": self._generate_command_response_callback(k)
             for k in Commands
         }
-        command_response_subscriptions[f'{self.market_id}/register_participant/response'] = self._on_register
-        command_response_subscriptions[f'{self._channel_prefix}/market_cycle'] = self._on_market_cycle
-        self.pubsub.subscribe(**command_response_subscriptions)
+        channel_subs[f'{self.market_id}/register_participant/response'] = self._on_register
+        channel_subs[f'{self.market_id}/unregister_participant/response'] = self._on_unregister
+        channel_subs[f'{self._channel_prefix}/market_cycle'] = self._on_market_cycle
+        self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
 
     def register(self, is_blocking=False):
-        self.redis_db.publish(f'{self.market_id}/register_participant', json.dumps({"name": self.client_id}))
+        if self.is_active:
+            raise RedisAPIException(f'API is already registered to the market.')
+
+        self.redis_db.publish(f'{self.market_id}/register_participant',
+                              json.dumps({"name": self.client_id}))
         if is_blocking:
-            wait_until_timeout_blocking(lambda: self.is_active, timeout=30)
+            try:
+                wait_until_timeout_blocking(lambda: self.is_active, timeout=30)
+            except AssertionError:
+                raise RedisAPIException(
+                    f'API registration process timed out. Server will continue processing your '
+                    f'request on the background and will notify you as soon as the registration '
+                    f'has been completed.')
+
+    def unregister(self, is_blocking=False):
+        if not self.is_active:
+            raise RedisAPIException(f'API is already unregistered from the market.')
+
+        self.redis_db.publish(f'{self.market_id}/unregister_participant',
+                              json.dumps({"name": self.client_id}))
+        if is_blocking:
+            try:
+                wait_until_timeout_blocking(lambda: not self.is_active, timeout=30)
+            except AssertionError:
+                raise RedisAPIException(
+                    f'API unregister process timed out. Server will continue processing your '
+                    f'request on the background and will notify you as soon as the unregistration '
+                    f'has been completed.')
 
     @property
     def _channel_prefix(self):
@@ -137,6 +163,13 @@ class RedisClient:
         logging.info(f"Client was registered to market: {message}")
         self.is_active = True
         self.on_register()
+
+    def _on_unregister(self, msg):
+        message = json.loads(msg["data"])
+        self.is_active = False
+        if message["response"] != "success":
+            raise RedisAPIException(f'Failed to unregister from market {self.market_id}.'
+                                    f'Deactivating connection.')
 
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
