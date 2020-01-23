@@ -22,7 +22,7 @@ def _ensure_pip_tools():
     except ImportError:
         with hide('running', 'stdout'):
             puts(yellow("Installing 'pip-tools'"), show_prefix=True)
-            local("pip install pip-tools>=4.2.0")
+            local("pip install pip-tools==4.4.0")
 
 
 @task
@@ -42,5 +42,4 @@ def sync():
     with hide('running', 'stdout'):
         puts(green("Syncing requirements to local packages."), show_prefix=True)
         local('pip-sync requirements/base.txt')
-        local('pip install git+https://github.com/gridsingularity/d3a-interface.git@feature/D3ASIM-1867')
-        local('pip install --no-deps -e .')
+        local('pip install -e .')

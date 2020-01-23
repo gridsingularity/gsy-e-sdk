@@ -10,18 +10,19 @@ click==7.0                # via pip-tools
 cryptography==2.8         # via paramiko
 fabric3==1.14.post1
 filelock==3.0.12          # via tox
-importlib-metadata==0.18  # via pluggy, tox
-packaging==19.2           # via tox
+importlib-metadata==1.4.0  # via pluggy, tox
+more-itertools==8.1.0     # via zipp
+packaging==20.0           # via tox
 paramiko==2.7.1           # via fabric3
 pip-tools==4.4.0
-pluggy==0.12.0            # via tox
-py==1.8.0                 # via tox
+pluggy==0.13.1            # via tox
+py==1.8.1                 # via tox
 pycparser==2.19           # via cffi
 pynacl==1.3.0             # via paramiko
-pyparsing==2.4.5          # via packaging
-redis==3.2.1
-six==1.12.0               # via bcrypt, cryptography, fabric3, packaging, pip-tools, pynacl, tox
+pyparsing==2.4.6          # via packaging
+redis==3.3.11
+six==1.14.0               # via bcrypt, cryptography, fabric3, packaging, pip-tools, pynacl, tox
 toml==0.10.0              # via tox
-tox==3.13.2
-virtualenv==16.6.2        # via tox
-zipp==0.5.2               # via importlib-metadata
+tox==3.14.3
+virtualenv==16.7.9        # via tox
+zipp==2.0.1               # via importlib-metadata
