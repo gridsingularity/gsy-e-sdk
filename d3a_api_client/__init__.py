@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class APIClientInterface(ABC):
     """
     Interface for D3A API clients, that support different communication protocols.
-    This interface defines the common user functionality that these client should
+    This interface defines the common user functionality that these clients should
     support.
     """
 
