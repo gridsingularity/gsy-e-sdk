@@ -2,7 +2,7 @@
 Test file for the device client. Depends on d3a test setup file strategy_tests.external_devices
 """
 from time import sleep
-from d3a_api_client.redis import RedisDeviceClient
+from d3a_api_client.redis_device import RedisDeviceClient
 
 
 class AutoOfferBidOnMarket(RedisDeviceClient):
