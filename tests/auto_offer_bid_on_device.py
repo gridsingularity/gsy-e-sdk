@@ -1,6 +1,8 @@
 """
 Test file for the device client. Depends on d3a test setup file strategy_tests.external_devices
 """
+import logging
+import json
 from time import sleep
 from d3a_api_client.redis_device import RedisDeviceClient
 
@@ -15,15 +17,18 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
         :param market_info: Incoming message containing the newly-created market info
         :return: None
         """
-        print(f"New market information {market_info}")
+        logging.debug(f"New market information {market_info}")
         if "available_energy_kWh" in market_info and market_info["available_energy_kWh"] > 0.0:
             offer = self.offer_energy(market_info["available_energy_kWh"], 0.1)
-            print(f"Offer placed on the new market: {offer}")
-        print(market_info["energy_requirement_kWh"])
+            logging.debug(f"Offer placed on the new market: {offer}")
+        logging.debug(market_info["energy_requirement_kWh"])
         if market_info["energy_requirement_kWh"] > 0.0:
             bid = self.bid_energy(market_info["energy_requirement_kWh"], 100)
-            print(f"Bid placed on the new market: {bid}")
-        print(f"Aggregated device/market statistics: {self.list_stats()}")
+            logging.error(f"Bid placed on the new market: {bid}")
+            # bid_id = json.loads(bid["bid"])["id"]
+            # delete_bid = self.delete_bid(bid_id)
+            # logging.error(f"Bid deleted {delete_bid}")
+        logging.debug(f"Aggregated device/market statistics: {self.list_stats()}")
 
 
 # Connects one client to the load device
