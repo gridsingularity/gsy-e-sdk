@@ -2,6 +2,8 @@
 Test file for the device client. Depends on d3a test setup file strategy_tests.external_devices
 """
 import json
+import traceback
+import logging
 from math import isclose
 from d3a_api_client.redis_device import RedisDeviceClient
 
@@ -48,8 +50,6 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
                 self.status = "finished"
             self.latest_stats = stats
         except AssertionError as e:
-            import traceback
-            print(e)
-            print(traceback.format_exc())
+            logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
             raise e
