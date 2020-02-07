@@ -9,7 +9,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
+root_logger.setLevel(logging.ERROR)
 
 
 class RedisAPIException(Exception):
@@ -32,10 +32,11 @@ class Commands(Enum):
     DELETE_BID = 4
     LIST_OFFERS = 5
     LIST_BIDS = 6
+    LIST_STATS = 7
 
 
 class RedisClient(APIClientInterface):
-    def __init__(self, market_id, client_id, autoregister=True, redis_url='redis://localhost'):
+    def __init__(self, market_id, client_id, autoregister=True, redis_url='redis://localhost:6379'):
         super().__init__(market_id, client_id, autoregister, redis_url)
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
@@ -105,7 +106,9 @@ class RedisClient(APIClientInterface):
             Commands.DELETE_OFFER: f'{self._channel_prefix}/delete_offer',
             Commands.DELETE_BID: f'{self._channel_prefix}/delete_bid',
             Commands.LIST_OFFERS: f'{self._channel_prefix}/offers',
-            Commands.LIST_BIDS: f'{self._channel_prefix}/bids'
+            Commands.LIST_BIDS: f'{self._channel_prefix}/bids',
+            Commands.LIST_STATS: f'{self._channel_prefix}/stats',
+
         }
 
     def _wait_and_consume_command_response(self, command_type):
@@ -178,6 +181,12 @@ class RedisClient(APIClientInterface):
         logging.debug(f"Client tries to read its posted bids.")
         self.redis_db.publish(self._command_topics[Commands.LIST_BIDS], json.dumps(""))
         return self._wait_and_consume_command_response(Commands.LIST_BIDS)
+
+    @registered_connection
+    def list_stats(self):
+        logging.debug(f"Client tries to read its posted bids.")
+        self.redis_db.publish(self._command_topics[Commands.LIST_STATS], json.dumps(""))
+        return self._wait_and_consume_command_response(Commands.LIST_STATS)
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
