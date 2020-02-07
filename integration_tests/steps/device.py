@@ -18,7 +18,7 @@ def step_impl(context, setup_file):
            f'run -t 1s -s 15m --setup {setup_file}')
 
 
-@when('the external client container is started with test_load_connection')
+@when('the external client is started with test_load_connection')
 def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
@@ -26,7 +26,7 @@ def step_impl(context):
     context.load = AutoBidOnLoadDevice('load', autoregister=True, redis_url='redis://localhost:6379/')
 
 
-@when('the external client container is started with test_pv_connection')
+@when('the external client is started with test_pv_connection')
 def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
@@ -52,6 +52,4 @@ def step_impl(context):
 
 @then('the energy bills of the load report the required energy was bought by the load')
 def step_impl(context):
-    print(context.load.latest_stats["device_stats"]["bills"])
-    print()
     assert context.load.latest_stats["device_stats"]["bills"]["bought"] == (24 * 4 - 2) * 0.05

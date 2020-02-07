@@ -45,7 +45,6 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
             traded_slots = stats["market_stats"]["energy_trade_profile"]["sold_energy"]["pv"]["accumulated"].values()
             assert isclose(stats["device_stats"]["bills"]["bought"], sum(traded_slots))
 
-            print(market_info["start_time"])
             if market_info["start_time"][-5:] == "23:45":
                 self.status = "finished"
             self.latest_stats = stats
