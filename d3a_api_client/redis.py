@@ -9,7 +9,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
+root_logger.setLevel(logging.ERROR)
 
 
 class RedisAPIException(Exception):
@@ -36,7 +36,7 @@ class Commands(Enum):
 
 
 class RedisClient(APIClientInterface):
-    def __init__(self, market_id, client_id, autoregister=True, redis_url='redis://localhost'):
+    def __init__(self, market_id, client_id, autoregister=True, redis_url='redis://localhost:6379'):
         super().__init__(market_id, client_id, autoregister, redis_url)
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
