@@ -6,7 +6,7 @@ fi
 
 if [[ "$(docker images -q d3a 2> /dev/null)" == "" ]]; then
   cd tests/ && \
-  git clone https://github.com/gridsingularity/d3a.git && \
+  git clone -b feature/D3ASIM-1922 https://github.com/gridsingularity/d3a.git && \
   cd d3a && \
   docker build -t d3a . && \
   cd ../ && \
