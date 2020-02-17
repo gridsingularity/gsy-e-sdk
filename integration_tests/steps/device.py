@@ -4,6 +4,7 @@ from time import sleep
 from integration_tests.test_load_connection import AutoBidOnLoadDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
 from integration_tests.test_ess_bid_connection import AutoBidOnESSDevice
+from integration_tests.test_ess_offer_connection import AutoOfferOnESSDevice
 
 
 @given('redis container is started')
@@ -41,7 +42,16 @@ def step_impl(context):
     sleep(5)
     # Connects one client to the load device
     context.device = AutoBidOnESSDevice('storage', autoregister=True,
-                                         redis_url='redis://localhost:6379/')
+                                        redis_url='redis://localhost:6379/')
+
+
+@when('the external client is started with test_ess_offer_connection')
+def step_impl(context):
+    # Wait for d3a to activate all areas
+    sleep(5)
+    # Connects one client to the load device
+    context.device = AutoOfferOnESSDevice('storage', autoregister=True,
+                                          redis_url='redis://localhost:6379/')
 
 
 @then('the external client is connecting to the simulation until finished')
@@ -51,16 +61,26 @@ def step_impl(context):
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
     while context.device.errors == 0 and context.device.status != "finished" and counter < 300:
-        print(f"context.load.status: {context.device.status}")
         sleep(0.5)
         counter += 0.5
 
 
 @then('the external client does not report errors')
 def step_impl(context):
-    print(f"ERROR_LIST: {context.device.error_list}")
     assert context.device.errors == 0
-    assert False
+
+
+@then('the storage is not overcharged')
+def step_impl(context):
+    assert context.device.last_market_info["used_storage"] <= \
+           context.device.last_market_info["capacity"]
+
+@then('the storage state is limitied to min_allowed_soc')
+def step_impl(context):
+    actual = context.device.last_market_info["used_storage"]
+    expected = context.device.last_market_info["capacity"] * context.device.last_market_info["min_allowed_soc_ratio"]
+    assert actual >= expected
+
 
 
 @then('the energy bills of the load report the required energy was bought by the load')

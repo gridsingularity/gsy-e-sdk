@@ -21,4 +21,13 @@ Scenario: External ESS agent not allowed to overcharge the Storage State
    When the external client is started with test_ess_bid_connection
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
-#   And the external failed to place bids beyond the full capacity of storage
+   And the storage is not overcharged
+
+
+Scenario: External ESS agent not allowed to sell below min_allowed_soc
+   Given redis container is started
+   And d3a container is started using setup file strategy_tests.external_ess_offers
+   When the external client is started with test_ess_offer_connection
+   Then the external client is connecting to the simulation until finished
+   And the external client does not report errors
+   And the storage state is limitied to min_allowed_soc
