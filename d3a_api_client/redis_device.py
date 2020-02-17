@@ -25,8 +25,8 @@ class RedisDeviceClient(RedisClient):
             for c in Commands
         }
 
-        channel_subs[f'{self.market_id}/register_participant/response'] = self._on_register
-        channel_subs[f'{self.market_id}/unregister_participant/response'] = self._on_unregister
+        channel_subs[f'{self.area_id}/register_participant/response'] = self._on_register
+        channel_subs[f'{self.area_id}/unregister_participant/response'] = self._on_unregister
         channel_subs[f'{self._channel_prefix}/market_event'] = self._on_market_cycle
 
         self.pubsub.subscribe(**channel_subs)

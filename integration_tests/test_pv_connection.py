@@ -41,7 +41,7 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
                 assert offer_info["price"] == 10 * market_info["available_energy_kWh"]
                 assert offer_info["energy"] == market_info["available_energy_kWh"]
 
-            stats = self.list_stats()
+            stats = self.list_device_stats()
             traded_slots = stats["market_stats"]["energy_trade_profile"]["sold_energy"]["pv"]["accumulated"].values()
             assert isclose(stats["device_stats"]["bills"]["bought"], sum(traded_slots))
 

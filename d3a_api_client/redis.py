@@ -32,15 +32,17 @@ class Commands(Enum):
     DELETE_BID = 4
     LIST_OFFERS = 5
     LIST_BIDS = 6
-    LIST_STATS = 7
+    LIST_DEVICE_STATS = 7
+    LIST_MARKET_STATS = 8
 
 
 class RedisClient(APIClientInterface):
-    def __init__(self, market_id, client_id, autoregister=True, redis_url='redis://localhost:6379'):
-        super().__init__(market_id, client_id, autoregister, redis_url)
+    def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379'):
+        super().__init__(area_id, client_id, autoregister, redis_url)
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
-        self.market_id = market_id
+        # TODO: Replace area_id (which is a area name slug now) with "area_uuid"
+        self.area_id = area_id
         self.client_id = client_id
         self.is_active = False
         self._blocking_command_responses = {}
@@ -54,19 +56,20 @@ class RedisClient(APIClientInterface):
             f"{self._command_topics[c]}/response": self._generate_command_response_callback(c)
             for c in Commands
         }
+        # channel_subs[f'{self.area_id}/market_stats/response'] = self._generate_command_response_callback(Commands.LIST_MARKET_STATS)
 
-        channel_subs[f'{self.market_id}/register_participant/response'] = self._on_register
-        channel_subs[f'{self.market_id}/unregister_participant/response'] = self._on_unregister
+        channel_subs[f'{self.area_id}/register_participant/response'] = self._on_register
+        channel_subs[f'{self.area_id}/unregister_participant/response'] = self._on_unregister
         channel_subs[f'{self._channel_prefix}/market_cycle'] = self._on_market_cycle
         self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
 
     def register(self, is_blocking=False):
-        logging.info(f"Trying to register to {self.market_id} as client {self.client_id}")
+        logging.info(f"Trying to register to {self.area_id} as client {self.client_id}")
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
 
-        self.redis_db.publish(f'{self.market_id}/register_participant',
+        self.redis_db.publish(f'{self.area_id}/register_participant',
                               json.dumps({"name": self.client_id}))
         if is_blocking:
             try:
@@ -78,12 +81,12 @@ class RedisClient(APIClientInterface):
                     f'has been completed.')
 
     def unregister(self, is_blocking=False):
-        logging.info(f"Trying to unregister from {self.market_id} as client {self.client_id}")
+        logging.info(f"Trying to unregister from {self.area_id} as client {self.client_id}")
 
         if not self.is_active:
             raise RedisAPIException(f'API is already unregistered from the market.')
 
-        self.redis_db.publish(f'{self.market_id}/unregister_participant',
+        self.redis_db.publish(f'{self.area_id}/unregister_participant',
                               json.dumps({"name": self.client_id}))
         if is_blocking:
             try:
@@ -96,7 +99,7 @@ class RedisClient(APIClientInterface):
 
     @property
     def _channel_prefix(self):
-        return f"{self.market_id}/{self.client_id}"
+        return f"{self.area_id}/{self.client_id}"
 
     @property
     def _command_topics(self):
@@ -107,8 +110,8 @@ class RedisClient(APIClientInterface):
             Commands.DELETE_BID: f'{self._channel_prefix}/delete_bid',
             Commands.LIST_OFFERS: f'{self._channel_prefix}/offers',
             Commands.LIST_BIDS: f'{self._channel_prefix}/bids',
-            Commands.LIST_STATS: f'{self._channel_prefix}/stats',
-
+            Commands.LIST_DEVICE_STATS: f'{self._channel_prefix}/stats',
+            Commands.LIST_MARKET_STATS: f'{self.area_id}/market_stats'
         }
 
     def _wait_and_consume_command_response(self, command_type):
@@ -183,16 +186,22 @@ class RedisClient(APIClientInterface):
         return self._wait_and_consume_command_response(Commands.LIST_BIDS)
 
     @registered_connection
-    def list_stats(self):
-        logging.debug(f"Client tries to read its posted bids.")
-        self.redis_db.publish(self._command_topics[Commands.LIST_STATS], json.dumps(""))
-        return self._wait_and_consume_command_response(Commands.LIST_STATS)
+    def list_device_stats(self):
+        logging.debug(f"Client tries to read device stats")
+        self.redis_db.publish(self._command_topics[Commands.LIST_DEVICE_STATS], json.dumps(""))
+        return self._wait_and_consume_command_response(Commands.LIST_DEVICE_STATS)
+
+    @registered_connection
+    def list_market_stats(self, area_slug, market_slot_list):
+        logging.debug(f"Client tries to read market_stats.")
+        self.redis_db.publish(f'{area_slug}/market_stats', json.dumps({"market_slots": market_slot_list}))
+        return self._wait_and_consume_command_response(Commands.LIST_MARKET_STATS)
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
         if 'available_publish_channels' not in message or \
                 'available_subscribe_channels' not in message:
-            raise RedisAPIException(f'Registration to the market {self.market_id} failed.')
+            raise RedisAPIException(f'Registration to the market {self.area_id} failed.')
 
         logging.info(f"Client was registered to market: {message}")
         self.is_active = True
@@ -205,7 +214,7 @@ class RedisClient(APIClientInterface):
         message = json.loads(msg["data"])
         self.is_active = False
         if message["response"] != "success":
-            raise RedisAPIException(f'Failed to unregister from market {self.market_id}.'
+            raise RedisAPIException(f'Failed to unregister from market {self.area_id}.'
                                     f'Deactivating connection.')
 
     def _on_market_cycle(self, msg):
