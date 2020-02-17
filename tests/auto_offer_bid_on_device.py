@@ -24,11 +24,11 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
         logging.debug(market_info["energy_requirement_kWh"])
         if market_info["energy_requirement_kWh"] > 0.0:
             bid = self.bid_energy(market_info["energy_requirement_kWh"], 100)
-            logging.error(f"Bid placed on the new market: {bid}")
-            # bid_id = json.loads(bid["bid"])["id"]
-            # delete_bid = self.delete_bid(bid_id)
-            # logging.error(f"Bid deleted {delete_bid}")
+            logging.debug(f"Bid placed on the new market: {bid}")
         logging.debug(f"Aggregated device/market statistics: {self.list_stats()}")
+
+    def on_tick(self, tick_info):
+        logging.debug(f"Progress information on the device: {tick_info}")
 
 
 # Connects one client to the load device
