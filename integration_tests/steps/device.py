@@ -15,7 +15,7 @@ def step_impl(context):
 @given('d3a container is started using setup file {setup_file}')
 def step_impl(context, setup_file):
     sleep(3)
-    system(f'docker run -d --env REDIS_URL=redis://redis.container:6379/ --net integtestnet -t d3a '
+    system(f'docker run -d --env REDIS_URL=redis://redis.container:6379/ --net integtestnet d3a-tests '
            f'  -l DEBUG run -t 1s -s 60m --setup {setup_file}')
 
 
@@ -34,6 +34,7 @@ def step_impl(context):
     # Connects one client to the load device
     context.device = AutoOfferOnPVDevice('pv', autoregister=True, redis_url='redis://localhost:6379/')
 
+
 @when('the external client is started with test_ess_bid_connection')
 def step_impl(context):
     # Wait for d3a to activate all areas
@@ -41,6 +42,7 @@ def step_impl(context):
     # Connects one client to the load device
     context.device = AutoBidOnESSDevice('storage', autoregister=True,
                                          redis_url='redis://localhost:6379/')
+
 
 @then('the external client is connecting to the simulation until finished')
 def step_impl(context):
