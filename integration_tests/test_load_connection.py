@@ -3,9 +3,10 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 """
 import logging
 import json
-from math import isclose
-from d3a_api_client.redis_device import RedisDeviceClient
 import traceback
+from pendulum import today
+from d3a_api_client.redis_device import RedisDeviceClient
+from d3a_interface.constants_limits import DATE_TIME_FORMAT
 
 
 class AutoBidOnLoadDevice(RedisDeviceClient):
@@ -13,6 +14,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
         self.errors = 0
         self.status = "running"
         self.latest_stats = {}
+        self.market_info = {}
         super().__init__(*args, **kwargs)
 
     def on_market_cycle(self, market_info):
@@ -41,14 +43,19 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 assert bid_info["price"] == 33 * market_info["energy_requirement_kWh"]
                 assert bid_info["energy"] == market_info["energy_requirement_kWh"]
 
-            stats = self.list_device_stats()
-            traded_slots = stats["market_stats"]["energy_trade_profile"]["bought_energy"]["load"]["accumulated"].values()
-            assert isclose(stats["device_stats"]["bills"]["bought"], sum(traded_slots))
-            assert all(t in [0.05, 0.0] for t in traded_slots)
+            market_slot_string_1 = today().format(DATE_TIME_FORMAT)
+            market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
+            stats = self.list_market_stats("house-2", [market_slot_string_1, market_slot_string_2])
+            assert set(stats["market_stats"].keys()) == {market_slot_string_1, market_slot_string_2}
+            assert set([key for slot in stats["market_stats"].keys() for key in stats["market_stats"][slot].keys()]) \
+                == {"min_trade_rate", "max_trade_rate", "avg_trade_rate", "total_traded_energy_kWh"}
 
+            print(market_info)
             if market_info["start_time"][-5:] == "23:45":
                 self.status = "finished"
             self.latest_stats = stats
+            self.market_info = market_info
+
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1

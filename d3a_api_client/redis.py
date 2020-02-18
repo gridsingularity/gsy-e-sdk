@@ -9,7 +9,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.ERROR)
+root_logger.setLevel(logging.INFO)
 
 
 class RedisAPIException(Exception):
@@ -56,11 +56,10 @@ class RedisClient(APIClientInterface):
             f"{self._command_topics[c]}/response": self._generate_command_response_callback(c)
             for c in Commands
         }
-        # channel_subs[f'{self.area_id}/market_stats/response'] = self._generate_command_response_callback(Commands.LIST_MARKET_STATS)
 
         channel_subs[f'{self.area_id}/register_participant/response'] = self._on_register
         channel_subs[f'{self.area_id}/unregister_participant/response'] = self._on_unregister
-        channel_subs[f'{self._channel_prefix}/market_cycle'] = self._on_market_cycle
+        channel_subs[f'{self._channel_prefix}/market_event'] = self._on_market_cycle
         self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
 
@@ -115,7 +114,8 @@ class RedisClient(APIClientInterface):
         }
 
     def _wait_and_consume_command_response(self, command_type):
-        wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses)
+        logging.info(f"Command {command_type} waiting for response...")
+        wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses, timeout=120)
         command_output = self._blocking_command_responses.pop(command_type)
         logging.info(f"Command {command_type} got response {command_output}")
         return command_output
@@ -184,12 +184,6 @@ class RedisClient(APIClientInterface):
         logging.debug(f"Client tries to read its posted bids.")
         self.redis_db.publish(self._command_topics[Commands.LIST_BIDS], json.dumps(""))
         return self._wait_and_consume_command_response(Commands.LIST_BIDS)
-
-    @registered_connection
-    def list_device_stats(self):
-        logging.debug(f"Client tries to read device stats")
-        self.redis_db.publish(self._command_topics[Commands.LIST_DEVICE_STATS], json.dumps(""))
-        return self._wait_and_consume_command_response(Commands.LIST_DEVICE_STATS)
 
     @registered_connection
     def list_market_stats(self, area_slug, market_slot_list):

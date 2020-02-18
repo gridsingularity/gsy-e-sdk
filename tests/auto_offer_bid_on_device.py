@@ -28,7 +28,7 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
             # bid_id = json.loads(bid["bid"])["id"]
             # delete_bid = self.delete_bid(bid_id)
             # logging.error(f"Bid deleted {delete_bid}")
-        logging.debug(f"Aggregated device/market statistics: {self.list_device_stats()}")
+        # logging.debug(f"Aggregated device/market statistics: {self.list_device_stats()}")
 
 
 # Connects one client to the load device
