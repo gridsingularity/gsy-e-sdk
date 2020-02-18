@@ -30,4 +30,4 @@ Scenario: External ESS agent not allowed to sell below min_allowed_soc
    When the external client is started with test_ess_offer_connection
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
-   And the storage state is limitied to min_allowed_soc
+   And the storage state is limited to min_allowed_soc
