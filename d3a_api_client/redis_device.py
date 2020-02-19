@@ -28,6 +28,7 @@ class RedisDeviceClient(RedisClient):
         channel_subs[f'{self.market_id}/register_participant/response'] = self._on_register
         channel_subs[f'{self.market_id}/unregister_participant/response'] = self._on_unregister
         channel_subs[f'{self._channel_prefix}/market_event'] = self._on_market_cycle
+        channel_subs[f'{self._channel_prefix}/tick'] = self._on_tick
 
         self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
