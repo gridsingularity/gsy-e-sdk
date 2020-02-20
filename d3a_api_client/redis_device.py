@@ -21,14 +21,14 @@ class RedisDeviceClient(RedisClient):
 
     def _subscribe_to_response_channels(self):
         channel_subs = {
-            f"{self._command_topics[c]}/response": self._generate_command_response_callback(c)
+            self._response_topics[c]: self._generate_command_response_callback(c)
             for c in Commands
         }
 
         channel_subs[f'{self.market_id}/response/register_participant'] = self._on_register
         channel_subs[f'{self.market_id}/response/unregister_participant'] = self._on_unregister
-        channel_subs[f'{self._channel_prefix}/market'] = self._on_market_cycle
-        channel_subs[f'{self._channel_prefix}/tick'] = self._on_tick
+        channel_subs[f'{self._channel_prefix}/events/market'] = self._on_market_cycle
+        channel_subs[f'{self._channel_prefix}/events/tick'] = self._on_tick
 
         self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
