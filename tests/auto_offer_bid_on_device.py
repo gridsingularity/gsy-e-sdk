@@ -30,6 +30,9 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
     def on_tick(self, tick_info):
         logging.debug(f"Progress information on the device: {tick_info}")
 
+    def on_trade(self, trade_info):
+        logging.debug(f"Trade info: {trade_info}")
+
 
 # Connects one client to the load device
 load = AutoOfferBidOnMarket('load', autoregister=True)
