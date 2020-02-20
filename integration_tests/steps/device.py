@@ -4,6 +4,8 @@ from time import sleep
 from integration_tests.test_load_connection import AutoBidOnLoadDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
 from integration_tests.environment import docker_command
+from integration_tests.test_ess_bid_connection import AutoBidOnESSDevice
+from integration_tests.test_ess_offer_connection import AutoOfferOnESSDevice
 
 
 @given('redis container is started')
@@ -15,8 +17,8 @@ def step_impl(context):
 @given('d3a container is started using setup file {setup_file}')
 def step_impl(context, setup_file):
     sleep(3)
-    system(f'{docker_command} run -d --env REDIS_URL=redis://redis.container:6379/ --net integtestnet --name d3a-api-test  d3a-tests '
-           f'-l INFO run -t 1s -s 15m --no-export --setup {setup_file}')
+    system(f'docker run -d --env REDIS_URL=redis://redis.container:6379/ --net integtestnet d3a-tests '
+           f'  -l DEBUG run -t 1s -s 60m --setup {setup_file}')
 
 
 @when('the external client is started with test_load_connection')
@@ -24,7 +26,7 @@ def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
     # Connects one client to the load device
-    context.load = AutoBidOnLoadDevice('load', autoregister=True, redis_url='redis://localhost:6379/')
+    context.device = AutoBidOnLoadDevice('load', autoregister=True, redis_url='redis://localhost:6379/')
 
 
 @when('the external client is started with test_pv_connection')
@@ -32,7 +34,25 @@ def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
     # Connects one client to the load device
-    context.load = AutoOfferOnPVDevice('pv', autoregister=True, redis_url='redis://localhost:6379/')
+    context.device = AutoOfferOnPVDevice('pv', autoregister=True, redis_url='redis://localhost:6379/')
+
+
+@when('the external client is started with test_ess_bid_connection')
+def step_impl(context):
+    # Wait for d3a to activate all areas
+    sleep(5)
+    # Connects one client to the load device
+    context.device = AutoBidOnESSDevice('storage', autoregister=True,
+                                        redis_url='redis://localhost:6379/')
+
+
+@when('the external client is started with test_ess_offer_connection')
+def step_impl(context):
+    # Wait for d3a to activate all areas
+    sleep(5)
+    # Connects one client to the load device
+    context.device = AutoOfferOnESSDevice('storage', autoregister=True,
+                                          redis_url='redis://localhost:6379/')
 
 
 @then('the external client is connecting to the simulation until finished')
@@ -48,9 +68,19 @@ def step_impl(context):
 
 @then('the external client does not report errors')
 def step_impl(context):
-    assert context.load.errors == 0
+    assert context.device.errors == 0
+
+
+@then('the storage is not overcharged')
+def step_impl(context):
+    assert context.device.last_market_info["used_storage"] <= 20.0
+
+
+@then('the storage state is limited to min_allowed_soc')
+def step_impl(context):
+    assert context.device.last_market_info["used_storage"] >= 2.0
 
 
 @then('the energy bills of the load report the required energy was bought by the load')
 def step_impl(context):
-    assert context.load.device_bills["bought"] == (24 * 4 - 2) * 0.05
+    assert context.device.device_bills["bought"] == (24 * 4 - 2) * 0.05

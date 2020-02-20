@@ -12,6 +12,7 @@ from d3a_interface.constants_limits import DATE_TIME_FORMAT
 class AutoOfferOnPVDevice(RedisDeviceClient):
     def __init__(self, *args, **kwargs):
         self.errors = 0
+        self.error_list = []
         self.status = "running"
         self.latest_stats = {}
         self.market_info = {}
@@ -50,7 +51,7 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
             assert "last_market_stats" in market_info
             assert set(market_info["last_market_stats"]) == {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'total_traded_energy_kWh'}
 
-            if market_info["start_time"][-5:] == "23:45":
+            if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
 
             self.market_info = market_info
@@ -58,4 +59,5 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
+            self.error_list.append(e)
             raise e

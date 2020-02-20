@@ -58,6 +58,9 @@ class RedisClient(APIClientInterface):
         channel_subs[f'{self.area_id}/register_participant/response'] = self._on_register
         channel_subs[f'{self.area_id}/unregister_participant/response'] = self._on_unregister
         channel_subs[f'{self._channel_prefix}/market_event'] = self._on_market_cycle
+        channel_subs[f'{self._channel_prefix}/tick'] = self._on_tick
+        channel_subs[f'{self._channel_prefix}/trade'] = self._on_trade
+
         self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
 
@@ -209,8 +212,30 @@ class RedisClient(APIClientInterface):
             self.on_market_cycle(message)
         self.executor.submit(executor_function)
 
+    def _on_tick(self, msg):
+        message = json.loads(msg["data"])
+        logging.info(f"Time has elapsed on the device. Progress info: {message}")
+
+        def executor_function():
+            self.on_tick(message)
+        self.executor.submit(executor_function)
+
+    def _on_trade(self, msg):
+        message = json.loads(msg["data"])
+        logging.info(f"A trade took place on the device. Trade information: {message}")
+
+        def executor_function():
+            self.on_trade(message)
+        self.executor.submit(executor_function)
+
     def on_register(self, registration_info):
         pass
 
     def on_market_cycle(self, market_info):
+        pass
+
+    def on_tick(self, tick_info):
+        pass
+
+    def on_trade(self, trade_info):
         pass
