@@ -6,11 +6,11 @@ else
     docker_command="docker"
 fi;
 
-if [[ "$(${docker_command} images -q d3a-api-client 2> /dev/null)" == "" ]]; then
-  echo "Building d3a-api-client image ..."
-  ${docker_command} build -t d3a-api-client .
-  echo "... done"
-fi
+#if [[ "$(${docker_command} images -q d3a-api-client 2> /dev/null)" == "" ]]; then
+#  echo "Building d3a-api-client image ..."
+#  ${docker_command} build -t d3a-api-client .
+#  echo "... done"
+#fi
 
 D3A_IMAGE_TAG="d3a-tests"
 

@@ -4,9 +4,7 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 import logging
 import json
 import traceback
-from pendulum import today
 from d3a_api_client.redis_device import RedisDeviceClient
-from d3a_interface.constants_limits import DATE_TIME_FORMAT
 
 
 class AutoBidOnLoadDevice(RedisDeviceClient):
@@ -15,6 +13,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
         self.status = "running"
         self.latest_stats = {}
         self.market_info = {}
+        self.device_bills = {}
         super().__init__(*args, **kwargs)
 
     def on_market_cycle(self, market_info):
@@ -43,17 +42,15 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 assert bid_info["price"] == 33 * market_info["energy_requirement_kWh"]
                 assert bid_info["energy"] == market_info["energy_requirement_kWh"]
 
-            market_slot_string_1 = today().format(DATE_TIME_FORMAT)
-            market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
-            stats = self.list_market_stats("house-2", [market_slot_string_1, market_slot_string_2])
-            assert set(stats["market_stats"].keys()) == {market_slot_string_1, market_slot_string_2}
-            assert set([key for slot in stats["market_stats"].keys() for key in stats["market_stats"][slot].keys()]) \
-                == {"min_trade_rate", "max_trade_rate", "avg_trade_rate", "total_traded_energy_kWh"}
+            assert "device_bill" in market_info
+            self.device_bills = market_info["device_bill"]
+            assert set(self.device_bills.keys()) == {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee', 'type'}
+            assert "last_market_stats" in market_info
+            assert set(market_info["last_market_stats"]) == {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'total_traded_energy_kWh'}
 
-            print(market_info)
             if market_info["start_time"][-5:] == "23:45":
                 self.status = "finished"
-            self.latest_stats = stats
+
             self.market_info = market_info
 
         except AssertionError as e:

@@ -16,7 +16,7 @@ def step_impl(context):
 def step_impl(context, setup_file):
     sleep(3)
     system(f'{docker_command} run -d --env REDIS_URL=redis://redis.container:6379/ --net integtestnet --name d3a-api-test  d3a-tests '
-           f'run -t 2s -s 60m --setup {setup_file}')
+           f'-l INFO run -t 1s -s 15m --no-export --setup {setup_file}')
 
 
 @when('the external client is started with test_load_connection')
@@ -42,18 +42,15 @@ def step_impl(context):
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
     while context.load.errors == 0 and context.load.status != "finished" and counter < 300:
-        print(counter, context.load.status)
         sleep(3)
         counter += 3
 
 
 @then('the external client does not report errors')
 def step_impl(context):
-    print(context.load.errors)
     assert context.load.errors == 0
 
 
 @then('the energy bills of the load report the required energy was bought by the load')
 def step_impl(context):
-    print(context.load.market_info)
-    assert context.load.market_info["device_bill"]["bought"] == (24 * 4 - 2) * 0.05
+    assert context.load.device_bills["bought"] == (24 * 4 - 2) * 0.05

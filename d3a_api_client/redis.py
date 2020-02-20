@@ -9,7 +9,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(logging.ERROR)
 
 
 class RedisAPIException(Exception):
@@ -32,8 +32,6 @@ class Commands(Enum):
     DELETE_BID = 4
     LIST_OFFERS = 5
     LIST_BIDS = 6
-    LIST_DEVICE_STATS = 7
-    LIST_MARKET_STATS = 8
 
 
 class RedisClient(APIClientInterface):
@@ -109,8 +107,6 @@ class RedisClient(APIClientInterface):
             Commands.DELETE_BID: f'{self._channel_prefix}/delete_bid',
             Commands.LIST_OFFERS: f'{self._channel_prefix}/offers',
             Commands.LIST_BIDS: f'{self._channel_prefix}/bids',
-            Commands.LIST_DEVICE_STATS: f'{self._channel_prefix}/stats',
-            Commands.LIST_MARKET_STATS: f'{self.area_id}/market_stats'
         }
 
     def _wait_and_consume_command_response(self, command_type):
@@ -184,12 +180,6 @@ class RedisClient(APIClientInterface):
         logging.debug(f"Client tries to read its posted bids.")
         self.redis_db.publish(self._command_topics[Commands.LIST_BIDS], json.dumps(""))
         return self._wait_and_consume_command_response(Commands.LIST_BIDS)
-
-    @registered_connection
-    def list_market_stats(self, area_slug, market_slot_list):
-        logging.debug(f"Client tries to read market_stats.")
-        self.redis_db.publish(f'{area_slug}/market_stats', json.dumps({"market_slots": market_slot_list}))
-        return self._wait_and_consume_command_response(Commands.LIST_MARKET_STATS)
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
