@@ -12,7 +12,7 @@ if [[ "$(${docker_command} images -q ${D3A_IMAGE_TAG} 2> /dev/null)" == "" ]]; t
   echo "Building d3a image ..." && \
   rm -rf tests/d3a && \
   cd tests/ && \
-  git clone -b feature/D3ASIM-1979 https://github.com/gridsingularity/d3a.git && \
+  git clone https://github.com/gridsingularity/d3a.git && \
   cd d3a && \
   ${docker_command} build -t ${D3A_IMAGE_TAG} . && \
   cd ../ && \
