@@ -4,14 +4,13 @@ from time import sleep
 from math import isclose
 from integration_tests.test_load_connection import AutoBidOnLoadDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
-from integration_tests.environment import docker_command
 from integration_tests.test_ess_bid_connection import AutoBidOnESSDevice
 from integration_tests.test_ess_offer_connection import AutoOfferOnESSDevice
 
 
 @given('redis container is started')
 def step_impl(context):
-    system(f'{docker_command} run -d -p 6379:6379 --name redis.container -h redis.container '
+    system(f'docker run -d -p 6379:6379 --name redis.container -h redis.container '
            '--net integtestnet gsyd3a/d3a:redis-staging')
 
 

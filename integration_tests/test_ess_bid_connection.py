@@ -21,7 +21,6 @@ class AutoBidOnESSDevice(RedisDeviceClient):
         try:
             assert "energy_to_buy_dict" in market_info
             energy = market_info["energy_to_buy_dict"]
-            print("energy", market_info["energy_to_buy_dict"])
             if energy > 0:
                 bid = self.bid_energy(energy, (31 * energy))
                 bid_info = json.loads(bid["bid"])

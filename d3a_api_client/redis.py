@@ -9,7 +9,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(logging.ERROR)
 
 
 class RedisAPIException(Exception):
