@@ -49,7 +49,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
             assert "last_market_stats" in market_info
             assert set(market_info["last_market_stats"]) == {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'total_traded_energy_kWh'}
 
-            if market_info["start_time"][-5:] == "23:00":
+            if market_info["start_time"][-5:] == "23:45":
                 self.status = "finished"
 
             self.market_info = market_info

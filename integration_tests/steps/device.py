@@ -17,8 +17,8 @@ def step_impl(context):
 @given('d3a container is started using setup file {setup_file}')
 def step_impl(context, setup_file):
     sleep(3)
-    system(f'docker run -d --env REDIS_URL=redis://redis.container:6379/ --net integtestnet d3a-tests '
-           f'  -l DEBUG run -t 1s -s 60m --setup {setup_file}')
+    system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ --net integtestnet '
+           f' d3a-tests -l INFO run -t 1s -s 15m --setup {setup_file} --no-export')
 
 
 @when('the external client is started with test_load_connection')
@@ -61,7 +61,7 @@ def step_impl(context):
     # placing bids and offers on every market cycle.
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
-    while context.load.errors == 0 and context.load.status != "finished" and counter < 300:
+    while context.device.errors == 0 and context.device.status != "finished" and counter < 300:
         sleep(3)
         counter += 3
 
