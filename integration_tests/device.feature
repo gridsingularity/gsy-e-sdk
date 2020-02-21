@@ -23,7 +23,6 @@ Scenario: External ESS agent not allowed to overcharge the Storage State
    And the external client does not report errors
    And the storage is not overcharged
 
-
 Scenario: External ESS agent not allowed to sell below min_allowed_soc
    Given redis container is started
    And d3a container is started using setup file strategy_tests.external_ess_offers

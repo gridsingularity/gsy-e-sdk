@@ -1,6 +1,7 @@
 from behave import given, when, then
 from os import system
 from time import sleep
+from math import isclose
 from integration_tests.test_load_connection import AutoBidOnLoadDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
 from integration_tests.environment import docker_command
@@ -18,7 +19,7 @@ def step_impl(context):
 def step_impl(context, setup_file):
     sleep(3)
     system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ --net integtestnet '
-           f' d3a-tests -l INFO run -t 1s -s 15m --setup {setup_file} --no-export')
+           f' d3a-tests -l INFO run -t 1s -s 60m --setup {setup_file} --no-export')
 
 
 @when('the external client is started with test_load_connection')
@@ -83,4 +84,5 @@ def step_impl(context):
 
 @then('the energy bills of the load report the required energy was bought by the load')
 def step_impl(context):
-    assert context.device.device_bills["bought"] == (24 * 4 - 2) * 0.05
+    assert isclose(context.device.device_bills["bought"], 22 * 0.2)
+
