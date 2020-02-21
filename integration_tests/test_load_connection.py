@@ -45,7 +45,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
             stats = self.list_stats()
             traded_slots = stats["market_stats"]["energy_trade_profile"]["bought_energy"]["load"]["accumulated"].values()
             assert isclose(stats["device_stats"]["bills"]["bought"], sum(traded_slots))
-            assert all(t in [0.05, 0.0] for t in traded_slots)
+            assert all(t in [market_info["energy_requirement_kWh"], 0.0] for t in traded_slots)
 
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"

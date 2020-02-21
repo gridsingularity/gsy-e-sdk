@@ -51,15 +51,15 @@ class RedisClient(APIClientInterface):
 
     def _subscribe_to_response_channels(self):
         channel_subs = {
-            f"{self._command_topics[c]}/response": self._generate_command_response_callback(c)
+            self._response_topics[c]: self._generate_command_response_callback(c)
             for c in Commands
         }
 
-        channel_subs[f'{self.market_id}/register_participant/response'] = self._on_register
-        channel_subs[f'{self.market_id}/unregister_participant/response'] = self._on_unregister
-        channel_subs[f'{self._channel_prefix}/market_cycle'] = self._on_market_cycle
-        channel_subs[f'{self._channel_prefix}/tick'] = self._on_tick
-        channel_subs[f'{self._channel_prefix}/trade'] = self._on_trade
+        channel_subs[f'{self.market_id}/response/register_participant'] = self._on_register
+        channel_subs[f'{self.market_id}/response/unregister_participant'] = self._on_unregister
+        channel_subs[f'{self._channel_prefix}/events/market'] = self._on_market_cycle
+        channel_subs[f'{self._channel_prefix}/events/tick'] = self._on_tick
+        channel_subs[f'{self._channel_prefix}/events/trade'] = self._on_trade
         self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
 
@@ -110,7 +110,19 @@ class RedisClient(APIClientInterface):
             Commands.LIST_OFFERS: f'{self._channel_prefix}/offers',
             Commands.LIST_BIDS: f'{self._channel_prefix}/bids',
             Commands.LIST_STATS: f'{self._channel_prefix}/stats',
+        }
 
+    @property
+    def _response_topics(self):
+        response_prefix = self._channel_prefix + "/response"
+        return {
+            Commands.OFFER: f'{response_prefix}/offer',
+            Commands.BID: f'{response_prefix}/bid',
+            Commands.DELETE_OFFER: f'{response_prefix}/delete_offer',
+            Commands.DELETE_BID: f'{response_prefix}/delete_bid',
+            Commands.LIST_OFFERS: f'{response_prefix}/offers',
+            Commands.LIST_BIDS: f'{response_prefix}/bids',
+            Commands.LIST_STATS: f'{response_prefix}/stats',
         }
 
     def _wait_and_consume_command_response(self, command_type):
