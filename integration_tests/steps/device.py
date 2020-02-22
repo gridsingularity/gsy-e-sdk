@@ -10,15 +10,15 @@ from integration_tests.test_ess_offer_connection import AutoOfferOnESSDevice
 
 @given('redis container is started')
 def step_impl(context):
-    system('docker run -d -p 6379:6379 --name redis.container -h redis.container '
+    system(f'docker run -d -p 6379:6379 --name redis.container -h redis.container '
            '--net integtestnet gsyd3a/d3a:redis-staging')
 
 
 @given('d3a container is started using setup file {setup_file}')
 def step_impl(context, setup_file):
     sleep(3)
-    system(f'docker run -d --env REDIS_URL=redis://redis.container:6379/ --net integtestnet d3a-tests '
-           f'  -l INFO run -t 1s -s 60m --setup {setup_file}')
+    system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ --net integtestnet '
+           f' d3a-tests -l INFO run -t 1s -s 60m --setup {setup_file} --no-export')
 
 
 @when('the external client is started with test_load_connection')
@@ -62,8 +62,8 @@ def step_impl(context):
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
     while context.device.errors == 0 and context.device.status != "finished" and counter < 300:
-        sleep(0.5)
-        counter += 0.5
+        sleep(3)
+        counter += 3
 
 
 @then('the external client does not report errors')
@@ -83,5 +83,5 @@ def step_impl(context):
 
 @then('the energy bills of the load report the required energy was bought by the load')
 def step_impl(context):
-    assert isclose(context.device.latest_stats["device_stats"]["bills"]["bought"], 22 * 0.2)
+    assert isclose(context.device.device_bills["bought"], 22 * 0.2)
 

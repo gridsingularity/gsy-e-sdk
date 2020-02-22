@@ -3,11 +3,11 @@ from os import system
 
 def before_all(context):
     system('bash integration_tests/build_test_containers.sh')
-    system('docker network create integtestnet')
+    system(f'docker network create integtestnet')
 
 
 def after_all(context):
-    system('docker network rm integtestnet')
+    system(f'docker network rm integtestnet')
 
 
 def before_scenario(context, scenario):
@@ -15,4 +15,4 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
-    system('docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)')
+    system(f'docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)')

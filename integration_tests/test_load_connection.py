@@ -3,9 +3,8 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 """
 import logging
 import json
-from math import isclose
-from d3a_api_client.redis_device import RedisDeviceClient
 import traceback
+from d3a_api_client.redis_device import RedisDeviceClient
 
 
 class AutoBidOnLoadDevice(RedisDeviceClient):
@@ -14,6 +13,8 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
         self.error_list = []
         self.status = "running"
         self.latest_stats = {}
+        self.market_info = {}
+        self.device_bills = {}
         super().__init__(*args, **kwargs)
 
     def on_market_cycle(self, market_info):
@@ -42,14 +43,17 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 assert bid_info["price"] == 33 * market_info["energy_requirement_kWh"]
                 assert bid_info["energy"] == market_info["energy_requirement_kWh"]
 
-            stats = self.list_stats()
-            traded_slots = stats["market_stats"]["energy_trade_profile"]["bought_energy"]["load"]["accumulated"].values()
-            assert isclose(stats["device_stats"]["bills"]["bought"], sum(traded_slots))
-            assert all(t in [market_info["energy_requirement_kWh"], 0.0] for t in traded_slots)
+            assert "device_bill" in market_info
+            self.device_bills = market_info["device_bill"]
+            assert set(self.device_bills.keys()) == {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee', 'type'}
+            assert "last_market_stats" in market_info
+            assert set(market_info["last_market_stats"]) == {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'total_traded_energy_kWh'}
 
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
-            self.latest_stats = stats
+
+            self.market_info = market_info
+
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
