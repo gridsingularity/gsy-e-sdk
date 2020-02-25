@@ -1,5 +1,7 @@
 pip-tools==4.4.0
+websockets
 redis
+requests
 tox
 fabric3
 behave
