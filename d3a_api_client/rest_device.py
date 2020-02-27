@@ -6,7 +6,7 @@ import json
 import ssl
 from functools import wraps
 from concurrent.futures.thread import ThreadPoolExecutor
-from d3a_api_client.websocket_device import WebsocketMessageDispatcher, WebsocketThread
+from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 
 
 root_logger = logging.getLogger()
@@ -36,14 +36,13 @@ class RestDeviceClient(APIClientInterface):
 
         if is_ssl:
             self.pem_cert = ssl.get_server_certificate(domain_name)
-        self.dispatcher = WebsocketMessageDispatcher(self)
+        self.dispatcher = WebsocketMessageReceiver(self)
         self.websocket_thread = WebsocketThread(simulation_id, device_id, self.jwt_token,
                                                 websockets_domain_name, self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=5)
         self.registered = False
         if autoregister:
-            print(f"Trying to register")
             self.register()
 
     def retrieve_key_from_server(self):
@@ -70,7 +69,7 @@ class RestDeviceClient(APIClientInterface):
                      "Authorization": f"JWT {self.jwt_token}"})
         if resp.status_code != 200:
             logging.error(f"Request {endpoint_suffix} failed with status code {resp.status_code}."
-                          f"Response body: {resp.text}")
+                          f"Response body: {resp.text} {resp.reason}")
             return False
         return True
 
@@ -89,7 +88,7 @@ class RestDeviceClient(APIClientInterface):
     def register(self, is_blocking=True):
         if self.post_request('register', {}):
             return_value = self.dispatcher.wait_for_command_response('register')
-            self.registered = True
+            self.registered = json.loads(return_value)["registered"]
             return return_value
 
     @logging_decorator('unregister')

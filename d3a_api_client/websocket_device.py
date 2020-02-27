@@ -11,7 +11,7 @@ class RestWebsocketAPIException(Exception):
     pass
 
 
-class WebsocketMessageDispatcher:
+class WebsocketMessageReceiver:
     def __init__(self, rest_client):
         self.client = rest_client
         self.command_response_buffer = []
@@ -65,7 +65,7 @@ class WebsocketThread(threading.Thread):
         self.domain_name = domain_name
         self.sim_id = sim_id
         self.area_uuid = area_uuid
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, daemon=True)
 
     def run(self):
         event_loop = asyncio.new_event_loop()

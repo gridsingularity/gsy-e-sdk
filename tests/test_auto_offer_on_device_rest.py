@@ -21,7 +21,7 @@ class AutoOfferBidOnMarket(RestDeviceClient):
         logging.debug(f"New market information {market_info}")
         if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
             print(market_info["device_info"]["available_energy_kWh"])
-            offer = self.offer_energy(market_info["device_info"]["available_energy_kWh"], 0.1)
+            offer = self.offer_energy(market_info["device_info"]["available_energy_kWh"] / 2, 0.1)
             logging.debug(f"Offer placed on the new market: {offer}")
 
     def on_tick(self, tick_info):
@@ -36,7 +36,7 @@ load = AutoOfferBidOnMarket(
     simulation_id='77b0db33-167c-421a-a323-93968a7ee8b8',
     device_id='1613ddab-1413-44c3-a21f-9add93114556',
     domain_name='http://localhost:8000',
-    websockets_domain_name='ws://localhost:8000/externalWs',
+    websockets_domain_name='ws://localhost:8000/external-ws',
     is_ssl=False,
     autoregister=True)
 # Connects a second client to the pv device
