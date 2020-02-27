@@ -22,6 +22,7 @@ class AutoOfferBidOnMarket(RestDeviceClient):
         if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
             offer = self.offer_energy(market_info["device_info"]["available_energy_kWh"] / 2, 0.1)
             logging.debug(f"Offer placed on the new market: {offer}")
+            assert len(self.list_offers()) == 1
 
     def on_tick(self, tick_info):
         logging.debug(f"Progress information on the device: {tick_info}")

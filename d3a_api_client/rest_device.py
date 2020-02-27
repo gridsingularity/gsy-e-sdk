@@ -74,7 +74,7 @@ class RestDeviceClient(APIClientInterface):
         return True
 
     def _get_request(self, endpoint_suffix):
-        resp = requests.post(
+        resp = requests.get(
             f"{self._url_prefix}/{endpoint_suffix}/",
             headers={"Content-Type": "application/json",
                      "Authorization": f"JWT {self.jwt_token}"})
