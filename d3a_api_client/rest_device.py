@@ -88,7 +88,7 @@ class RestDeviceClient(APIClientInterface):
     def register(self, is_blocking=True):
         if self.post_request('register', {}):
             return_value = self.dispatcher.wait_for_command_response('register')
-            self.registered = json.loads(return_value)["registered"]
+            self.registered = return_value["registered"]
             return return_value
 
     @logging_decorator('unregister')

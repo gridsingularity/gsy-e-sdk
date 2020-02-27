@@ -20,7 +20,6 @@ class AutoOfferBidOnMarket(RestDeviceClient):
             return
         logging.debug(f"New market information {market_info}")
         if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
-            print(market_info["device_info"]["available_energy_kWh"])
             offer = self.offer_energy(market_info["device_info"]["available_energy_kWh"] / 2, 0.1)
             logging.debug(f"Offer placed on the new market: {offer}")
 

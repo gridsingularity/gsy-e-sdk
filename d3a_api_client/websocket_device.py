@@ -74,7 +74,6 @@ class WebsocketThread(threading.Thread):
         event_loop.run_until_complete(
             websocket_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
         )
-        event_loop.run_forever()
         event_loop.close()
 
 
