@@ -108,8 +108,8 @@ class RedisClient(APIClientInterface):
             Commands.BID: f'{self._channel_prefix}/bid',
             Commands.DELETE_OFFER: f'{self._channel_prefix}/delete_offer',
             Commands.DELETE_BID: f'{self._channel_prefix}/delete_bid',
-            Commands.LIST_OFFERS: f'{self._channel_prefix}/offers',
-            Commands.LIST_BIDS: f'{self._channel_prefix}/bids'
+            Commands.LIST_OFFERS: f'{self._channel_prefix}/list_offers',
+            Commands.LIST_BIDS: f'{self._channel_prefix}/list_bids'
         }
 
     @property
@@ -120,8 +120,8 @@ class RedisClient(APIClientInterface):
             Commands.BID: f'{response_prefix}/bid',
             Commands.DELETE_OFFER: f'{response_prefix}/delete_offer',
             Commands.DELETE_BID: f'{response_prefix}/delete_bid',
-            Commands.LIST_OFFERS: f'{response_prefix}/offers',
-            Commands.LIST_BIDS: f'{response_prefix}/bids',
+            Commands.LIST_OFFERS: f'{response_prefix}/list_offers',
+            Commands.LIST_BIDS: f'{response_prefix}/list_bids',
         }
 
     def _wait_and_consume_command_response(self, command_type):
