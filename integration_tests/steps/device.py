@@ -73,12 +73,12 @@ def step_impl(context):
 
 @then('the storage is not overcharged')
 def step_impl(context):
-    assert context.device.last_market_info["used_storage"] <= 20.0
+    assert context.device.last_market_info["device_info"]["used_storage"] <= 20.0
 
 
 @then('the storage state is limited to min_allowed_soc')
 def step_impl(context):
-    assert context.device.last_market_info["used_storage"] >= 2.0
+    assert context.device.last_market_info["device_info"]["used_storage"] >= 2.0
 
 
 @then('the energy bills of the load report the required energy was bought by the load')

@@ -32,7 +32,7 @@ class RestDeviceClient(APIClientInterface):
         self.simulation_id = simulation_id
         self.device_id = device_id
         self.domain_name = domain_name
-        self.retrieve_key_from_server()
+        self._retrieve_jwt_key_from_server()
 
         if is_ssl:
             self.pem_cert = ssl.get_server_certificate(domain_name)
@@ -45,7 +45,7 @@ class RestDeviceClient(APIClientInterface):
         if autoregister:
             self.register()
 
-    def retrieve_key_from_server(self):
+    def _retrieve_jwt_key_from_server(self):
         resp = requests.post(
             f"{self.domain_name}/api-token-auth/",
             data=json.dumps({"username": os.environ["API_CLIENT_USERNAME"],
@@ -61,7 +61,7 @@ class RestDeviceClient(APIClientInterface):
     def _url_prefix(self):
         return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}/'
 
-    def post_request(self, endpoint_suffix, data):
+    def _post_request(self, endpoint_suffix, data):
         resp = requests.post(
             f"{self._url_prefix}/{endpoint_suffix}/",
             data=json.dumps(data),
@@ -73,7 +73,7 @@ class RestDeviceClient(APIClientInterface):
             return False
         return True
 
-    def get_request(self, endpoint_suffix):
+    def _get_request(self, endpoint_suffix):
         resp = requests.post(
             f"{self._url_prefix}/{endpoint_suffix}/",
             headers={"Content-Type": "application/json",
@@ -86,47 +86,47 @@ class RestDeviceClient(APIClientInterface):
 
     @logging_decorator('register')
     def register(self, is_blocking=True):
-        if self.post_request('register', {}):
+        if self._post_request('register', {}):
             return_value = self.dispatcher.wait_for_command_response('register')
             self.registered = return_value["registered"]
             return return_value
 
     @logging_decorator('unregister')
     def unregister(self, is_blocking):
-        if self.post_request('unregister', {}):
+        if self._post_request('unregister', {}):
             return_value = self.dispatcher.wait_for_command_response('unregister')
             self.registered = False
             return return_value
 
     @logging_decorator('offer')
     def offer_energy(self, energy, price):
-        if self.post_request('offer', {"energy": energy, "price": price}):
+        if self._post_request('offer', {"energy": energy, "price": price}):
             return self.dispatcher.wait_for_command_response('offer')
 
     @logging_decorator('bid')
     def bid_energy(self, energy, price):
-        if self.post_request('bid', {"energy": energy, "price": price}):
+        if self._post_request('bid', {"energy": energy, "price": price}):
             return self.dispatcher.wait_for_command_response('bid')
 
     @logging_decorator('delete offer')
     def delete_offer(self, offer_id):
-        if self.post_request('delete-offer', {"offer": offer_id}):
+        if self._post_request('delete-offer', {"offer": offer_id}):
             return self.dispatcher.wait_for_command_response('offer_delete')
 
     @logging_decorator('delete bid')
     def delete_bid(self, bid_id):
-        if self.post_request('delete-bid', {"bid": bid_id}):
+        if self._post_request('delete-bid', {"bid": bid_id}):
             return self.dispatcher.wait_for_command_response('bid_delete')
 
     @logging_decorator('list offers')
     def list_offers(self):
-        if self.get_request('offers'):
-            return self.dispatcher.wait_for_command_response('offers')
+        if self._get_request('list-offers'):
+            return self.dispatcher.wait_for_command_response('list_offers')
 
     @logging_decorator('list bids')
     def list_bids(self):
-        if self.get_request('bids'):
-            return self.dispatcher.wait_for_command_response('bids')
+        if self._get_request('list-bids'):
+            return self.dispatcher.wait_for_command_response('list_bids')
 
     def on_register(self, registration_info):
         pass
