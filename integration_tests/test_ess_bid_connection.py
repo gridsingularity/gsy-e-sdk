@@ -19,8 +19,8 @@ class AutoBidOnESSDevice(RedisDeviceClient):
 
     def on_market_cycle(self, market_info):
         try:
-            assert "energy_to_buy_dict" in market_info
-            energy = market_info["energy_to_buy_dict"]
+            assert "energy_to_buy" in market_info["device_info"]
+            energy = market_info["device_info"]["energy_to_buy"]
             if energy > 0:
                 bid = self.bid_energy(energy, (31 * energy))
                 bid_info = json.loads(bid["bid"])
