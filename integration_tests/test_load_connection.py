@@ -19,13 +19,14 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
 
     def on_market_cycle(self, market_info):
         try:
-            assert "energy_requirement_kWh" in market_info
-            if market_info["energy_requirement_kWh"] > 0.0:
+            assert "energy_requirement_kWh" in market_info["device_info"]
+            energy_requirement = market_info["device_info"]["energy_requirement_kWh"]
+            if energy_requirement > 0.001:
                 # Placing a cheap bid to the market that will not be accepted
-                bid = self.bid_energy(market_info["energy_requirement_kWh"], 0.0001 * market_info["energy_requirement_kWh"])
+                bid = self.bid_energy(energy_requirement, 0.0001 * energy_requirement)
                 bid_info = json.loads(bid["bid"])
-                assert bid_info["price"] == 0.0001 * market_info["energy_requirement_kWh"]
-                assert bid_info["energy"] == market_info["energy_requirement_kWh"]
+                assert bid_info["price"] == 0.0001 * energy_requirement
+                assert bid_info["energy"] == energy_requirement
                 # Validate that the bid was placed to the market
                 bid_listing = self.list_bids()
                 listed_bid = next(bid for bid in bid_listing["bid_list"] if bid["id"] == bid_info["id"])
@@ -38,10 +39,10 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 empty_listing = self.list_bids()
                 assert not any(b for b in empty_listing["bid_list"] if b["id"] == bid_info["id"])
                 # Place the bid with a price that will be acceptable for trading
-                bid = self.bid_energy(market_info["energy_requirement_kWh"], 33 * market_info["energy_requirement_kWh"])
+                bid = self.bid_energy(energy_requirement, 33 * energy_requirement)
                 bid_info = json.loads(bid["bid"])
-                assert bid_info["price"] == 33 * market_info["energy_requirement_kWh"]
-                assert bid_info["energy"] == market_info["energy_requirement_kWh"]
+                assert bid_info["price"] == 33 * energy_requirement
+                assert bid_info["energy"] == energy_requirement
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]

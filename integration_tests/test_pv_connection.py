@@ -21,13 +21,14 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
 
     def on_market_cycle(self, market_info):
         try:
-            assert "available_energy_kWh" in market_info
-            if market_info["available_energy_kWh"] > 0.0:
+            assert "available_energy_kWh" in market_info["device_info"]
+            available_energy = market_info["device_info"]["available_energy_kWh"]
+            if available_energy > 0.0:
                 # Placing an expensive offer to the market that will not be accepted
-                offer = self.offer_energy(market_info["available_energy_kWh"], 50 * market_info["available_energy_kWh"])
+                offer = self.offer_energy(available_energy, 50 * available_energy)
                 offer_info = json.loads(offer["offer"])
-                assert offer_info["price"] == 50 * market_info["available_energy_kWh"]
-                assert offer_info["energy"] == market_info["available_energy_kWh"]
+                assert offer_info["price"] == 50 * available_energy
+                assert offer_info["energy"] == available_energy
                 # Validate that the offer was placed to the market
                 offer_listing = self.list_offers()
                 listed_offer = next(offer for offer in offer_listing["offer_list"] if offer["id"] == offer_info["id"])
@@ -40,10 +41,10 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
                 empty_listing = self.list_offers()
                 assert not any(o for o in empty_listing["offer_list"] if o["id"] == offer_info["id"])
                 # Place the offer with a price that will be acceptable for trading
-                offer = self.offer_energy(market_info["available_energy_kWh"], 10 * market_info["available_energy_kWh"])
+                offer = self.offer_energy(available_energy, 10 * available_energy)
                 offer_info = json.loads(offer["offer"])
-                assert offer_info["price"] == 10 * market_info["available_energy_kWh"]
-                assert offer_info["energy"] == market_info["available_energy_kWh"]
+                assert offer_info["price"] == 10 * available_energy
+                assert offer_info["energy"] == available_energy
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
