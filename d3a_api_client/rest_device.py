@@ -28,14 +28,12 @@ def logging_decorator(command_name):
 class RestDeviceClient(APIClientInterface):
 
     def __init__(self, simulation_id, device_id, domain_name,
-                 websockets_domain_name, is_ssl, autoregister=False):
+                 websockets_domain_name, autoregister=False):
         self.simulation_id = simulation_id
         self.device_id = device_id
         self.domain_name = domain_name
         self._retrieve_jwt_key_from_server()
 
-        if is_ssl:
-            self.pem_cert = ssl.get_server_certificate(domain_name)
         self.dispatcher = WebsocketMessageReceiver(self)
         self.websocket_thread = WebsocketThread(simulation_id, device_id, self.jwt_token,
                                                 websockets_domain_name, self.dispatcher)
@@ -59,7 +57,7 @@ class RestDeviceClient(APIClientInterface):
 
     @property
     def _url_prefix(self):
-        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}/'
+        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
 
     def _post_request(self, endpoint_suffix, data):
         resp = requests.post(

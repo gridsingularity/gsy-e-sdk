@@ -23,6 +23,10 @@ class AutoOfferBidOnMarket(RestDeviceClient):
             offer = self.offer_energy(market_info["device_info"]["available_energy_kWh"] / 2, 0.1)
             logging.debug(f"Offer placed on the new market: {offer}")
             assert len(self.list_offers()) == 1
+        if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
+            bid = self.bid_energy(market_info["device_info"]["energy_requirement_kWh"], 30)
+            logging.error(f"Bid placed on the new market: {bid}")
+            assert len(self.list_bids()) == 1
 
     def on_tick(self, tick_info):
         logging.debug(f"Progress information on the device: {tick_info}")
@@ -33,11 +37,10 @@ class AutoOfferBidOnMarket(RestDeviceClient):
 
 # Connects one client to the load device
 load = AutoOfferBidOnMarket(
-    simulation_id='77b0db33-167c-421a-a323-93968a7ee8b8',
-    device_id='1613ddab-1413-44c3-a21f-9add93114556',
-    domain_name='http://localhost:8000',
-    websockets_domain_name='ws://localhost:8000/external-ws',
-    is_ssl=False,
+    simulation_id="00555be7-bcc6-4b9b-bb9b-5150300b5f9d",
+    device_id='fde7c16f-f885-4ed8-ab3e-a1bbebeb188f',
+    domain_name='https://d3aweb-dev.gridsingularity.com',
+    websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
     autoregister=True)
 # Connects a second client to the pv device
 # pv = AutoOfferBidOnMarket('pv', autoregister=True)
