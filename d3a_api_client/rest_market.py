@@ -28,16 +28,16 @@ class RestMarketClient:
     def _post_request(self, endpoint_suffix, data):
         return post_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
 
-    def _get_request(self, endpoint_suffix):
-        return get_request(f"{self._url_prefix}/{endpoint_suffix}/", self.jwt_token)
+    def _get_request(self, endpoint_suffix, data=None):
+        return get_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
 
     @property
     def _url_prefix(self):
         return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
 
     @logging_decorator('market_stats')
-    def list_stats(self):
-        if self._get_request('market_stats'):
+    def list_stats(self, selected_markets):
+        if self._get_request('market_stats', selected_markets):
             return self.dispatcher.wait_for_command_response('market_stats')
 
     @logging_decorator('grid_fees')

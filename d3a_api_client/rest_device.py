@@ -48,8 +48,8 @@ class RestDeviceClient(APIClientInterface):
     def _post_request(self, endpoint_suffix, data):
         return post_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
 
-    def _get_request(self, endpoint_suffix):
-        return get_request(f"{self._url_prefix}/{endpoint_suffix}/", self.jwt_token)
+    def _get_request(self, endpoint_suffix, data):
+        return get_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
 
     @logging_decorator('register')
     def register(self, is_blocking=True):
@@ -87,12 +87,12 @@ class RestDeviceClient(APIClientInterface):
 
     @logging_decorator('list offers')
     def list_offers(self):
-        if self._get_request('list-offers'):
+        if self._get_request('list-offers', ""):
             return self.dispatcher.wait_for_command_response('list_offers')
 
     @logging_decorator('list bids')
     def list_bids(self):
-        if self._get_request('list-bids'):
+        if self._get_request('list-bids', ""):
             return self.dispatcher.wait_for_command_response('list_bids')
 
     def on_register(self, registration_info):

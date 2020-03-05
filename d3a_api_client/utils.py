@@ -30,9 +30,10 @@ def post_request(endpoint, data, jwt_token):
     return True
 
 
-def get_request(endpoint, jwt_token):
+def get_request(endpoint, data, jwt_token):
     resp = requests.get(
         endpoint,
+        data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
     if resp.status_code != 200:
