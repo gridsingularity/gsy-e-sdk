@@ -1,10 +1,10 @@
 from d3a_api_client import APIClientInterface
 import logging
-import requests
 from functools import wraps
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, post_request, get_request
+from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
 root_logger = logging.getLogger()
@@ -36,7 +36,7 @@ class RestDeviceClient(APIClientInterface):
         self.websocket_thread = WebsocketThread(simulation_id, device_id, self.jwt_token,
                                                 websockets_domain_name, self.dispatcher)
         self.websocket_thread.start()
-        self.callback_thread = ThreadPoolExecutor(max_workers=5)
+        self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.registered = False
         if autoregister:
             self.register()

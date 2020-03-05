@@ -3,6 +3,7 @@ from d3a_api_client.rest_device import logging_decorator
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, post_request, get_request
+from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
 root_logger = logging.getLogger()
@@ -22,7 +23,7 @@ class RestMarketClient:
         self.websocket_thread = WebsocketThread(simulation_id, device_id, self.jwt_token,
                                                 websockets_domain_name, self.dispatcher)
         self.websocket_thread.start()
-        self.callback_thread = ThreadPoolExecutor(max_workers=5)
+        self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
     def _post_request(self, endpoint_suffix, data):
         return post_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
