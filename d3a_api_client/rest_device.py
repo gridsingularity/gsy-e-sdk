@@ -1,12 +1,10 @@
 from d3a_api_client import APIClientInterface
-import os
 import logging
-import requests
-import json
-import ssl
 from functools import wraps
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
+from d3a_api_client.utils import retrieve_jwt_key_from_server, post_request, get_request
+from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
 root_logger = logging.getLogger()
@@ -32,55 +30,26 @@ class RestDeviceClient(APIClientInterface):
         self.simulation_id = simulation_id
         self.device_id = device_id
         self.domain_name = domain_name
-        self._retrieve_jwt_key_from_server()
+        self.jwt_token = retrieve_jwt_key_from_server(domain_name)
 
         self.dispatcher = WebsocketMessageReceiver(self)
         self.websocket_thread = WebsocketThread(simulation_id, device_id, self.jwt_token,
                                                 websockets_domain_name, self.dispatcher)
         self.websocket_thread.start()
-        self.callback_thread = ThreadPoolExecutor(max_workers=5)
+        self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.registered = False
         if autoregister:
             self.register()
-
-    def _retrieve_jwt_key_from_server(self):
-        resp = requests.post(
-            f"{self.domain_name}/api-token-auth/",
-            data=json.dumps({"username": os.environ["API_CLIENT_USERNAME"],
-                             "password": os.environ["API_CLIENT_PASSWORD"]}),
-            headers={"Content-Type": "application/json"})
-        if resp.status_code != 200:
-            logging.error(f"Request for token authentication failed with status code {resp.status_code}."
-                          f"Response body: {resp.text}")
-            return
-        self.jwt_token = json.loads(resp.text)["token"]
 
     @property
     def _url_prefix(self):
         return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
 
     def _post_request(self, endpoint_suffix, data):
-        resp = requests.post(
-            f"{self._url_prefix}/{endpoint_suffix}/",
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json",
-                     "Authorization": f"JWT {self.jwt_token}"})
-        if resp.status_code != 200:
-            logging.error(f"Request {endpoint_suffix} failed with status code {resp.status_code}."
-                          f"Response body: {resp.text} {resp.reason}")
-            return False
-        return True
+        return post_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
 
-    def _get_request(self, endpoint_suffix):
-        resp = requests.get(
-            f"{self._url_prefix}/{endpoint_suffix}/",
-            headers={"Content-Type": "application/json",
-                     "Authorization": f"JWT {self.jwt_token}"})
-        if resp.status_code != 200:
-            logging.error(f"Request {endpoint_suffix} failed with status code {resp.status_code}."
-                          f"Response body: {resp.text}")
-            return False
-        return True
+    def _get_request(self, endpoint_suffix, data):
+        return get_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
 
     @logging_decorator('register')
     def register(self, is_blocking=True):
@@ -118,12 +87,12 @@ class RestDeviceClient(APIClientInterface):
 
     @logging_decorator('list offers')
     def list_offers(self):
-        if self._get_request('list-offers'):
+        if self._get_request('list-offers', ""):
             return self.dispatcher.wait_for_command_response('list_offers')
 
     @logging_decorator('list bids')
     def list_bids(self):
-        if self._get_request('list-bids'):
+        if self._get_request('list-bids', ""):
             return self.dispatcher.wait_for_command_response('list_bids')
 
     def on_register(self, registration_info):

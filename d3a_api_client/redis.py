@@ -6,7 +6,7 @@ from redis import StrictRedis
 from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
-
+from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.ERROR)
@@ -45,7 +45,7 @@ class RedisClient(APIClientInterface):
         self.is_active = False
         self._blocking_command_responses = {}
         self._subscribe_to_response_channels()
-        self.executor = ThreadPoolExecutor(max_workers=5)
+        self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         if autoregister:
             self.register(is_blocking=False)
 
