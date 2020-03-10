@@ -4,6 +4,10 @@ import json
 import logging
 
 
+class AreaNotFoundException(Exception):
+    pass
+
+
 def retrieve_jwt_key_from_server(domain_name):
     resp = requests.post(
         f"{domain_name}/api-token-auth/",
@@ -41,3 +45,35 @@ def get_request(endpoint, data, jwt_token):
                       f"Response body: {resp.text}")
         return False
     return True
+
+
+def get_area_uuid_from_area_name(serialized_scenario, area_name):
+    if "name" in serialized_scenario and serialized_scenario["name"] == area_name:
+        return serialized_scenario["uuid"]
+    if "children" in serialized_scenario:
+        for child in serialized_scenario["children"]:
+            area_uuid = get_area_uuid_from_area_name(child, area_name)
+            if area_uuid is not None:
+                return area_uuid
+    return None
+
+
+def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, domain_name):
+    jwt_key = retrieve_jwt_key_from_server(domain_name)
+    from sgqlc.endpoint.http import HTTPEndpoint
+
+    url = f"{domain_name}/graphql/"
+    headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'}
+
+    query = 'query { readConfiguration(uuid: "{' + collab_id + \
+            '}") { scenarioData { representation { serialized } } } }'
+
+    endpoint = HTTPEndpoint(url, headers)
+    data = endpoint(query=query)
+    area_uuid = get_area_uuid_from_area_name(
+        json.loads(data["data"]["readConfiguration"]["scenarioData"]["representation"]["serialized"]), area_name
+    )
+    if not area_uuid:
+        raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
+                                    f"collaboration with UUID {collab_id}")
+    return area_uuid
