@@ -4,6 +4,10 @@ import json
 import logging
 
 
+class AreaNotFoundException(Exception):
+    pass
+
+
 def retrieve_jwt_key_from_server(domain_name):
     resp = requests.post(
         f"{domain_name}/api-token-auth/",
@@ -66,6 +70,9 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
 
     endpoint = HTTPEndpoint(url, headers)
     data = endpoint(query=query)
-    return get_area_uuid_from_area_name(
+    area_uuid = get_area_uuid_from_area_name(
         json.loads(data["data"]["readConfiguration"]["scenarioData"]["representation"]["serialized"]), area_name
     )
+    if not area_uuid:
+        raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
+                                    f"collaboration with UUID {collab_id}")
