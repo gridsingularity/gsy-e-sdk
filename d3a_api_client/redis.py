@@ -167,8 +167,11 @@ class RedisClient(APIClientInterface):
         return self._wait_and_consume_command_response(Commands.BID)
 
     @registered_connection
-    def delete_offer(self, offer_id):
-        logging.debug(f"Client tries to delete offer {offer_id}.")
+    def delete_offer(self, offer_id=None):
+        if offer_id is None:
+            logging.debug(f"Client tries to delete all offers.")
+        else:
+            logging.debug(f"Client tries to delete offer {offer_id}.")
         self.redis_db.publish(
             self._command_topics[Commands.DELETE_OFFER],
             json.dumps({"offer": offer_id})
@@ -176,8 +179,11 @@ class RedisClient(APIClientInterface):
         return self._wait_and_consume_command_response(Commands.DELETE_OFFER)
 
     @registered_connection
-    def delete_bid(self, bid_id):
-        logging.debug(f"Client tries to delete bid {bid_id}.")
+    def delete_bid(self, bid_id=None):
+        if bid_id is None:
+            logging.debug(f"Client tries to delete all bids.")
+        else:
+            logging.debug(f"Client tries to delete bid {bid_id}.")
         self.redis_db.publish(
             self._command_topics[Commands.DELETE_BID],
             json.dumps({"bid": bid_id})
