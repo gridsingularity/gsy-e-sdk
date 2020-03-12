@@ -36,7 +36,7 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
                 assert listed_offer["energy"] == listed_offer["energy"]
                 # Try to delete the offer
                 delete_resp = self.delete_offer(offer_info["id"])
-                assert delete_resp["deleted_offer"] == offer_info["id"]
+                assert delete_resp["deleted_offer"] == [offer_info["id"]]
                 # Validate that the offer was deleted from the market
                 empty_listing = self.list_offers()
                 assert not any(o for o in empty_listing["offer_list"] if o["id"] == offer_info["id"])

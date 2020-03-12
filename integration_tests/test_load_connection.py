@@ -34,7 +34,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 assert listed_bid["energy"] == bid_info["energy"]
                 # Try to delete the bid
                 delete_resp = self.delete_bid(bid_info["id"])
-                assert delete_resp["bid_deleted"] == bid_info["id"]
+                assert delete_resp["bids_deleted"] == [bid_info["id"]]
                 # Validate that the bid was deleted from the market
                 empty_listing = self.list_bids()
                 assert not any(b for b in empty_listing["bid_list"] if b["id"] == bid_info["id"])
