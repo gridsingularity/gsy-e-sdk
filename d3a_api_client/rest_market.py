@@ -36,11 +36,11 @@ class RestMarketClient:
         return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
 
     @logging_decorator('market_stats')
-    def list_stats(self, selected_markets):
-        if self._get_request('market_stats', selected_markets):
+    def list_market_stats(self, selected_markets):
+        if self._get_request('market-stats', {"market_slots": selected_markets}):
             return self.dispatcher.wait_for_command_response('market_stats')
 
     @logging_decorator('grid_fees')
     def grid_fees(self, fee_cents_per_kWh):
-        if self._post_request('grid_fees', {"fee": fee_cents_per_kWh}):
+        if self._post_request('grid-fees', {"fee": fee_cents_per_kWh}):
             return self.dispatcher.wait_for_command_response('grid_fees')
