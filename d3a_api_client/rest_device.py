@@ -95,6 +95,11 @@ class RestDeviceClient(APIClientInterface):
         if self._get_request('list-bids', ""):
             return self.dispatcher.wait_for_command_response('list_bids')
 
+    @logging_decorator('device info')
+    def device_info(self):
+        if self._get_request('device-info', ""):
+            return self.dispatcher.wait_for_command_response('device_info')
+
     def on_register(self, registration_info):
         pass
 

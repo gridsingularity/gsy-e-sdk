@@ -32,6 +32,7 @@ class Commands(Enum):
     DELETE_BID = 4
     LIST_OFFERS = 5
     LIST_BIDS = 6
+    DEVICE_INFO = 7
 
 
 class RedisClient(APIClientInterface):
@@ -109,7 +110,8 @@ class RedisClient(APIClientInterface):
             Commands.DELETE_OFFER: f'{self._channel_prefix}/delete_offer',
             Commands.DELETE_BID: f'{self._channel_prefix}/delete_bid',
             Commands.LIST_OFFERS: f'{self._channel_prefix}/list_offers',
-            Commands.LIST_BIDS: f'{self._channel_prefix}/list_bids'
+            Commands.LIST_BIDS: f'{self._channel_prefix}/list_bids',
+            Commands.DEVICE_INFO: f'{self._channel_prefix}/device_info'
         }
 
     @property
@@ -122,6 +124,7 @@ class RedisClient(APIClientInterface):
             Commands.DELETE_BID: f'{response_prefix}/delete_bid',
             Commands.LIST_OFFERS: f'{response_prefix}/list_offers',
             Commands.LIST_BIDS: f'{response_prefix}/list_bids',
+            Commands.DEVICE_INFO: f'{response_prefix}/device_info',
         }
 
     def _wait_and_consume_command_response(self, command_type):
@@ -201,6 +204,12 @@ class RedisClient(APIClientInterface):
         logging.debug(f"Client tries to read its posted bids.")
         self.redis_db.publish(self._command_topics[Commands.LIST_BIDS], json.dumps(""))
         return self._wait_and_consume_command_response(Commands.LIST_BIDS)
+
+    @registered_connection
+    def device_info(self):
+        logging.debug(f"Client tries to read the device information.")
+        self.redis_db.publish(self._command_topics[Commands.DEVICE_INFO], json.dumps(""))
+        return self._wait_and_consume_command_response(Commands.DEVICE_INFO)
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
