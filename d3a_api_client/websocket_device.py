@@ -24,6 +24,8 @@ class WebsocketMessageReceiver:
                 self.client._on_tick(message)
             elif message["event"] == "trade":
                 self.client._on_trade(message)
+            elif message["event"] == "finish":
+                self.client._on_finish(message)
             else:
                 logging.error(f"Received message with unknown event type: {message}")
         elif "command" in message:

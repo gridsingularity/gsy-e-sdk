@@ -124,6 +124,13 @@ class RestDeviceClient(APIClientInterface):
             self.on_trade(message)
         self.callback_thread.submit(executor_function)
 
+    def _on_finish(self, message):
+        logging.debug(f"Simulation finished. Information: {message}")
+
+        def executor_function():
+            self.on_finish(message)
+        self.callback_thread.submit(executor_function)
+
     def on_market_cycle(self, market_info):
         if not self.registered:
             self.register()
@@ -132,4 +139,7 @@ class RestDeviceClient(APIClientInterface):
         pass
 
     def on_trade(self, trade_info):
+        pass
+
+    def on_finish(self, finish_info):
         pass
