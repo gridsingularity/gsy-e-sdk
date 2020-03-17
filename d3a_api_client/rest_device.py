@@ -76,12 +76,12 @@ class RestDeviceClient(APIClientInterface):
             return self.dispatcher.wait_for_command_response('bid')
 
     @logging_decorator('delete offer')
-    def delete_offer(self, offer_id):
+    def delete_offer(self, offer_id=None):
         if self._post_request('delete-offer', {"offer": offer_id}):
             return self.dispatcher.wait_for_command_response('offer_delete')
 
     @logging_decorator('delete bid')
-    def delete_bid(self, bid_id):
+    def delete_bid(self, bid_id=None):
         if self._post_request('delete-bid', {"bid": bid_id}):
             return self.dispatcher.wait_for_command_response('bid_delete')
 
