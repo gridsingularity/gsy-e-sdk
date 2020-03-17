@@ -61,6 +61,7 @@ class RedisClient(APIClientInterface):
         channel_subs[f'{self._channel_prefix}/events/market'] = self._on_market_cycle
         channel_subs[f'{self._channel_prefix}/events/tick'] = self._on_tick
         channel_subs[f'{self._channel_prefix}/events/trade'] = self._on_trade
+        channel_subs[f'{self._channel_prefix}/events/finish'] = self._on_finish
 
         self.pubsub.subscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
@@ -255,6 +256,14 @@ class RedisClient(APIClientInterface):
             self.on_trade(message)
         self.executor.submit(executor_function)
 
+    def _on_finish(self, msg):
+        message = json.loads(msg["data"])
+        logging.info(f"Simulation finished. Information: {message}")
+
+        def executor_function():
+            self.on_finish(message)
+        self.executor.submit(executor_function)
+
     def on_register(self, registration_info):
         pass
 
@@ -265,4 +274,7 @@ class RedisClient(APIClientInterface):
         pass
 
     def on_trade(self, trade_info):
+        pass
+
+    def on_finish(self, finish_info):
         pass
