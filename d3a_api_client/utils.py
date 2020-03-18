@@ -2,10 +2,28 @@ import os
 import requests
 import json
 import logging
+import uuid
 
 
 class AreaNotFoundException(Exception):
     pass
+
+
+class RestCommunicationMixin:
+
+    @property
+    def _url_prefix(self):
+        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
+
+    def _post_request(self, endpoint_suffix, data):
+        endpoint = f"{self._url_prefix}/{endpoint_suffix}/"
+        data["transaction_id"] = str(uuid.uuid4())
+        return data["transaction_id"], post_request(endpoint, data, self.jwt_token)
+
+    def _get_request(self, endpoint_suffix, data):
+        endpoint = f"{self._url_prefix}/{endpoint_suffix}/"
+        data["transaction_id"] = str(uuid.uuid4())
+        return data["transaction_id"], get_request(endpoint, data, self.jwt_token)
 
 
 def retrieve_jwt_key_from_server(domain_name):
@@ -35,6 +53,7 @@ def post_request(endpoint, data, jwt_token):
 
 
 def get_request(endpoint, data, jwt_token):
+    print("get_request")
     resp = requests.get(
         endpoint,
         data=json.dumps(data),

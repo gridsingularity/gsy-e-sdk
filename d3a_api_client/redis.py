@@ -1,5 +1,6 @@
 import logging
 import json
+import uuid
 from enum import Enum
 from functools import wraps
 from redis import StrictRedis
@@ -71,8 +72,10 @@ class RedisClient(APIClientInterface):
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
 
-        self.redis_db.publish(f'{self.area_id}/register_participant',
-                              json.dumps({"name": self.client_id}))
+        data = {"name": self.client_id, "transaction_id": uuid.uuid4()}
+        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
+        self._blocking_command_responses["register"] = data
+
         if is_blocking:
             try:
                 wait_until_timeout_blocking(lambda: self.is_active, timeout=120)
@@ -88,8 +91,10 @@ class RedisClient(APIClientInterface):
         if not self.is_active:
             raise RedisAPIException(f'API is already unregistered from the market.')
 
-        self.redis_db.publish(f'{self.area_id}/unregister_participant',
-                              json.dumps({"name": self.client_id}))
+        data = {"name": self.client_id, "transaction_id": uuid.uuid4()}
+        self.redis_db.publish(f'{self.area_id}/unregister_participant', json.dumps(data))
+        self._blocking_command_responses["unregister"] = data
+
         if is_blocking:
             try:
                 wait_until_timeout_blocking(lambda: not self.is_active, timeout=120)
@@ -128,9 +133,13 @@ class RedisClient(APIClientInterface):
             Commands.DEVICE_INFO: f'{response_prefix}/device_info',
         }
 
-    def _wait_and_consume_command_response(self, command_type):
+    def _wait_and_consume_command_response(self, command_type, transaction_id):
+        def check_if_command_response_received():
+            return any(command == command_type and
+                       "transaction_id" in data and data["transaction_id"] == transaction_id
+                       for command, data in self._blocking_command_responses.items())
         logging.info(f"Command {command_type} waiting for response...")
-        wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses, timeout=120)
+        wait_until_timeout_blocking(check_if_command_response_received, timeout=120)
         command_output = self._blocking_command_responses.pop(command_type)
         logging.info(f"Command {command_type} got response {command_output}")
         return command_output
@@ -152,23 +161,20 @@ class RedisClient(APIClientInterface):
                 self._blocking_command_responses[command_type] = message
         return _command_received
 
+    def _publish_and_wait(self, command_type, data):
+        data.update({"transaction_id": str(uuid.uuid4())})
+        self.redis_db.publish(self._command_topics[command_type], json.dumps(data))
+        return self._wait_and_consume_command_response(command_type, data["transaction_id"])
+
     @registered_connection
     def offer_energy(self, energy, price):
         logging.debug(f"Client tries to place an offer for {energy} kWh at {price} cents.")
-        self.redis_db.publish(
-            self._command_topics[Commands.OFFER],
-            json.dumps({"energy": energy, "price": price})
-        )
-        return self._wait_and_consume_command_response(Commands.OFFER)
+        return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": price})
 
     @registered_connection
     def bid_energy(self, energy, price):
         logging.debug(f"Client tries to place a bid for {energy} kWh at {price} cents.")
-        self.redis_db.publish(
-            self._command_topics[Commands.BID],
-            json.dumps({"energy": energy, "price": price})
-        )
-        return self._wait_and_consume_command_response(Commands.BID)
+        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
 
     @registered_connection
     def delete_offer(self, offer_id=None):
@@ -176,11 +182,7 @@ class RedisClient(APIClientInterface):
             logging.debug(f"Client tries to delete all offers.")
         else:
             logging.debug(f"Client tries to delete offer {offer_id}.")
-        self.redis_db.publish(
-            self._command_topics[Commands.DELETE_OFFER],
-            json.dumps({"offer": offer_id})
-        )
-        return self._wait_and_consume_command_response(Commands.DELETE_OFFER)
+        return self._publish_and_wait(Commands.DELETE_OFFER, {"offer": offer_id})
 
     @registered_connection
     def delete_bid(self, bid_id=None):
@@ -188,32 +190,30 @@ class RedisClient(APIClientInterface):
             logging.debug(f"Client tries to delete all bids.")
         else:
             logging.debug(f"Client tries to delete bid {bid_id}.")
-        self.redis_db.publish(
-            self._command_topics[Commands.DELETE_BID],
-            json.dumps({"bid": bid_id})
-        )
-        return self._wait_and_consume_command_response(Commands.DELETE_BID)
+        return self._publish_and_wait(Commands.DELETE_BID, {"bid": bid_id})
 
     @registered_connection
     def list_offers(self):
         logging.debug(f"Client tries to read its posted offers.")
-        self.redis_db.publish(self._command_topics[Commands.LIST_OFFERS], json.dumps(""))
-        return self._wait_and_consume_command_response(Commands.LIST_OFFERS)
+        return self._publish_and_wait(Commands.LIST_OFFERS, {})
 
     @registered_connection
     def list_bids(self):
         logging.debug(f"Client tries to read its posted bids.")
-        self.redis_db.publish(self._command_topics[Commands.LIST_BIDS], json.dumps(""))
-        return self._wait_and_consume_command_response(Commands.LIST_BIDS)
+        return self._publish_and_wait(Commands.LIST_OFFERS, {})
 
     @registered_connection
     def device_info(self):
         logging.debug(f"Client tries to read the device information.")
-        self.redis_db.publish(self._command_topics[Commands.DEVICE_INFO], json.dumps(""))
-        return self._wait_and_consume_command_response(Commands.DEVICE_INFO)
+        return self._publish_and_wait(Commands.DEVICE_INFO, {})
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
+        transaction_id = message["transaction_id"]
+        if not any(command == "register" and
+                   "transaction_id" in data and data["transaction_id"] == transaction_id
+                   for command, data in self._blocking_command_responses.items()):
+            return
         if 'available_publish_channels' not in message or \
                 'available_subscribe_channels' not in message:
             raise RedisAPIException(f'Registration to the market {self.area_id} failed.')
@@ -227,6 +227,11 @@ class RedisClient(APIClientInterface):
 
     def _on_unregister(self, msg):
         message = json.loads(msg["data"])
+        transaction_id = message["transaction_id"]
+        if not any(command == "unregister" and
+                   "transaction_id" in data and data["transaction_id"] == transaction_id
+                   for command, data in self._blocking_command_responses.items()):
+            return
         self.is_active = False
         if message["response"] != "success":
             raise RedisAPIException(f'Failed to unregister from market {self.area_id}.'
