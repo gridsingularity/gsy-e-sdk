@@ -53,7 +53,6 @@ def post_request(endpoint, data, jwt_token):
 
 
 def get_request(endpoint, data, jwt_token):
-    print("get_request")
     resp = requests.get(
         endpoint,
         data=json.dumps(data),

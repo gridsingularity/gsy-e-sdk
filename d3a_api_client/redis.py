@@ -10,7 +10,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.ERROR)
+root_logger.setLevel(logging.INFO)
 
 
 class RedisAPIException(Exception):
@@ -72,7 +72,7 @@ class RedisClient(APIClientInterface):
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
 
-        data = {"name": self.client_id, "transaction_id": uuid.uuid4()}
+        data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
         self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
         self._blocking_command_responses["register"] = data
 
@@ -91,7 +91,7 @@ class RedisClient(APIClientInterface):
         if not self.is_active:
             raise RedisAPIException(f'API is already unregistered from the market.')
 
-        data = {"name": self.client_id, "transaction_id": uuid.uuid4()}
+        data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
         self.redis_db.publish(f'{self.area_id}/unregister_participant', json.dumps(data))
         self._blocking_command_responses["unregister"] = data
 
@@ -173,7 +173,7 @@ class RedisClient(APIClientInterface):
 
     @registered_connection
     def bid_energy(self, energy, price):
-        logging.debug(f"Client tries to place a bid for {energy} kWh at {price} cents.")
+        logging.info(f"Client tries to place a bid for {energy} kWh at {price} cents.")
         return self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
 
     @registered_connection
@@ -209,10 +209,7 @@ class RedisClient(APIClientInterface):
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
-        transaction_id = message["transaction_id"]
-        if not any(command == "register" and
-                   "transaction_id" in data and data["transaction_id"] == transaction_id
-                   for command, data in self._blocking_command_responses.items()):
+        if not self._is_trans_id_matching(message):
             return
         if 'available_publish_channels' not in message or \
                 'available_subscribe_channels' not in message:
@@ -227,10 +224,7 @@ class RedisClient(APIClientInterface):
 
     def _on_unregister(self, msg):
         message = json.loads(msg["data"])
-        transaction_id = message["transaction_id"]
-        if not any(command == "unregister" and
-                   "transaction_id" in data and data["transaction_id"] == transaction_id
-                   for command, data in self._blocking_command_responses.items()):
+        if not self._is_trans_id_matching(message):
             return
         self.is_active = False
         if message["response"] != "success":
@@ -268,6 +262,12 @@ class RedisClient(APIClientInterface):
         def executor_function():
             self.on_finish(message)
         self.executor.submit(executor_function)
+
+    def _is_trans_id_matching(self, message):
+        transaction_id = message["transaction_id"]
+        return any(command == "register" and "transaction_id" in data and
+                   data["transaction_id"] == transaction_id
+                   for command, data in self._blocking_command_responses.items())
 
     def on_register(self, registration_info):
         pass
