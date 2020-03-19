@@ -209,8 +209,7 @@ class RedisClient(APIClientInterface):
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
-        if not self._is_trans_id_matching(message):
-            return
+        self._check_buffer_message_matching_command_and_id(message)
         if 'available_publish_channels' not in message or \
                 'available_subscribe_channels' not in message:
             raise RedisAPIException(f'Registration to the market {self.area_id} failed.')
@@ -224,8 +223,7 @@ class RedisClient(APIClientInterface):
 
     def _on_unregister(self, msg):
         message = json.loads(msg["data"])
-        if not self._is_trans_id_matching(message):
-            return
+        self._check_buffer_message_matching_command_and_id(message)
         self.is_active = False
         if message["response"] != "success":
             raise RedisAPIException(f'Failed to unregister from market {self.area_id}.'
@@ -263,11 +261,12 @@ class RedisClient(APIClientInterface):
             self.on_finish(message)
         self.executor.submit(executor_function)
 
-    def _is_trans_id_matching(self, message):
+    def _check_buffer_message_matching_command_and_id(self, message):
         transaction_id = message["transaction_id"]
-        return any(command == "register" and "transaction_id" in data and
+        if not any(command == "register" and "transaction_id" in data and
                    data["transaction_id"] == transaction_id
-                   for command, data in self._blocking_command_responses.items())
+                   for command, data in self._blocking_command_responses.items()):
+            raise Exception("There is no matching command response in _blocking_command_responses.")
 
     def on_register(self, registration_info):
         pass
