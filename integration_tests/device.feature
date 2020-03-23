@@ -6,7 +6,7 @@ Scenario: API client can connect successfully to a load device and perform all o
    When the external client is started with test_load_connection
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
-   And the energy bills of the load report the required energy was bought by the load
+#   And the energy bills of the load report the required energy was bought by the load
 
 Scenario: API client can connect successfully to a PV device and perform all operations
    Given redis container is started
@@ -21,7 +21,7 @@ Scenario: External ESS agent not allowed to overcharge the Storage State
    When the external client is started with test_ess_bid_connection
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
-   And the storage is not overcharged
+#   And the storage is not overcharged
 
 Scenario: External ESS agent not allowed to sell below min_allowed_soc
    Given redis container is started
@@ -29,4 +29,4 @@ Scenario: External ESS agent not allowed to sell below min_allowed_soc
    When the external client is started with test_ess_offer_connection
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
-   And the storage state is limited to min_allowed_soc
+#   And the storage state is limited to min_allowed_soc

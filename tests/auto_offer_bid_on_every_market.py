@@ -1,5 +1,5 @@
 from time import sleep
-from d3a_api_client.redis import RedisClient
+from d3a_api_client.redis_helper import RedisClient
 
 
 class AutoOfferBidOnMarket(RedisClient):

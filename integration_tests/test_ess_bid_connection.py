@@ -30,6 +30,7 @@ class AutoBidOnESSDevice(RedisDeviceClient):
             if market_info["start_time"][-5:] == "23:00":
                 self.last_market_info = market_info
                 self.status = "finished"
+                self.last_market_info["device_info"]["used_storage"] <= 20.0
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.error_list.append(e)

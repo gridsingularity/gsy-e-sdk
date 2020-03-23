@@ -1,10 +1,20 @@
 import logging
 import json
 from redis import StrictRedis
-from d3a_interface.utils import wait_until_timeout_blocking
+# from d3a_interface.utils import wait_until_timeout_blocking
+import time
 
 
-class RedisMarketClient:
+def wait_until_timeout_blocking(functor, timeout=10, polling_period=0.01):
+    current_time = 0.0
+    while not functor() and current_time < timeout:
+        start_time = time.time()
+        time.sleep(polling_period)
+        current_time += time.time() - start_time
+    assert functor()
+
+
+class MarketClient:
     def __init__(self, area_id, redis_url='redis://localhost:6379'):
         self.area_id = area_id
         self.redis_db = StrictRedis.from_url(redis_url)
@@ -38,7 +48,16 @@ class RedisMarketClient:
 
     def _wait_and_consume_command_response(self, command_type):
         logging.info(f"Command {command_type} waiting for response...")
-        wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses, timeout=120)
+        cmd = command_type in self._blocking_command_responses
+        print(f"CMD: {cmd}")
+        from time import sleep
+        for i in range(20):
+            if command_type in self._blocking_command_responses:
+                break
+            print(f"I: {i}")
+            sleep(5)
+            # cmd()
+        # wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses, timeout=30)
         command_output = self._blocking_command_responses.pop(command_type)
         logging.info(f"Command {command_type} got response {command_output}")
         return command_output
@@ -52,3 +71,17 @@ class RedisMarketClient:
         logging.debug(f"Client tries to change grid fees.")
         self.redis_db.publish(f"{self.area_id}/grid_fees", json.dumps({"fee": fee_cents_kwh}))
         return self._wait_and_consume_command_response("grid_fees")
+
+#
+# market = MarketClient('house-2')
+#
+# from time import sleep
+# from pendulum import today
+# from d3a_interface.constants_limits import DATE_TIME_FORMAT
+#
+# # market_slot_string_1 = today().format(DATE_TIME_FORMAT)
+# market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
+#
+# while True:
+#     print(f"STATS: {market.list_market_stats([market_slot_string_2])}")
+#     sleep(0.5)

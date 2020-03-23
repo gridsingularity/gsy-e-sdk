@@ -19,10 +19,12 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
 
     def on_market_cycle(self, market_info):
         try:
+            self.market_info = market_info
             assert "energy_requirement_kWh" in market_info["device_info"]
             energy_requirement = market_info["device_info"]["energy_requirement_kWh"]
             if energy_requirement > 0.001:
                 # Placing a cheap bid to the market that will not be accepted
+                self.delete_bid()
                 bid = self.bid_energy(energy_requirement, 0.0001 * energy_requirement)
                 bid_info = json.loads(bid["bid"])
                 assert bid_info["price"] == 0.0001 * energy_requirement
@@ -33,8 +35,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 assert listed_bid["price"] == bid_info["price"]
                 assert listed_bid["energy"] == bid_info["energy"]
                 # Try to delete the bid
-                delete_resp = self.delete_bid(bid_info["id"])
-                assert delete_resp["deleted_bids"] == [bid_info["id"]]
+                self.delete_bid()
                 # Validate that the bid was deleted from the market
                 empty_listing = self.list_bids()
                 assert not any(b for b in empty_listing["bid_list"] if b["id"] == bid_info["id"])
@@ -46,14 +47,17 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
-            assert set(self.device_bills.keys()) == {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee', 'type'}
+            assert set(self.device_bills.keys()) == \
+                   {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee',
+                    'type', 'penalty_energy', 'penalty_cost'}
             assert "last_market_stats" in market_info
-            assert set(market_info["last_market_stats"]) == {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'total_traded_energy_kWh'}
+            assert set(market_info["last_market_stats"]) == \
+                   {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'median_trade_rate',
+                    'total_traded_energy_kWh'}
 
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
-
-            self.market_info = market_info
+                self.market_info = market_info
 
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")

@@ -4,6 +4,7 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 import json
 import traceback
 import logging
+from math import isclose
 from pendulum import today
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_interface.constants_limits import DATE_TIME_FORMAT
@@ -48,6 +49,7 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
+            assert isclose(self.device_bills['bought'], 22 * 0.2)
             assert set(self.device_bills.keys()) == {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee', 'type'}
             assert "last_market_stats" in market_info
             assert set(market_info["last_market_stats"]) == {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'total_traded_energy_kWh'}
