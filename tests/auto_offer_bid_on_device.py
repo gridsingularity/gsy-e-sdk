@@ -2,7 +2,6 @@
 Test file for the device client. Depends on d3a test setup file strategy_tests.external_devices
 """
 import logging
-import json
 from time import sleep
 from d3a_api_client.redis_device import RedisDeviceClient
 
@@ -18,12 +17,14 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
         :return: None
         """
         logging.debug(f"New market information {market_info}")
-        if "available_energy_kWh" in market_info and market_info["available_energy_kWh"] > 0.0:
-            offer = self.offer_energy(market_info["available_energy_kWh"], 0.1)
+        if "available_energy_kWh" in market_info['device_info'] and \
+                market_info['device_info']["available_energy_kWh"] > 0.0:
+            offer = self.offer_energy(market_info['device_info']["available_energy_kWh"], 0.1)
             logging.debug(f"Offer placed on the new market: {offer}")
-        logging.debug(market_info["energy_requirement_kWh"])
-        if market_info["energy_requirement_kWh"] > 0.0:
-            bid = self.bid_energy(market_info["energy_requirement_kWh"], 100)
+        logging.debug(market_info['device_info']['energy_requirement_kWh'])
+        if "energy_requirement_kWh" in market_info['device_info'] and \
+                market_info['device_info']["energy_requirement_kWh"] > 0.0:
+            bid = self.bid_energy(market_info['device_info']["energy_requirement_kWh"], 100)
             logging.debug(f"Bid placed on the new market: {bid}")
 
     def on_tick(self, tick_info):

@@ -11,11 +11,13 @@ class RedisDeviceClient(RedisClient):
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
+        self._check_buffer_message_matching_command_and_id(message)
         logging.info(f"Client was registered to the device: {message}")
         self.is_active = True
 
     def _on_unregister(self, msg):
         message = json.loads(msg["data"])
+        self._check_buffer_message_matching_command_and_id(message)
         logging.info(f"Client was unregistered from the device: {message}")
         self.is_active = False
 

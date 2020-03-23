@@ -3,9 +3,8 @@ import logging
 from functools import wraps
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
-from d3a_api_client.utils import retrieve_jwt_key_from_server, post_request, get_request
+from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin
 from d3a_api_client.constants import MAX_WORKER_THREADS
-
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -23,7 +22,7 @@ def logging_decorator(command_name):
     return decorator
 
 
-class RestDeviceClient(APIClientInterface):
+class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def __init__(self, simulation_id, device_id, domain_name,
                  websockets_domain_name, autoregister=False):
@@ -41,64 +40,63 @@ class RestDeviceClient(APIClientInterface):
         if autoregister:
             self.register()
 
-    @property
-    def _url_prefix(self):
-        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
-
-    def _post_request(self, endpoint_suffix, data):
-        return post_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
-
-    def _get_request(self, endpoint_suffix, data):
-        return get_request(f"{self._url_prefix}/{endpoint_suffix}/", data, self.jwt_token)
-
     @logging_decorator('register')
     def register(self, is_blocking=True):
-        if self._post_request('register', {}):
-            return_value = self.dispatcher.wait_for_command_response('register')
+        transaction_id, posted = self._post_request('register', {})
+        if posted:
+            return_value = self.dispatcher.wait_for_command_response('register', transaction_id)
             self.registered = return_value["registered"]
             return return_value
 
     @logging_decorator('unregister')
     def unregister(self, is_blocking):
-        if self._post_request('unregister', {}):
-            return_value = self.dispatcher.wait_for_command_response('unregister')
+        transaction_id, posted = self._post_request('unregister', {})
+        if posted:
+            return_value = self.dispatcher.wait_for_command_response('unregister', transaction_id)
             self.registered = False
             return return_value
 
     @logging_decorator('offer')
     def offer_energy(self, energy, price):
-        if self._post_request('offer', {"energy": energy, "price": price}):
-            return self.dispatcher.wait_for_command_response('offer')
+        transaction_id, posted = self._post_request('offer', {"energy": energy, "price": price})
+        if posted:
+            return self.dispatcher.wait_for_command_response('offer', transaction_id)
 
     @logging_decorator('bid')
     def bid_energy(self, energy, price):
-        if self._post_request('bid', {"energy": energy, "price": price}):
-            return self.dispatcher.wait_for_command_response('bid')
+        transaction_id, posted = self._post_request('bid', {"energy": energy, "price": price})
+        if posted:
+            return self.dispatcher.wait_for_command_response('bid', transaction_id)
 
     @logging_decorator('delete offer')
     def delete_offer(self, offer_id=None):
-        if self._post_request('delete-offer', {"offer": offer_id}):
-            return self.dispatcher.wait_for_command_response('offer_delete')
+        transaction_id, posted = self._post_request('delete-offer', {"offer": offer_id})
+        if posted:
+            return self.dispatcher.wait_for_command_response('offer_delete', transaction_id)
 
     @logging_decorator('delete bid')
     def delete_bid(self, bid_id=None):
-        if self._post_request('delete-bid', {"bid": bid_id}):
-            return self.dispatcher.wait_for_command_response('bid_delete')
+        transaction_id, posted = self._post_request('delete-bid', {"bid": bid_id})
+        if posted:
+            return self.dispatcher.wait_for_command_response('bid_delete', transaction_id)
 
     @logging_decorator('list offers')
     def list_offers(self):
-        if self._get_request('list-offers', ""):
-            return self.dispatcher.wait_for_command_response('list_offers')
+        transaction_id, get_sent = self._get_request('list-offers', "")
+        if get_sent:
+            return self.dispatcher.wait_for_command_response('list_offers', transaction_id)
 
     @logging_decorator('list bids')
     def list_bids(self):
-        if self._get_request('list-bids', ""):
-            return self.dispatcher.wait_for_command_response('list_bids')
+        transaction_id, get_sent = self._get_request('list-bids', {})
+        if get_sent:
+            return self.dispatcher.wait_for_command_response('list_bids', transaction_id)
 
     @logging_decorator('device info')
     def device_info(self):
-        if self._get_request('device-info', ""):
-            return self.dispatcher.wait_for_command_response('device_info')
+        transaction_id, get_sent = self._get_request('device-info', {})
+        if get_sent:
+            return self.dispatcher.wait_for_command_response('device_info', transaction_id)
 
     def on_register(self, registration_info):
         pass
