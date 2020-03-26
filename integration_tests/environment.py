@@ -2,7 +2,9 @@ from os import system
 
 
 def before_all(context):
+    system(f'docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)')
     system(f'docker network create integtestnet')
+    system('bash integration_tests/build_test_containers.sh')
 
 
 def after_all(context):
@@ -10,9 +12,9 @@ def after_all(context):
 
 
 def before_scenario(context, scenario):
-    system(f'docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)')
-    system('bash integration_tests/build_test_containers.sh')
+    pass
 
 
 def after_scenario(context, scenario):
-    pass
+    system(f'docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)')
+    # pass

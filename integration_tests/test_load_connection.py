@@ -15,6 +15,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
         self.latest_stats = {}
         self.market_info = {}
         self.device_bills = {}
+        self.final_device_bill = {}
         super().__init__(*args, **kwargs)
 
     def on_market_cycle(self, market_info):
