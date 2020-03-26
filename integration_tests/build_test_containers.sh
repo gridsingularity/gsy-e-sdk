@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+set -e
+
+echo "dockerusename"
+echo "${DOCKER_USERNAME}"
 docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}" &&
 docker pull gsyd3a/d3a:redis-staging
 
