@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-D3A_IMAGE_TAG="d3a-tests-3"
+D3A_IMAGE_TAG="d3a-tests"
 
 if [[ "$(docker images -q ${D3A_IMAGE_TAG} 2> /dev/null)" == "" ]]; then
   echo "Building d3a image ..." && \
