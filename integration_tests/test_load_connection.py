@@ -21,6 +21,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
     def on_market_cycle(self, market_info):
         try:
             self.market_info = market_info
+            logging.info(f"market_info: {self.market_info}")
             assert "energy_requirement_kWh" in market_info["device_info"], "energy_requirement_kWh is not in market info"
             energy_requirement = market_info["device_info"]["energy_requirement_kWh"]
             if energy_requirement > 0.001:

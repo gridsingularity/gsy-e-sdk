@@ -61,7 +61,7 @@ def step_impl(context):
     # placing bids and offers on every market cycle.
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
-    while context.device.errors == 0 and context.device.status != "finished" and counter < 100:
+    while context.device.errors == 0 and context.device.status != "finished" and counter < 200:
         sleep(10)
         counter += 10
 
@@ -81,7 +81,7 @@ def step_impl(context):
     assert context.device.last_market_info["device_info"]["used_storage"] >= 2.0
 
 
-@then('the energy bills of the load report the required energy was bought by the load')
+@then('the energy bills of the load reports that the energy was bought by the load')
 def step_impl(context):
-    assert isclose(context.device.final_device_bill["bought"], 21 * 0.2)
+    assert context.device.market_info['device_bill']['bought'] > 1.0
 
