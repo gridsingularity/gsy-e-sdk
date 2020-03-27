@@ -56,7 +56,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
             logging.info(f"ERRORS: {self.errors}")
             logging.info(f"BOUGHT: {self.device_bills['bought']}")
 
-        except AssertionError as e:
+        except Exception as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
             self.error_list.append(e)

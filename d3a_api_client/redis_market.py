@@ -6,7 +6,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
-class MarketClient:
+class RedisMarketClient:
     def __init__(self, area_id, redis_url='redis://localhost:6379'):
         self.area_id = area_id
         self.redis_db = StrictRedis.from_url(redis_url)
@@ -45,7 +45,7 @@ class MarketClient:
 
     def _wait_and_consume_command_response(self, command_type):
         logging.info(f"Command {command_type} waiting for response...")
-        wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses, timeout=30)
+        wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses, timeout=120)
         command_output = self._blocking_command_responses.pop(command_type)
         logging.info(f"Command {command_type} got response {command_output}")
         return command_output

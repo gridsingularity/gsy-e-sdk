@@ -1,14 +1,14 @@
 from pendulum import today
 from behave import given, when, then
 from time import sleep
-from d3a_api_client.market import MarketClient
+from d3a_api_client.redis_market import RedisMarketClient
 from d3a_interface.constants_limits import DATE_TIME_FORMAT
 
 
 @given('the external client is started that connects to {area_id} market')
 def step_impl(context, area_id):
     sleep(5)
-    context.redis_market = MarketClient(area_id)
+    context.redis_market = RedisMarketClient(area_id)
 
 
 @when('the external client is requesting market stats')

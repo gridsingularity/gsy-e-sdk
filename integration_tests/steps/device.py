@@ -25,11 +25,13 @@ def step_impl(context, setup_file):
 @when('the external client is started with test_load_connection')
 def step_impl(context):
     # Wait for d3a to activate all areas
-    sleep(2)
+    sleep(5)
     # Connects one client to the load device
     context.device = AutoBidOnLoadDevice('load', autoregister=True,
                                          redis_url='redis://localhost:6379/')
-    sleep(5)
+    sleep(3)
+    assert context.device.is_active is True
+    sleep(2)
 
 
 @when('the external client is started with test_pv_connection')
@@ -66,8 +68,8 @@ def step_impl(context):
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
     while context.device.errors == 0 and context.device.status != "finished" and counter < 300:
-        sleep(10)
-        counter += 10
+        sleep(3)
+        counter += 3
 
 
 @then('the external client does not report errors')
@@ -87,5 +89,6 @@ def step_impl(context):
 
 @then('the energy bills of the load reports that the energy was bought by the load')
 def step_impl(context):
+    print("final_device_bill", context.device.final_device_bill)
     assert(isclose(context.device.final_device_bill["bought"], (21 * 0.2), rel_tol=0.1))
 
