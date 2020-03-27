@@ -17,16 +17,19 @@ def step_impl(context):
 @given('d3a container is started using setup file {setup_file}')
 def step_impl(context, setup_file):
     sleep(3)
-    system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ --net integtestnet '
-           f' d3a-tests -l INFO run -t 5s -s 60m --setup {setup_file} --no-export')
+    system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ '
+           f'--net integtestnet d3a-tests -l INFO run -t 1s -s 60m --setup {setup_file} '
+           f'--no-export --seed 0')
 
 
 @when('the external client is started with test_load_connection')
 def step_impl(context):
     # Wait for d3a to activate all areas
-    sleep(10)
+    sleep(2)
     # Connects one client to the load device
-    context.device = AutoBidOnLoadDevice('load', autoregister=True, redis_url='redis://localhost:6379/')
+    context.device = AutoBidOnLoadDevice('load', autoregister=True,
+                                         redis_url='redis://localhost:6379/')
+    sleep(5)
 
 
 @when('the external client is started with test_pv_connection')
@@ -34,7 +37,8 @@ def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
     # Connects one client to the load device
-    context.device = AutoOfferOnPVDevice('pv', autoregister=True, redis_url='redis://localhost:6379/')
+    context.device = AutoOfferOnPVDevice('pv', autoregister=True,
+                                         redis_url='redis://localhost:6379/')
 
 
 @when('the external client is started with test_ess_bid_connection')
@@ -61,7 +65,7 @@ def step_impl(context):
     # placing bids and offers on every market cycle.
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
-    while context.device.errors == 0 and context.device.status != "finished" and counter < 200:
+    while context.device.errors == 0 and context.device.status != "finished" and counter < 300:
         sleep(10)
         counter += 10
 
@@ -83,5 +87,5 @@ def step_impl(context):
 
 @then('the energy bills of the load reports that the energy was bought by the load')
 def step_impl(context):
-    assert context.device.market_info['device_bill']['bought'] > 1.0
+    assert(isclose(context.device.final_device_bill["bought"], (21 * 0.2), rel_tol=0.1))
 
