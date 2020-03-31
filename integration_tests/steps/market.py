@@ -14,15 +14,21 @@ def step_impl(context, area_id):
 @when('the external client is requesting market stats')
 def step_impl(context):
     # wait enough time to finish at least the first market slot
-    sleep(5)
+    sleep(10)
     context.market_slot_string_1 = today().format(DATE_TIME_FORMAT)
     context.market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
-    context.results = context.redis_market.list_market_stats([context.market_slot_string_1,
-                                                              context.market_slot_string_2])
+    context.list_market_stats_results = \
+        context.redis_market.list_market_stats([context.market_slot_string_1, context.market_slot_string_2])
+    context.list_dso_market_stats_results = \
+        context.redis_market.list_dso_market_stats([context.market_slot_string_1, context.market_slot_string_2])
 
 
 @then('the market stats are reported correctly')
 def step_impl(context):
-    assert "market_fee_const" in context.results
-    assert set(context.results["market_fee_const"].keys()) == {context.market_slot_string_1,
-                                                               context.market_slot_string_2}
+    assert "market_stats" in context.list_market_stats_results
+    assert set(context.list_market_stats_results["market_stats"].keys()) == \
+           {context.market_slot_string_1, context.market_slot_string_2}
+
+    assert "market_stats" in context.list_dso_market_stats_results
+    assert set(context.list_dso_market_stats_results["market_stats"].keys()) == \
+           {context.market_slot_string_1, context.market_slot_string_2}

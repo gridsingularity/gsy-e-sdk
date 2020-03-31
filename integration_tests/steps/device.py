@@ -70,7 +70,6 @@ def step_impl(context):
     while context.device.errors == 0 and context.device.status != "finished" and counter < 500:
         sleep(3)
         counter += 3
-    print("#####", context.device.errors, context.device.status, counter, "#####")
 
 
 @then('the external client does not report errors')
@@ -90,6 +89,5 @@ def step_impl(context):
 
 @then('the energy bills of the load reports that the energy was bought by the load')
 def step_impl(context):
-    print("final_device_bill", context.device.final_device_bill)
     assert(isclose(context.device.final_device_bill["bought"], (21 * 0.2), rel_tol=0.1))
 

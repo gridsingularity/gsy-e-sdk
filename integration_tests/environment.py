@@ -17,5 +17,4 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
-    sleep(15)
     system(f'docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)')
