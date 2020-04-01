@@ -10,7 +10,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(logging.ERROR)
 
 
 class RedisAPIException(Exception):
@@ -200,7 +200,7 @@ class RedisClient(APIClientInterface):
     @registered_connection
     def list_bids(self):
         logging.debug(f"Client tries to read its posted bids.")
-        return self._publish_and_wait(Commands.LIST_OFFERS, {})
+        return self._publish_and_wait(Commands.LIST_BIDS, {})
 
     @registered_connection
     def device_info(self):

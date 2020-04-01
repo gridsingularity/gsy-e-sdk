@@ -14,7 +14,7 @@ def step_impl(context, area_id):
 @when('the external client is requesting market stats')
 def step_impl(context):
     # wait enough time to finish at least the first market slot
-    sleep(10)
+    sleep(15)
     context.market_slot_string_1 = today().format(DATE_TIME_FORMAT)
     context.market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
     context.list_market_stats_results = \

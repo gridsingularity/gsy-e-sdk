@@ -1,6 +1,6 @@
 import logging
 import json
-from d3a_api_client.redis_helper import RedisClient, Commands
+from d3a_api_client.redis_client_base import RedisClient, Commands
 
 
 class RedisDeviceClient(RedisClient):

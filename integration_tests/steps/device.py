@@ -31,7 +31,6 @@ def step_impl(context):
                                          redis_url='redis://localhost:6379/')
     sleep(3)
     assert context.device.is_active is True
-    sleep(2)
 
 
 @when('the external client is started with test_pv_connection')
@@ -87,7 +86,7 @@ def step_impl(context):
     assert context.device.last_market_info["device_info"]["used_storage"] >= 2.0
 
 
-@then('the energy bills of the load reports that the energy was bought by the load')
+@then('the energy bills of the load report the required energy was bought by the load')
 def step_impl(context):
-    assert(isclose(context.device.final_device_bill["bought"], (21 * 0.2), rel_tol=0.1))
+    assert isclose(context.device.device_bills["bought"], 22 * 0.2)
 
