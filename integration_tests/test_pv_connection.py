@@ -46,7 +46,6 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
-            logging.info(f"device_bills: {self.device_bills.keys()}")
             assert set(self.device_bills.keys()) == \
                    {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost',
                     'market_fee', 'type', 'penalty_energy', 'penalty_cost'}
