@@ -29,6 +29,7 @@ class AutoOfferOnESSDevice(RedisDeviceClient):
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
                 self.last_market_info = market_info
+                self.unregister()
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1

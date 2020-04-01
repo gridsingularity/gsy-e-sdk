@@ -200,7 +200,7 @@ class RedisClient(APIClientInterface):
     @registered_connection
     def list_bids(self):
         logging.debug(f"Client tries to read its posted bids.")
-        return self._publish_and_wait(Commands.LIST_OFFERS, {})
+        return self._publish_and_wait(Commands.LIST_BIDS, {})
 
     @registered_connection
     def device_info(self):

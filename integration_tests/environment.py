@@ -1,9 +1,11 @@
 from os import system
+from time import sleep
 
 
 def before_all(context):
-    system('bash integration_tests/build_test_containers.sh')
+    system(f'docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)')
     system(f'docker network create integtestnet')
+    system('bash integration_tests/build_test_containers.sh')
 
 
 def after_all(context):

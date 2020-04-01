@@ -46,12 +46,17 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
-            assert set(self.device_bills.keys()) == {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee', 'type'}
+            assert set(self.device_bills.keys()) == \
+                   {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee',
+                    'type', 'penalty_energy', 'penalty_cost'}
             assert "last_market_stats" in market_info
-            assert set(market_info["last_market_stats"]) == {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'total_traded_energy_kWh'}
+            assert set(market_info["last_market_stats"]) == \
+                   {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'median_trade_rate',
+                    'total_traded_energy_kWh'}
 
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
+                self.unregister()
 
             self.market_info = market_info
 

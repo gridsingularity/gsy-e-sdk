@@ -1,13 +1,12 @@
 import logging
 import json
-from d3a_api_client.redis import RedisClient, Commands
+from d3a_api_client.redis_client_base import RedisClient, Commands
 
 
 class RedisDeviceClient(RedisClient):
     def __init__(self, device_id, autoregister=True, redis_url='redis://localhost:6379'):
         self.device_id = device_id
         super().__init__(device_id, None, autoregister, redis_url)
-        self.is_active = True
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])

@@ -5,7 +5,6 @@ import json
 import traceback
 import logging
 from d3a_api_client.redis_device import RedisDeviceClient
-from time import sleep
 
 
 class AutoBidOnESSDevice(RedisDeviceClient):
@@ -30,6 +29,7 @@ class AutoBidOnESSDevice(RedisDeviceClient):
             if market_info["start_time"][-5:] == "23:00":
                 self.last_market_info = market_info
                 self.status = "finished"
+                self.unregister()
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.error_list.append(e)
