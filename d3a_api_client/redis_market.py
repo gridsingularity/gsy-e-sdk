@@ -55,9 +55,14 @@ class RedisMarketClient:
         self.redis_db.publish(f"{self.area_id}/market_stats", json.dumps({"market_slots": market_slot_list}))
         return self._wait_and_consume_command_response("market_stats")
 
-    def change_grid_fees(self, fee_cents_kwh):
+    def change_grid_fees_const(self, fee_cents_kwh):
         logging.debug(f"Client tries to change grid fees.")
-        self.redis_db.publish(f"{self.area_id}/grid_fees", json.dumps({"fee": fee_cents_kwh}))
+        self.redis_db.publish(f"{self.area_id}/grid_fees", json.dumps({"fee_const": fee_cents_kwh}))
+        return self._wait_and_consume_command_response("grid_fees")
+
+    def change_grid_fees_percent(self, fee_percent):
+        logging.debug(f"Client tries to change grid fees.")
+        self.redis_db.publish(f"{self.area_id}/grid_fees", json.dumps({"fee_percent": fee_percent}))
         return self._wait_and_consume_command_response("grid_fees")
 
     def list_dso_market_stats(self, market_slot_list):
