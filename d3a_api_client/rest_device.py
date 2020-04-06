@@ -94,7 +94,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     @logging_decorator('device info')
     def device_info(self):
-        transaction_id, get_sent = self._get_request('device-info', {})
+        transaction_id, get_sent = self._get_request('device-stats', {})
         if get_sent:
             return self.dispatcher.wait_for_command_response('device_info', transaction_id)
 
