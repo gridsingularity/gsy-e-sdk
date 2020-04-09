@@ -35,4 +35,3 @@ class AutoBidOnESSDevice(RedisDeviceClient):
             self.error_list.append(e)
             self.errors += 1
             raise e
-
