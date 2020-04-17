@@ -6,6 +6,7 @@ from integration_tests.test_load_connection import AutoBidOnLoadDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
 from integration_tests.test_ess_bid_connection import AutoBidOnESSDevice
 from integration_tests.test_ess_offer_connection import AutoOfferOnESSDevice
+from integration_tests.test_load_trade import TestLoadTrades
 
 
 @given('redis container is started')
@@ -29,6 +30,17 @@ def step_impl(context):
     # Connects one client to the load device
     context.device = AutoBidOnLoadDevice('load', autoregister=True,
                                          redis_url='redis://localhost:6379/')
+    sleep(3)
+    assert context.device.is_active is True
+
+
+@when('the external client is started with test_load_trade')
+def step_impl(context):
+    # Wait for d3a to activate all areas
+    sleep(5)
+    # Connects one client to the load device
+    context.device = TestLoadTrades('load', autoregister=True,
+                                    redis_url='redis://localhost:6379/')
     sleep(3)
     assert context.device.is_active is True
 
@@ -90,3 +102,7 @@ def step_impl(context):
 def step_impl(context):
     assert isclose(context.device.device_bills["bought"], 22 * 0.2)
 
+
+@then('the load is trading energy on every market')
+def step_impl(context):
+    assert context.device.trade_counter == 23

@@ -30,3 +30,11 @@ Scenario: External ESS agent not allowed to sell below min_allowed_soc
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
    And the storage state is limited to min_allowed_soc
+
+Scenario: API client can correctly track the trades of a load device
+   Given redis container is started
+   And d3a container is started using setup file strategy_tests.external_devices
+   When the external client is started with test_load_trade
+   Then the external client is connecting to the simulation until finished
+   And the external client does not report errors
+   And the load is trading energy on every market
