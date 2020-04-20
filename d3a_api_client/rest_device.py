@@ -62,9 +62,23 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         if posted:
             return self.dispatcher.wait_for_command_response('offer', transaction_id)
 
+    @logging_decorator('offer')
+    def offer_energy_rate(self, energy, rate):
+        transaction_id, posted = self._post_request(
+            'offer', {"energy": energy, "price": rate * energy})
+        if posted:
+            return self.dispatcher.wait_for_command_response('offer', transaction_id)
+
     @logging_decorator('bid')
     def bid_energy(self, energy, price):
         transaction_id, posted = self._post_request('bid', {"energy": energy, "price": price})
+        if posted:
+            return self.dispatcher.wait_for_command_response('bid', transaction_id)
+
+    @logging_decorator('bid')
+    def bid_energy_rate(self, energy, rate):
+        transaction_id, posted = self._post_request(
+            'bid', {"energy": energy, "price": rate * energy})
         if posted:
             return self.dispatcher.wait_for_command_response('bid', transaction_id)
 
