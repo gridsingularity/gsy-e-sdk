@@ -38,8 +38,8 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 # Validate that the bid was deleted from the market
                 empty_listing = self.list_bids()
                 assert not any(b for b in empty_listing["bid_list"] if b["id"] == bid_info["id"])
-                # Place the bid with a price that will be acceptable for trading
-                bid = self.bid_energy(energy_requirement, 33 * energy_requirement)
+                # Place the bid with a rate that will be acceptable for trading
+                bid = self.bid_energy_rate(energy_requirement, 33)
                 bid_info = json.loads(bid["bid"])
                 assert bid_info["price"] == 33 * energy_requirement
                 assert bid_info["energy"] == energy_requirement

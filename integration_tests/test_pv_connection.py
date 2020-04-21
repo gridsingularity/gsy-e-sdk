@@ -38,8 +38,8 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
                 # Validate that the offer was deleted from the market
                 empty_listing = self.list_offers()
                 assert not any(o for o in empty_listing["offer_list"] if o["id"] == offer_info["id"])
-                # Place the offer with a price that will be acceptable for trading
-                offer = self.offer_energy(available_energy, 10 * available_energy)
+                # Place the offer with a rate that will be acceptable for trading
+                offer = self.offer_energy_rate(available_energy, 10)
                 offer_info = json.loads(offer["offer"])
                 assert offer_info["price"] == 10 * available_energy
                 assert offer_info["energy"] == available_energy
