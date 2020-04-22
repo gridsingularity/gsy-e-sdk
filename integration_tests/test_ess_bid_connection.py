@@ -18,13 +18,18 @@ class AutoBidOnESSDevice(RedisDeviceClient):
 
     def on_market_cycle(self, market_info):
         try:
-            assert "energy_to_buy" in market_info["device_info"]
+            assert set(market_info["device_info"].keys()) == \
+                   {'energy_to_sell','offered_sell_kWh', 'energy_to_buy', 'offered_buy_kWh',
+                    'free_storage', 'used_storage'}
             energy = market_info["device_info"]["energy_to_buy"]
             if energy > 0:
                 bid = self.bid_energy(energy, (31 * energy))
                 bid_info = json.loads(bid["bid"])
                 assert bid_info["price"] == 31 * energy
                 assert bid_info["energy"] == energy
+                device_info = self.device_info()
+                assert device_info["energy_to_buy"] == 0.0
+                assert device_info["offered_buy_kWh"] == energy
 
             if market_info["start_time"][-5:] == "23:00":
                 self.last_market_info = market_info

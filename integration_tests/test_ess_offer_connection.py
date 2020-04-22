@@ -18,13 +18,19 @@ class AutoOfferOnESSDevice(RedisDeviceClient):
 
     def on_market_cycle(self, market_info):
         try:
-            assert "energy_to_sell" in market_info["device_info"]
+            assert set(market_info["device_info"].keys()) == \
+                   {'energy_to_sell','offered_sell_kWh', 'energy_to_buy', 'offered_buy_kWh',
+                    'free_storage', 'used_storage'}
             energy_to_sell = market_info["device_info"]["energy_to_sell"]
             if energy_to_sell > 0:
                 offer = self.offer_energy(energy_to_sell, (10 * energy_to_sell))
                 offer_info = json.loads(offer["offer"])
                 assert offer_info["price"] == 10 * energy_to_sell
                 assert offer_info["energy"] == energy_to_sell
+                device_info = self.device_info()
+                assert device_info["energy_to_sell"] == 0.0
+                assert device_info["offered_sell_kWh"] == energy_to_sell
+
 
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
