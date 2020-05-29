@@ -1,14 +1,9 @@
 import asyncio
 import logging
-import json
 import threading
 import traceback
 import websockets
 from d3a_interface.utils import wait_until_timeout_blocking
-
-
-class RestWebsocketAPIException(Exception):
-    pass
 
 
 class WebsocketMessageReceiver:
@@ -79,5 +74,3 @@ class WebsocketThread(threading.Thread):
             websocket_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
         )
         event_loop.close()
-
-

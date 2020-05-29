@@ -3,9 +3,14 @@ import requests
 import json
 import logging
 import uuid
+from functools import wraps
 
 
 class AreaNotFoundException(Exception):
+    pass
+
+
+class RestWebsocketAPIException(Exception):
     pass
 
 
@@ -95,3 +100,15 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
                                     f"collaboration with UUID {collab_id}")
     return area_uuid
+
+
+def logging_decorator(command_name):
+    def decorator(f):
+        @wraps(f)
+        def wrapped(self, *args, **kwargs):
+            logging.debug(f'Sending command {command_name} to device.')
+            return_value = f(self, *args, **kwargs)
+            logging.debug(f'Command {command_name} responded with: {return_value}.')
+            return return_value
+        return wrapped
+    return decorator

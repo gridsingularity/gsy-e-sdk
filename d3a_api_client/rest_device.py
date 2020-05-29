@@ -1,25 +1,13 @@
-from d3a_api_client import APIClientInterface
 import logging
-from functools import wraps
 from concurrent.futures.thread import ThreadPoolExecutor
+from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
-from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin
+from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
+    logging_decorator
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
-
-
-def logging_decorator(command_name):
-    def decorator(f):
-        @wraps(f)
-        def wrapped(self, *args, **kwargs):
-            logging.debug(f'Sending command {command_name} to device.')
-            return_value = f(self, *args, **kwargs)
-            logging.debug(f'Command {command_name} responded with: {return_value}.')
-            return return_value
-        return wrapped
-    return decorator
 
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
@@ -96,7 +84,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     @logging_decorator('list offers')
     def list_offers(self):
-        transaction_id, get_sent = self._get_request('list-offers', "")
+        transaction_id, get_sent = self._get_request('list-offers', {})
         if get_sent:
             return self.dispatcher.wait_for_command_response('list_offers', transaction_id)
 
