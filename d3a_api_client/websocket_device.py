@@ -55,8 +55,8 @@ async def websocket_coroutine(websocket_uri, websocket_headers, message_dispatch
                 logging.debug(f"Websocket received message {message}")
                 message_dispatcher.received_message(json.loads(message.decode('utf-8')))
             except Exception as e:
-                logging.error(f"Error while receiving message: {str(e)}")
-                logging.error(traceback.format_exc())
+                raise Exception(f"Error while receiving message: {str(e)}, "
+                                f"traceback:{traceback.format_exc()}")
 
 
 class WebsocketThread(threading.Thread):
