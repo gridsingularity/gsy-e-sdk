@@ -3,10 +3,24 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 """
 import logging
 import sys
+import argparse
+import numpy as np
 from time import sleep
+from random import randint
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 
+#parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("--simulation_id", type=str, help="Simulation uuid")
+parser.add_argument("--load", type=str, help="Load device")
+parser.add_argument("--pv", type=str, help="PV device")
+parser.add_argument("--researcher_id", type=float, help="Researcher id")
+args = parser.parse_args()
+
+number_of_areas = 10
+number_of_researcher = 2
+connected_devices = []
 
 class AutoOfferBidOnMarket(RestDeviceClient):
 
@@ -24,9 +38,10 @@ class AutoOfferBidOnMarket(RestDeviceClient):
         """
         if self.registered is False or self.is_finished is True:
             return
+        #sleep(randint(1,10)/100.)
         logging.debug(f"New market information {market_info}")
         if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
-            offer = self.offer_energy_rate(market_info["device_info"]["available_energy_kWh"], 16)
+            offer = self.offer_energy_rate(market_info["device_info"]["available_energy_kWh"] / 2, 16)
             logging.debug(f"Offer placed on the new market: {offer}")
             assert len(self.list_offers()) == 1
         if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
@@ -43,24 +58,33 @@ class AutoOfferBidOnMarket(RestDeviceClient):
     def on_finish(self, finish_info):
         self.is_finished = True
 
-number_of_areas = 10
-load_names = [str(sys.argv[2]) if i == 0 else str(sys.argv[2])+' '+str(i+1) for i in range(number_of_areas)]
-pv_names = [str(sys.argv[3]) if i == 0 else str(sys.argv[3])+' '+str(i+1) for i in range(number_of_areas)]
-connected_devices = []
+#create a list with the number of areas
+areas=range(number_of_areas)
+#split the list to have one list for each researcher
+#the list contains lists of the devices numbers each researcher will connect to
+areas_split = [i.tolist() for i in np.array_split(np.array(areas),number_of_researcher)]
 
-for i in range(number_of_areas):
+if args.researcher_id <= number_of_researcher:
+    #create a list with the names of the Load the researcher connects to 
+    load_names = [args.load if i == 0 else f'{args.load} {i+1}' for i in areas_split[int(args.researcher_id-1)]]
+    #create a list with the names of the PV the researcher connects to 
+    pv_names = [args.pv if i == 0 else f'{args.pv} {i+1}' for i in areas_split[int(args.researcher_id-1)]]
+else:
+    raise ValueError(f'The researcher id is out of range. The number of researcher is {number_of_researcher}.')
+
+for i in range(len(load_names)):
     # Connects one client to the load device
     load = AutoOfferBidOnMarket(
-        simulation_id= str(sys.argv[1]), 
-        device_id= get_area_uuid_from_area_name_and_collaboration_id(str(sys.argv[1]), load_names[i], 'https://d3aweb-dev.gridsingularity.com'),
+        simulation_id= args.simulation_id, 
+        device_id= get_area_uuid_from_area_name_and_collaboration_id(args.simulation_id, load_names[i], 'https://d3aweb-dev.gridsingularity.com'),
         domain_name='https://d3aweb-dev.gridsingularity.com',
         websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
         autoregister=True)
     connected_devices.append(load)
     # Connects a second client to the pv device
     pv = AutoOfferBidOnMarket(
-        simulation_id= str(sys.argv[1]), 
-        device_id= get_area_uuid_from_area_name_and_collaboration_id(str(sys.argv[1]), pv_names[i], 'https://d3aweb-dev.gridsingularity.com'),
+        simulation_id= args.simulation_id, 
+        device_id= get_area_uuid_from_area_name_and_collaboration_id(args.simulation_id, pv_names[i], 'https://d3aweb-dev.gridsingularity.com'),
         domain_name='https://d3aweb-dev.gridsingularity.com',
         websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
         autoregister=True)
