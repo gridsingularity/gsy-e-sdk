@@ -53,22 +53,23 @@ class AutoOfferBidOnMarket(RestDeviceClient):
     def on_finish(self, finish_info):
         self.is_finished = True
 
-for i in range(len(args.load_names)):
+for load_name in args.load_names:
     # Connects one client to the load device
     load = AutoOfferBidOnMarket(
         simulation_id= args.simulation_id, 
         device_id= get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, args.load_names[i], 
+            args.simulation_id, load_name, 
             'https://d3aweb-dev.gridsingularity.com'),
         domain_name='https://d3aweb-dev.gridsingularity.com',
         websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
         autoregister=True)
     connected_devices.append(load)
+for pv_name in args.pv_names:
     # Connects a second client to the pv device
     pv = AutoOfferBidOnMarket(
         simulation_id= args.simulation_id, 
         device_id= get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, args.pv_names[i], 
+            args.simulation_id, pv_name, 
             'https://d3aweb-dev.gridsingularity.com'),
         domain_name='https://d3aweb-dev.gridsingularity.com',
         websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
