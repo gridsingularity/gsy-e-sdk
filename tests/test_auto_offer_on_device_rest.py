@@ -3,10 +3,20 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 """
 import logging
 import sys
+import argparse
 from time import sleep
+from random import randint
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 
+#parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("--simulation_id", type=str, help="Simulation uuid")
+parser.add_argument("--load_names", nargs='+')
+parser.add_argument("--pv_names", nargs='+')
+args = parser.parse_args()
+
+connected_devices = []
 
 class AutoOfferBidOnMarket(RestDeviceClient):
 
@@ -26,7 +36,7 @@ class AutoOfferBidOnMarket(RestDeviceClient):
             return
         logging.debug(f"New market information {market_info}")
         if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
-            offer = self.offer_energy_rate(market_info["device_info"]["available_energy_kWh"], 16)
+            offer = self.offer_energy_rate(market_info["device_info"]["available_energy_kWh"] / 2, 16)
             logging.debug(f"Offer placed on the new market: {offer}")
             assert len(self.list_offers()) == 1
         if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
@@ -43,24 +53,24 @@ class AutoOfferBidOnMarket(RestDeviceClient):
     def on_finish(self, finish_info):
         self.is_finished = True
 
-number_of_areas = 10
-load_names = [str(sys.argv[2]) if i == 0 else str(sys.argv[2])+' '+str(i+1) for i in range(number_of_areas)]
-pv_names = [str(sys.argv[3]) if i == 0 else str(sys.argv[3])+' '+str(i+1) for i in range(number_of_areas)]
-connected_devices = []
-
-for i in range(number_of_areas):
+for load_name in args.load_names:
     # Connects one client to the load device
     load = AutoOfferBidOnMarket(
-        simulation_id= str(sys.argv[1]), 
-        device_id= get_area_uuid_from_area_name_and_collaboration_id(str(sys.argv[1]), load_names[i], 'https://d3aweb-dev.gridsingularity.com'),
+        simulation_id= args.simulation_id, 
+        device_id= get_area_uuid_from_area_name_and_collaboration_id(
+            args.simulation_id, load_name, 
+            'https://d3aweb-dev.gridsingularity.com'),
         domain_name='https://d3aweb-dev.gridsingularity.com',
         websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
         autoregister=True)
     connected_devices.append(load)
+for pv_name in args.pv_names:
     # Connects a second client to the pv device
     pv = AutoOfferBidOnMarket(
-        simulation_id= str(sys.argv[1]), 
-        device_id= get_area_uuid_from_area_name_and_collaboration_id(str(sys.argv[1]), pv_names[i], 'https://d3aweb-dev.gridsingularity.com'),
+        simulation_id= args.simulation_id, 
+        device_id= get_area_uuid_from_area_name_and_collaboration_id(
+            args.simulation_id, pv_name, 
+            'https://d3aweb-dev.gridsingularity.com'),
         domain_name='https://d3aweb-dev.gridsingularity.com',
         websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
         autoregister=True)
