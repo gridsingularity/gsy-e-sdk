@@ -1,3 +1,4 @@
+# TODO: An integration test needs to be added for this test script.
 import logging
 import sys
 from time import sleep

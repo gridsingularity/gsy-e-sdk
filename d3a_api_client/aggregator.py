@@ -48,6 +48,9 @@ class Aggregator(RestDeviceClient):
         self.accept_all_devices = accept_all_devices
         self.device_uuid_list = []
         self.aggregator_uuid = None
+        self._connect_to_simulation()
+
+    def _connect_to_simulation(self):
         user_aggrs = self.list_aggregators()
         for a in user_aggrs:
             if a["name"] == self.aggregator_name:
