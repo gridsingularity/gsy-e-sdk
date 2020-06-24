@@ -57,6 +57,16 @@ def post_request(endpoint, data, jwt_token):
     return True
 
 
+def blocking_post_request(endpoint, data, jwt_token):
+    data["transaction_id"] = str(uuid.uuid4())
+    response = requests.post(
+        endpoint,
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"JWT {jwt_token}"})
+    return json.loads(response.json())
+
+
 def get_request(endpoint, data, jwt_token):
     resp = requests.get(
         endpoint,
@@ -68,6 +78,20 @@ def get_request(endpoint, data, jwt_token):
                       f"Response body: {resp.text}")
         return False
     return True
+
+
+def get_aggregator_prefix(domain_name, simulation_id):
+    return f"{domain_name}/external-connection/aggregator-api/{simulation_id}/"
+
+
+def blocking_get_request(endpoint, data, jwt_token):
+    data["transaction_id"] = str(uuid.uuid4())
+    response = requests.get(
+        endpoint,
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"JWT {jwt_token}"})
+    return json.loads(response.json())
 
 
 def get_area_uuid_from_area_name(serialized_scenario, area_name):

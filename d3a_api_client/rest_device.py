@@ -3,7 +3,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator
+    logging_decorator, get_aggregator_prefix, blocking_post_request, blocking_get_request
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
@@ -13,20 +13,27 @@ root_logger.setLevel(logging.INFO)
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def __init__(self, simulation_id, device_id, domain_name,
-                 websockets_domain_name, autoregister=False):
+                 websockets_domain_name, autoregister=False, start_websocket=True):
         self.simulation_id = simulation_id
         self.device_id = device_id
         self.domain_name = domain_name
         self.jwt_token = retrieve_jwt_key_from_server(domain_name)
+        self.websockets_domain_name = websockets_domain_name
+        self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
+        self.active_aggregator = None
+        if start_websocket:
+            self.start_websocket_connection()
 
-        self.dispatcher = WebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(simulation_id, device_id, self.jwt_token,
-                                                websockets_domain_name, self.dispatcher)
-        self.websocket_thread.start()
-        self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.registered = False
         if autoregister:
             self.register()
+
+    def start_websocket_connection(self):
+        self.dispatcher = WebsocketMessageReceiver(self)
+        self.websocket_thread = WebsocketThread(self.simulation_id, self.device_id, self.jwt_token,
+                                                self.websockets_domain_name, self.dispatcher)
+        self.websocket_thread.start()
+        self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
     @logging_decorator('register')
     def register(self, is_blocking=True):
@@ -43,6 +50,20 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             return_value = self.dispatcher.wait_for_command_response('unregister', transaction_id)
             self.registered = False
             return return_value
+
+    @logging_decorator('select-aggregator')
+    def select_aggregator(self, aggregator_uuid):
+        response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
+                                         {"aggregator_uuid": aggregator_uuid,
+                                          "device_uuid": self.device_id}, self.jwt_token)
+        self.active_aggregator = response["aggregator_uuid"]
+
+    @logging_decorator('unselect-aggregator')
+    def unselect_aggregator(self, aggregator_uuid):
+        response = blocking_post_request(f'{self.aggregator_prefix}unselect-aggregator/',
+                                         {"aggregator_uuid": aggregator_uuid,
+                                          "device_uuid": self.device_id}, self.jwt_token)
+        self.active_aggregator = None
 
     @logging_decorator('offer')
     def offer_energy(self, energy, price):

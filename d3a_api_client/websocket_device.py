@@ -3,6 +3,7 @@ import logging
 import threading
 import traceback
 import websockets
+import json
 from d3a_interface.utils import wait_until_timeout_blocking
 
 
