@@ -3,9 +3,14 @@ import requests
 import json
 import logging
 import uuid
+from functools import wraps
 
 
 class AreaNotFoundException(Exception):
+    pass
+
+
+class RestWebsocketAPIException(Exception):
     pass
 
 
@@ -52,6 +57,16 @@ def post_request(endpoint, data, jwt_token):
     return True
 
 
+def blocking_post_request(endpoint, data, jwt_token):
+    data["transaction_id"] = str(uuid.uuid4())
+    response = requests.post(
+        endpoint,
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"JWT {jwt_token}"})
+    return json.loads(response.json())
+
+
 def get_request(endpoint, data, jwt_token):
     resp = requests.get(
         endpoint,
@@ -63,6 +78,20 @@ def get_request(endpoint, data, jwt_token):
                       f"Response body: {resp.text}")
         return False
     return True
+
+
+def get_aggregator_prefix(domain_name, simulation_id):
+    return f"{domain_name}/external-connection/aggregator-api/{simulation_id}/"
+
+
+def blocking_get_request(endpoint, data, jwt_token):
+    data["transaction_id"] = str(uuid.uuid4())
+    response = requests.get(
+        endpoint,
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"JWT {jwt_token}"})
+    return json.loads(response.json())
 
 
 def get_area_uuid_from_area_name(serialized_scenario, area_name):
@@ -95,3 +124,15 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
                                     f"collaboration with UUID {collab_id}")
     return area_uuid
+
+
+def logging_decorator(command_name):
+    def decorator(f):
+        @wraps(f)
+        def wrapped(self, *args, **kwargs):
+            logging.debug(f'Sending command {command_name} to device.')
+            return_value = f(self, *args, **kwargs)
+            logging.debug(f'Command {command_name} responded with: {return_value}.')
+            return return_value
+        return wrapped
+    return decorator

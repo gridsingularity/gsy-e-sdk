@@ -1,8 +1,8 @@
 import logging
-from d3a_api_client.rest_device import logging_decorator
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
-from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin
+from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
+    logging_decorator
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
