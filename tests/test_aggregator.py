@@ -62,12 +62,16 @@ class AutoAggregator(Aggregator):
         if set(finish_info["device_data"].keys()) == set(self.device_uuid_list):
             self.is_finished = True
 
+import os
+os.environ["API_CLIENT_USERNAME"] = "muhammad@gridsingularity.com"
+os.environ["API_CLIENT_PASSWORD"] = "muhammadtest321*"
+
 
 aggregator = AutoAggregator(
-    simulation_id=str(sys.argv[1]),
-    domain_name='https://d3aweb-dev.gridsingularity.com',
-    aggregator_name="test_aggregator",
-    websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
+    simulation_id=str(),
+    domain_name='http://localhost:8000/',
+    aggregator_name="faizan_aggregator",
+    websockets_domain_name='ws://localhost:8000/external-ws',
     autoregister=True)
 
 while not aggregator.is_finished:

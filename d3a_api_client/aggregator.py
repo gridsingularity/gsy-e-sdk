@@ -39,10 +39,11 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
 class Aggregator(RestDeviceClient):
 
     def __init__(self, simulation_id, domain_name, aggregator_name,
-                 websockets_domain_name, accept_all_devices=True):
+                 websockets_domain_name, autoregister=False, accept_all_devices=True):
         super().__init__(
             simulation_id=simulation_id, device_id="", domain_name=domain_name,
-            websockets_domain_name=websockets_domain_name, autoregister=False, start_websocket=False)
+            websockets_domain_name=websockets_domain_name, autoregister=autoregister,
+            start_websocket=False)
 
         self.aggregator_name = aggregator_name
         self.accept_all_devices = accept_all_devices
@@ -70,6 +71,8 @@ class Aggregator(RestDeviceClient):
 
     @logging_decorator('create_aggregator')
     def list_aggregators(self):
+        # print(f"list_aggregators")
+        # print(f"jwt_token: {self.jwt_token}")
         return blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
 
     @property

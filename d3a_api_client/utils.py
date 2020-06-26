@@ -91,6 +91,7 @@ def blocking_get_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
+    print(f"response: {response}")
     return json.loads(response.json())
 
 
