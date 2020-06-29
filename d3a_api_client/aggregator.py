@@ -71,8 +71,6 @@ class Aggregator(RestDeviceClient):
 
     @logging_decorator('create_aggregator')
     def list_aggregators(self):
-        # print(f"list_aggregators")
-        # print(f"jwt_token: {self.jwt_token}")
         return blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
 
     @property

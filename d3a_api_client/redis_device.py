@@ -45,23 +45,19 @@ class RedisDeviceClient(RedisClient):
         self.pubsub.run_in_thread(daemon=True)
 
     def _aggregator_response_callback(self, message):
-        logging.info(f"message: {message}")
         data = json.loads(message['data'])
-        logging.info(f"data: {data}")
-        logging.info(f"transaction_id: {data['transaction_id']}")
-
         if data['transaction_id'] in self._transaction_id_buffer:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
 
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
 
-    def select_aggregator(self, aggregator_name, is_blocking=True):
-        logging.info(f"Device: {self.device_id} is trying to select aggregator {aggregator_name}")
+    def select_aggregator(self, aggregator_uuid, is_blocking=True):
+        logging.info(f"Device: {self.device_id} is trying to select aggregator {aggregator_uuid}")
 
         transaction_id = str(uuid.uuid4())
-        data = {"aggregator_name": aggregator_name,
-                "device_name": self.device_id,
+        data = {"aggregator_uuid": aggregator_uuid,
+                "device_uuid": self.device_uuid,
                 "type": "SELECT",
                 "transaction_id": transaction_id}
         self.redis_db.publish(f'crud_aggregator', json.dumps(data))
@@ -72,6 +68,8 @@ class RedisDeviceClient(RedisClient):
                 wait_until_timeout_blocking(
                     lambda: self._check_transaction_id_cached_out(transaction_id)
                 )
+                logging.info(f"DEVICE: {self.device_uuid} has selected "
+                             f"AGGREGATOR: {aggregator_uuid}")
                 return transaction_id
             except AssertionError:
                 raise RedisAPIException(f'API has timed out.')

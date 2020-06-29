@@ -1,15 +1,10 @@
 import logging
 import uuid
 import json
-from d3a_api_client.utils import logging_decorator, blocking_get_request, \
-    blocking_post_request
-from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
-from concurrent.futures.thread import ThreadPoolExecutor
-from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.redis_device import RedisDeviceClient
 from redis import StrictRedis
 from d3a_interface.utils import wait_until_timeout_blocking
+from concurrent.futures.thread import ThreadPoolExecutor
+from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -27,34 +22,41 @@ class RedisAggregator:
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
+        self.aggregator_uuid = None
         self.autoregister = autoregister
         self.accept_all_devices = accept_all_devices
         self._transaction_id_buffer = []
         self.device_uuid_list = []
-        self.aggregator_uuid = None
         self._subscribe_to_response_channels()
-        self._connect_to_simulation(is_blocking=False)
+        self._connect_to_simulation(is_blocking=True)
+        self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
-    def _connect_to_simulation(self, is_blocking=False):
+    def _connect_to_simulation(self, is_blocking=True):
         if self.aggregator_uuid is None:
             aggr_id = self._create_aggregator(is_blocking=is_blocking)
             self.aggregator_uuid = aggr_id
 
     def _subscribe_to_response_channels(self):
+        event_channel = f'external-aggregator/*/*/events/all'
+        channel_dict = {"crud_aggregator_response": self._aggregator_response_callback,
+                        event_channel: self._events_callback_dict
+        }
 
-        channel_dict = {"crud_aggregator_response": self._aggregator_response_callback}
-
-        self.pubsub.subscribe(**channel_dict)
+        self.pubsub.psubscribe(**channel_dict)
         self.pubsub.run_in_thread(daemon=True)
 
     def _aggregator_response_callback(self, message):
-        logging.info(f"message: {message}")
         data = json.loads(message['data'])
-        logging.info(f"data: {data}")
-        logging.info(f"transaction_id: {data['transaction_id']}")
 
         if data['transaction_id'] in self._transaction_id_buffer:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
+        if data['status'] == "SELECTED":
+            self._selected_by_device(data)
+
+    def _events_callback_dict(self, message):
+        payload = json.loads(message['data'])
+        if "event" in payload and payload['event'] == 'market':
+            self.on_market_cycle(payload)
 
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
@@ -77,12 +79,13 @@ class RedisAggregator:
                 raise RedisAPIException(f'API registration process timed out.')
 
     def delete_aggregator(self, is_blocking=True):
-        logging.info(f"Trying to create aggregator {self.aggregator_name}")
+        logging.info(f"Trying to delete aggregator {self.aggregator_name}")
 
         transaction_id = str(uuid.uuid4())
         data = {"name": self.aggregator_name,
+                "aggregator_uuid": self.aggregator_uuid,
                 "type": "DELETE",
-                "transaction_id": self.aggregator_uuid}
+                "transaction_id": transaction_id}
         self.redis_db.publish(f'crud_aggregator', json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
 
@@ -120,7 +123,20 @@ class RedisAggregator:
                         }
         """
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
-        transaction_id, posted = self._post_request(
-            'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
-        if posted:
-            return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
+        batched_command = {"type": "BATCHED", "transaction_id": str(uuid.uuid4()),
+                           "aggregator_uuid": self.aggregator_uuid,
+                           "batch_commands": batch_command_dict}
+        batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
+        self.redis_db.publish(batch_channel, json.dumps(batched_command))
+
+    def _on_market_cycle(self, msg):
+        message = json.loads(msg["data"])
+        logging.info(f"A new market was created. Market information: {message}")
+
+        def executor_function():
+            self.on_market_cycle(message)
+        self.executor.submit(executor_function)
+
+    def on_market_cycle(self, market_info):
+        pass
+
