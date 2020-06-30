@@ -19,7 +19,7 @@ def step_impl(context, setup_file):
     sleep(3)
     system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ '
            f'--net integtestnet d3a-tests -l INFO run -t 1s -s 60m --setup {setup_file} '
-           f'--no-export --seed 0')
+           f'--no-export --seed 0 --enable-external-connection')
 
 
 @when('the external client is started with test_load_connection')

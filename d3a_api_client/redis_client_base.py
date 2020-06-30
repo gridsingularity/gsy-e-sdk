@@ -275,7 +275,7 @@ class RedisClient(APIClientInterface):
     def _check_buffer_message_matching_command_and_id(self, message):
         if "transaction_id" in message and message["transaction_id"] is not None:
             transaction_id = message["transaction_id"]
-            if not any(command == "register" and "transaction_id" in data and
+            if not any(command in ["register", "unregister"] and "transaction_id" in data and
                        data["transaction_id"] == transaction_id
                        for command, data in self._blocking_command_responses.items()):
                 raise RedisAPIException("There is no matching command response in _blocking_command_responses.")
