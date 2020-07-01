@@ -11,7 +11,7 @@ class AutoAggregator(RedisAggregator):
         self.is_finished = False
 
     def on_market_cycle(self, market_info):
-        logging.info(f"market_info: {market_info}")
+        logging.info(f"AGGREGATOR_MARKET_INFO: {market_info}")
         # if self.is_finished is True:
         #     return
         # if "content" not in market_info:
@@ -40,12 +40,22 @@ class AutoAggregator(RedisAggregator):
             response = self.batch_command(batch_commands)
             logging.info(f"Batch command placed on the new market: {response}")
 
+    def on_tick(self, tick_info):
+        logging.info(f"AGGREGATOR_TICK_INFO: {tick_info}")
+
+    def on_trade(self, trade_info):
+        logging.info(f"AGGREGATOR_TRADE_INFO: {trade_info}")
+
+    def on_finish(self, finish_info):
+        self.is_finished = True
+        logging.info(f"AGGREGATOR_FINISH_INFO: {finish_info}")
+
 
 aggregator = AutoAggregator(
     aggregator_name="faizan_aggregator",
     autoregister=True)
 
-sleep(10)
+sleep(5)
 # aggregator.delete_aggregator(is_blocking=True)
 
 

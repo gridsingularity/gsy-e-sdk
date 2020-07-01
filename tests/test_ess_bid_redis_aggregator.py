@@ -36,6 +36,16 @@ class AutoAggregator(RedisAggregator):
             self.batch_command(batch_commands)
             logging.info(f"Batch command placed on the new market")
 
+    def on_tick(self, tick_info):
+        logging.info(f"AGGREGATOR_TICK_INFO: {tick_info}")
+
+    def on_trade(self, trade_info):
+        logging.info(f"AGGREGATOR_TRADE_INFO: {trade_info}")
+
+    def on_finish(self, finish_info):
+        self.is_finished = True
+        logging.info(f"AGGREGATOR_FINISH_INFO: {finish_info}")
+
 
 aggregator = AutoAggregator(
     aggregator_name="faizan_aggregator",

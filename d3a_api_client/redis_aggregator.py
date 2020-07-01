@@ -56,7 +56,13 @@ class RedisAggregator:
     def _events_callback_dict(self, message):
         payload = json.loads(message['data'])
         if "event" in payload and payload['event'] == 'market':
-            self.on_market_cycle(payload)
+            self._on_market_cycle(payload)
+        elif "event" in payload and payload["event"] == "tick":
+            self._on_tick(payload)
+        elif "event" in payload and payload["event"] == "trade":
+            self._on_trade(payload)
+        elif "event" in payload and payload["event"] == "finish":
+            self._on_finish(payload)
 
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
@@ -129,14 +135,42 @@ class RedisAggregator:
         batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
         self.redis_db.publish(batch_channel, json.dumps(batched_command))
 
-    def _on_market_cycle(self, msg):
-        message = json.loads(msg["data"])
+    def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")
 
         def executor_function():
             self.on_market_cycle(message)
         self.executor.submit(executor_function)
 
+    def _on_tick(self, message):
+        logging.info(f"Time has elapsed on the device. Progress info: {message}")
+
+        def executor_function():
+            self.on_tick(message)
+        self.executor.submit(executor_function)
+
+    def _on_trade(self, message):
+        logging.info(f"A trade took place on the device. Trade information: {message}")
+
+        def executor_function():
+            self.on_trade(message)
+        self.executor.submit(executor_function)
+
+    def _on_finish(self, message):
+        logging.info(f"Simulation finished. Information: {message}")
+
+        def executor_function():
+            self.on_finish(message)
+        self.executor.submit(executor_function)
+
     def on_market_cycle(self, market_info):
         pass
 
+    def on_tick(self, tick_info):
+        pass
+
+    def on_trade(self, trade_info):
+        pass
+
+    def on_finish(self, finish_info):
+        pass
