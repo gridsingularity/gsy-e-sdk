@@ -39,11 +39,23 @@ class RedisAggregator:
     def _subscribe_to_response_channels(self):
         event_channel = f'external-aggregator/*/*/events/all'
         channel_dict = {"crud_aggregator_response": self._aggregator_response_callback,
-                        event_channel: self._events_callback_dict
+                        event_channel: self._events_callback_dict,
+                        f"external-aggregator//*/response/batch_commands":
+                            self._batch_response,
         }
 
         self.pubsub.psubscribe(**channel_dict)
         self.pubsub.run_in_thread(daemon=True)
+
+    def _batch_response(self, message):
+        logging.info(f"_batch_response")
+        if self.aggregator_uuid != json.loads(message['data'])['aggregator_uuid']:
+            return
+        logging.info(f"Market Stats. Information: {message}")
+
+        def executor_function():
+            self.on_batch_response(json.loads(message['data'])['responses'])
+        self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
         data = json.loads(message['data'])
@@ -173,4 +185,7 @@ class RedisAggregator:
         pass
 
     def on_finish(self, finish_info):
+        pass
+
+    def on_batch_response(self, message):
         pass

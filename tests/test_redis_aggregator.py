@@ -1,7 +1,9 @@
 import logging
 from time import sleep
+from pendulum import today
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
+from d3a_interface.constants_limits import DATE_TIME_FORMAT
 
 
 class AutoAggregator(RedisAggregator):
@@ -30,11 +32,16 @@ class AutoAggregator(RedisAggregator):
 
             if "energy_requirement_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["energy_requirement_kWh"] > 0.0:
+                market_slot_string_1 = today().format(DATE_TIME_FORMAT)
+                market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
+                marker_list = [market_slot_string_1, market_slot_string_2]
                 batch_commands[device_event["area_uuid"]] =\
                     [{"type": "bid",
                       "price": 30,
                       "energy": device_event["device_info"]["energy_requirement_kWh"] / 2},
-                     {"type": "list_bids"}]
+                     {"type": "list_bids"},
+                     {"type": "list_market_stats", "data": {"market_slots": marker_list}}
+                     ]
 
         if batch_commands:
             response = self.batch_command(batch_commands)
@@ -49,6 +56,9 @@ class AutoAggregator(RedisAggregator):
     def on_finish(self, finish_info):
         self.is_finished = True
         logging.info(f"AGGREGATOR_FINISH_INFO: {finish_info}")
+
+    def on_batch_response(self, market_stats):
+        logging.info(f"AGGREGATORS_BATCH_RESPONSE: {market_stats}")
 
 
 aggregator = AutoAggregator(
