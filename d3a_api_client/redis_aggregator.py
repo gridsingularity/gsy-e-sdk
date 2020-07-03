@@ -5,7 +5,7 @@ from redis import StrictRedis
 from d3a_interface.utils import wait_until_timeout_blocking
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-
+from threading import Lock
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
@@ -26,10 +26,12 @@ class RedisAggregator:
         self.autoregister = autoregister
         self.accept_all_devices = accept_all_devices
         self._transaction_id_buffer = []
+        self._transaction_id_response_buffer = {}
         self.device_uuid_list = []
         self._subscribe_to_response_channels()
         self._connect_to_simulation(is_blocking=True)
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
+        self.lock = Lock()
 
     def _connect_to_simulation(self, is_blocking=True):
         if self.aggregator_uuid is None:
@@ -48,13 +50,16 @@ class RedisAggregator:
         self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):
-        logging.info(f"_batch_response")
-        if self.aggregator_uuid != json.loads(message['data'])['aggregator_uuid']:
+        data = json.loads(message['data'])
+        if self.aggregator_uuid != data['aggregator_uuid']:
             return
         logging.info(f"Market Stats. Information: {message}")
+        with self.lock:
+            self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
+            self._transaction_id_response_buffer[data['transaction_id']] = data['responses']
 
         def executor_function():
-            self.on_batch_response(json.loads(message['data'])['responses'])
+            self.on_batch_response(data['responses'])
         self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
@@ -132,7 +137,7 @@ class RedisAggregator:
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
-    def batch_command(self, batch_command_dict):
+    def batch_command(self, batch_command_dict, is_blocking=True):
         """
         batch_dict : dict where keys are device_uuids and values list of commands
         e.g.: batch_dict = {
@@ -141,11 +146,22 @@ class RedisAggregator:
                         }
         """
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
-        batched_command = {"type": "BATCHED", "transaction_id": str(uuid.uuid4()),
+        transaction_id = str(uuid.uuid4())
+        batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
                            "aggregator_uuid": self.aggregator_uuid,
                            "batch_commands": batch_command_dict}
         batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
         self.redis_db.publish(batch_channel, json.dumps(batched_command))
+        self._transaction_id_buffer.append(transaction_id)
+
+        if is_blocking:
+            try:
+                wait_until_timeout_blocking(
+                    lambda: not self._check_transaction_id_cached_out(transaction_id)
+                )
+                return self._transaction_id_response_buffer.get(transaction_id, None)
+            except AssertionError:
+                raise RedisAPIException(f'API registration process timed out.')
 
     def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")
