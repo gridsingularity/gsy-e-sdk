@@ -12,11 +12,6 @@ class AutoAggregator(RedisAggregator):
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
-        # if self.is_finished is True:
-        #     return
-        # if "content" not in market_info:
-        #     return
-        #
         batch_commands = {}
 
         for device_event in market_info["content"]:

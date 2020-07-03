@@ -40,7 +40,7 @@ class RedisAggregator:
 
     def _subscribe_to_response_channels(self):
         event_channel = f'external-aggregator/*/*/events/all'
-        channel_dict = {"crud_aggregator_response": self._aggregator_response_callback,
+        channel_dict = {"aggregator_response": self._aggregator_response_callback,
                         event_channel: self._events_callback_dict,
                         f"external-aggregator//*/response/batch_commands":
                             self._batch_response,

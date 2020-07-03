@@ -39,10 +39,10 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
 class Aggregator(RestDeviceClient):
 
     def __init__(self, simulation_id, domain_name, aggregator_name,
-                 websockets_domain_name, autoregister=False, accept_all_devices=True):
+                 websockets_domain_name, accept_all_devices=True):
         super().__init__(
             simulation_id=simulation_id, device_id="", domain_name=domain_name,
-            websockets_domain_name=websockets_domain_name, autoregister=autoregister,
+            websockets_domain_name=websockets_domain_name, autoregister=False,
             start_websocket=False)
 
         self.aggregator_name = aggregator_name
