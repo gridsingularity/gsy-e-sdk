@@ -77,9 +77,9 @@ logging.info(f"SELECTED: {selected}")
 
 
 redis_market = RedisMarketClient('house-2')
-market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
+market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
+
+list_market_stats_results = redis_market.list_market_stats([market_slot_string])
 
 while not aggregator.is_finished:
-    list_market_stats_results = redis_market.list_market_stats([market_slot_string_2])
-    logging.info(f"list_market_stats_results: {list_market_stats_results}")
-    sleep(5)
+    sleep(0.5)
