@@ -1,7 +1,11 @@
+from pendulum import today
+import logging
+from time import sleep
 from d3a_api_client.aggregator import Aggregator
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
-import logging
+from d3a_interface.constants_limits import DATE_TIME_FORMAT
+from d3a_api_client.rest_market import RestMarketClient
 
 
 class TestAggregator(Aggregator):
@@ -106,6 +110,12 @@ load1.select_aggregator(aggr.aggregator_uuid)
 load2.select_aggregator(aggr.aggregator_uuid)
 pv1.select_aggregator(aggr.aggregator_uuid)
 
-from time import sleep
+area_uuid = get_area_uuid_from_area_name_and_collaboration_id(
+    simulation_id, "House", domain_name)
+
+rest_market = RestMarketClient(simulation_id, area_uuid, domain_name, websocket_domain_name)
+market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
+list_market_stats_results = rest_market.list_market_stats([market_slot_string])
+
 while not aggr.is_finished:
     sleep(0.5)

@@ -4,6 +4,7 @@ from pendulum import today
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_interface.constants_limits import DATE_TIME_FORMAT
+from d3a_api_client.redis_market import RedisMarketClient
 
 
 class AutoAggregator(RedisAggregator):
@@ -73,6 +74,12 @@ logging.info(f"SELECTED: {selected}")
 
 selected = pv.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
+
+
+redis_market = RedisMarketClient('house-2')
+market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
+
+list_market_stats_results = redis_market.list_market_stats([market_slot_string])
 
 while not aggregator.is_finished:
     sleep(0.5)
