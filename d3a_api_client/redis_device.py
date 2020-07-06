@@ -21,6 +21,7 @@ class RedisDeviceClient(RedisClient):
         self._check_buffer_message_matching_command_and_id(message)
         logging.info(f"Client was registered to the device: {message}")
         self.is_active = True
+        self.device_uuid = message['device_uuid']
 
     def _on_unregister(self, msg):
         message = json.loads(msg["data"])
@@ -61,7 +62,7 @@ class RedisDeviceClient(RedisClient):
                 "device_uuid": self.device_uuid,
                 "type": "SELECT",
                 "transaction_id": transaction_id}
-        self.redis_db.publish(f'crud_aggregator', json.dumps(data))
+        self.redis_db.publish(f'aggregator', json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
 
         if is_blocking:

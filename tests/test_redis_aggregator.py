@@ -57,10 +57,9 @@ class AutoAggregator(RedisAggregator):
 
 
 aggregator = AutoAggregator(
-    aggregator_name="faizan_aggregator",
-    autoregister=True)
+    aggregator_name="faizan_aggregator"
+)
 
-sleep(5)
 # aggregator.delete_aggregator(is_blocking=True)
 
 
@@ -69,10 +68,9 @@ load = RedisDeviceClient('load', autoregister=True)
 # Connects a second client to the pv device
 pv = RedisDeviceClient('pv', autoregister=True)
 
-sleep(5)
 selected = load.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
-sleep(5)
+
 selected = pv.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
 

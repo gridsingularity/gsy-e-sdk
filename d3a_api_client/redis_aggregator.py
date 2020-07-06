@@ -16,14 +16,13 @@ class RedisAPIException(Exception):
 
 class RedisAggregator:
 
-    def __init__(self, aggregator_name, autoregister=False,
-                 accept_all_devices=True, redis_url='redis://localhost:6379'):
+    def __init__(self, aggregator_name, accept_all_devices=True,
+                 redis_url='redis://localhost:6379'):
 
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
         self.aggregator_uuid = None
-        self.autoregister = autoregister
         self.accept_all_devices = accept_all_devices
         self._transaction_id_buffer = []
         self._transaction_id_response_buffer = {}
@@ -89,7 +88,7 @@ class RedisAggregator:
 
         transaction_id = str(uuid.uuid4())
         data = {"name": self.aggregator_name, "type": "CREATE", "transaction_id": transaction_id}
-        self.redis_db.publish(f'crud_aggregator', json.dumps(data))
+        self.redis_db.publish(f'aggregator', json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
 
         if is_blocking:
@@ -109,7 +108,7 @@ class RedisAggregator:
                 "aggregator_uuid": self.aggregator_uuid,
                 "type": "DELETE",
                 "transaction_id": transaction_id}
-        self.redis_db.publish(f'crud_aggregator', json.dumps(data))
+        self.redis_db.publish(f'aggregator', json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
 
         if is_blocking:
