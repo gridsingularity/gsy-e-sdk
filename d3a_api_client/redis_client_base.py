@@ -44,12 +44,13 @@ class RedisClient(APIClientInterface):
         # TODO: Replace area_id (which is a area name slug now) with "area_uuid"
         self.area_id = area_id
         self.client_id = client_id
+        self.device_uuid = None
         self.is_active = False
         self._blocking_command_responses = {}
         self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         if autoregister:
-            self.register(is_blocking=False)
+            self.register(is_blocking=True)
 
     def _subscribe_to_response_channels(self):
         channel_subs = {
@@ -71,7 +72,6 @@ class RedisClient(APIClientInterface):
         logging.info(f"Trying to register to {self.area_id} as client {self.client_id}")
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
-
         data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
         self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
         self._blocking_command_responses["register"] = data
@@ -274,7 +274,7 @@ class RedisClient(APIClientInterface):
     def _check_buffer_message_matching_command_and_id(self, message):
         if "transaction_id" in message and message["transaction_id"] is not None:
             transaction_id = message["transaction_id"]
-            if not any(command == "register" and "transaction_id" in data and
+            if not any(command in ["register", "unregister"] and "transaction_id" in data and
                        data["transaction_id"] == transaction_id
                        for command, data in self._blocking_command_responses.items()):
                 raise RedisAPIException("There is no matching command response in _blocking_command_responses.")

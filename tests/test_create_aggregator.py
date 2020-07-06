@@ -81,6 +81,7 @@ load1_uuid = get_area_uuid_from_area_name_and_collaboration_id(
     device_args["simulation_id"], "Load", device_args["domain_name"])
 device_args["device_id"] = load1_uuid
 
+
 load1 = RestDeviceClient(
     **device_args
 )

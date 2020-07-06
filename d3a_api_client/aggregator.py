@@ -42,7 +42,8 @@ class Aggregator(RestDeviceClient):
                  websockets_domain_name, accept_all_devices=True):
         super().__init__(
             simulation_id=simulation_id, device_id="", domain_name=domain_name,
-            websockets_domain_name=websockets_domain_name, autoregister=False, start_websocket=False)
+            websockets_domain_name=websockets_domain_name, autoregister=False,
+            start_websocket=False)
 
         self.aggregator_name = aggregator_name
         self.accept_all_devices = accept_all_devices
