@@ -50,7 +50,7 @@ class RedisClient(APIClientInterface):
         self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         if autoregister:
-            self.register(is_blocking=False)
+            self.register(is_blocking=True)
 
     def _subscribe_to_response_channels(self):
         channel_subs = {
@@ -72,8 +72,7 @@ class RedisClient(APIClientInterface):
         logging.info(f"Trying to register to {self.area_id} as client {self.client_id}")
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
-        self.device_uuid = str(uuid.uuid4())
-        data = {"name": self.client_id, "transaction_id": self.device_uuid}
+        data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
         self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
         self._blocking_command_responses["register"] = data
 

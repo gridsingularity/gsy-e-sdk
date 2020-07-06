@@ -17,6 +17,7 @@ class RedisDeviceClient(RedisClient):
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
+        self.device_uuid = message['device_uuid']
         self._check_buffer_message_matching_command_and_id(message)
         logging.info(f"Client was registered to the device: {message}")
         self.is_active = True

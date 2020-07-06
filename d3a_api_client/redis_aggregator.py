@@ -137,7 +137,7 @@ class RedisAggregator:
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
-    def batch_command(self, batch_command_dict, is_blocking=True):
+    def batch_command(self, batch_command_dict, is_blocking=False):
         """
         batch_dict : dict where keys are device_uuids and values list of commands
         e.g.: batch_dict = {
