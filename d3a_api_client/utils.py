@@ -113,12 +113,12 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
     headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'}
 
     query = 'query { readConfiguration(uuid: "{' + collab_id + \
-            '}") { scenarioData { representation { serialized } } } }'
+            '}") { scenarioData { latest { serialized } } } }'
 
     endpoint = HTTPEndpoint(url, headers)
     data = endpoint(query=query)
     area_uuid = get_area_uuid_from_area_name(
-        json.loads(data["data"]["readConfiguration"]["scenarioData"]["representation"]["serialized"]), area_name
+        json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]), area_name
     )
     if not area_uuid:
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
