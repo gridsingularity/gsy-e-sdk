@@ -7,6 +7,7 @@ from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunication
     logging_decorator, get_aggregator_prefix, blocking_post_request, blocking_get_request
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_interface.utils import RepeatingTimer
+from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
@@ -23,7 +24,9 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
         self.active_aggregator = None
         self.lock = Lock()
-        self.jwt_token_refresh = RepeatingTimer(3500, self.refresh_jwt_token, [domain_name])
+        self.jwt_token_refresh = RepeatingTimer(
+            JWT_TOKEN_EXPIRY_IN_SECS - 30, self.refresh_jwt_token, [domain_name]
+        )
         self.jwt_token_refresh.start()
         if start_websocket:
             self.start_websocket_connection()
