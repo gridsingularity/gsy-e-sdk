@@ -33,7 +33,7 @@ class RestMarketClient(RestCommunicationMixin):
 
     @logging_decorator('grid_fees')
     def grid_fees(self, fee_cents_per_kWh):
-        transaction_id, get_sent = self._post_request('grid-fees', {"fee": fee_cents_per_kWh})
+        transaction_id, get_sent = self._post_request('grid-fee', {"fee_const": fee_cents_per_kWh})
         if get_sent:
             return self.dispatcher.wait_for_command_response('grid_fees', transaction_id)
 
