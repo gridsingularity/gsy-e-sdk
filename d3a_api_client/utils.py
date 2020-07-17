@@ -126,6 +126,36 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
     return area_uuid
 
 
+def _name_uuid_mapping_wrapper(serialized_scenario, mapping={}):
+    from d3a_interface.utils import key_in_dict_and_not_none
+    if key_in_dict_and_not_none(serialized_scenario, "name") and \
+            key_in_dict_and_not_none(serialized_scenario, "uuid"):
+        mapping.update({serialized_scenario['name']: serialized_scenario['uuid']})
+    if key_in_dict_and_not_none(serialized_scenario, "children"):
+        for child in serialized_scenario["children"]:
+            new_mapping = _name_uuid_mapping_wrapper(child, mapping)
+            mapping.update(new_mapping)
+    return mapping
+
+
+def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
+    jwt_key = retrieve_jwt_key_from_server(domain_name)
+    from sgqlc.endpoint.http import HTTPEndpoint
+
+    url = f"{domain_name}/graphql/"
+    headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'}
+
+    query = 'query { readConfiguration(uuid: "{' + collab_id + \
+            '}") { scenarioData { latest { serialized } } } }'
+
+    endpoint = HTTPEndpoint(url, headers)
+    data = endpoint(query=query)
+    area_name_uuid_map = _name_uuid_mapping_wrapper(
+        json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"])
+    )
+    return area_name_uuid_map
+
+
 def logging_decorator(command_name):
     def decorator(f):
         @wraps(f)
