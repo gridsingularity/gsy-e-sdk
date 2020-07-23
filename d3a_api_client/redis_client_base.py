@@ -77,9 +77,9 @@ class RedisClient(APIClientInterface):
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
         data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
-        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
         with self.lock:
             self._blocking_command_responses["register"] = data
+        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
 
         if is_blocking:
             try:
