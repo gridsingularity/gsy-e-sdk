@@ -56,7 +56,7 @@ class RedisDeviceClient(RedisClient):
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
 
-    def select_aggregator(self, aggregator_uuid, is_blocking=True, should_unsubscribe=True):
+    def select_aggregator(self, aggregator_uuid, is_blocking=True, unsubscribe_from_device_events=True):
         logging.info(f"Device: {self.device_id} is trying to select aggregator {aggregator_uuid}")
 
         transaction_id = str(uuid.uuid4())
@@ -77,7 +77,7 @@ class RedisDeviceClient(RedisClient):
                 return transaction_id
             except AssertionError:
                 raise RedisAPIException(f'API has timed out.')
-        if should_unsubscribe:
+        if unsubscribe_from_device_events:
             self.pubsub.unsubscribe(
                 [f'{self.area_id}/response/register_participant',
                  f'{self.area_id}/response/unregister_participant',
