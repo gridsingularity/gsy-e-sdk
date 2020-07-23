@@ -11,10 +11,10 @@ class RedisAPIException(Exception):
 
 class RedisDeviceClient(RedisClient):
     def __init__(self, device_id, autoregister=True, redis_url='redis://localhost:6379',
-                 pubsub=None):
+                 pubsub_thread=None):
         self.device_id = device_id
         self._transaction_id_buffer = []
-        super().__init__(device_id, None, autoregister, redis_url, pubsub)
+        super().__init__(device_id, None, autoregister, redis_url, pubsub_thread)
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
@@ -30,7 +30,7 @@ class RedisDeviceClient(RedisClient):
         logging.info(f"Client was unregistered from the device: {message}")
         self.is_active = False
 
-    def _subscribe_to_response_channels(self, pubsub=None):
+    def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
             self._response_topics[c]: self._generate_command_response_callback(c)
             for c in Commands
@@ -45,7 +45,7 @@ class RedisDeviceClient(RedisClient):
         channel_subs["aggregator_response"] = self._aggregator_response_callback
 
         self.pubsub.subscribe(**channel_subs)
-        if pubsub is None:
+        if pubsub_thread is None:
             self.pubsub.run_in_thread(daemon=True)
 
     def _aggregator_response_callback(self, message):
@@ -56,7 +56,7 @@ class RedisDeviceClient(RedisClient):
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
 
-    def select_aggregator(self, aggregator_uuid, is_blocking=True):
+    def select_aggregator(self, aggregator_uuid, is_blocking=True, should_unsubscribe=True):
         logging.info(f"Device: {self.device_id} is trying to select aggregator {aggregator_uuid}")
 
         transaction_id = str(uuid.uuid4())
@@ -77,14 +77,15 @@ class RedisDeviceClient(RedisClient):
                 return transaction_id
             except AssertionError:
                 raise RedisAPIException(f'API has timed out.')
-        self.pubsub.unsubscribe(
-            [f'{self.area_id}/response/register_participant',
-             f'{self.area_id}/response/unregister_participant',
-             f'{self._channel_prefix}/events/market',
-             f'{self._channel_prefix}/events/tick',
-             f'{self._channel_prefix}/events/trade',
-             f'{self._channel_prefix}/events/finish']
-        )
+        if should_unsubscribe:
+            self.pubsub.unsubscribe(
+                [f'{self.area_id}/response/register_participant',
+                 f'{self.area_id}/response/unregister_participant',
+                 f'{self._channel_prefix}/events/market',
+                 f'{self._channel_prefix}/events/tick',
+                 f'{self._channel_prefix}/events/trade',
+                 f'{self._channel_prefix}/events/finish']
+            )
 
     @property
     def _channel_prefix(self):
