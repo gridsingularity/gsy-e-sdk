@@ -37,22 +37,23 @@ class Commands(Enum):
 
 
 class RedisClient(APIClientInterface):
-    def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379'):
+    def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379',
+                 pubsub_thread=None):
         super().__init__(area_id, client_id, autoregister, redis_url)
         self.redis_db = StrictRedis.from_url(redis_url)
-        self.pubsub = self.redis_db.pubsub()
+        self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         # TODO: Replace area_id (which is a area name slug now) with "area_uuid"
         self.area_id = area_id
         self.client_id = client_id
         self.device_uuid = None
         self.is_active = False
         self._blocking_command_responses = {}
-        self._subscribe_to_response_channels()
+        self._subscribe_to_response_channels(pubsub_thread)
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         if autoregister:
             self.register(is_blocking=True)
 
-    def _subscribe_to_response_channels(self):
+    def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
             self._response_topics[c]: self._generate_command_response_callback(c)
             for c in Commands
@@ -66,15 +67,16 @@ class RedisClient(APIClientInterface):
         channel_subs[f'{self._channel_prefix}/events/finish'] = self._on_finish
 
         self.pubsub.subscribe(**channel_subs)
-        self.pubsub.run_in_thread(daemon=True)
+        if pubsub_thread is None:
+            self.pubsub.run_in_thread(daemon=True)
 
     def register(self, is_blocking=False):
         logging.info(f"Trying to register to {self.area_id} as client {self.client_id}")
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
         data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
-        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
         self._blocking_command_responses["register"] = data
+        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
 
         if is_blocking:
             try:
@@ -92,8 +94,8 @@ class RedisClient(APIClientInterface):
             raise RedisAPIException(f'API is already unregistered from the market.')
 
         data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
-        self.redis_db.publish(f'{self.area_id}/unregister_participant', json.dumps(data))
         self._blocking_command_responses["unregister"] = data
+        self.redis_db.publish(f'{self.area_id}/unregister_participant', json.dumps(data))
 
         if is_blocking:
             try:
