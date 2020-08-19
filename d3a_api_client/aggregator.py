@@ -71,7 +71,10 @@ class Aggregator(RestDeviceClient):
 
     @logging_decorator('create_aggregator')
     def list_aggregators(self):
-        return blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
+        list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
+        if list_of_aggregators is None:
+            raise Exception(f"No aggregators found on {self.aggregator_prefix}")
+        return list_of_aggregators
 
     @property
     def _url_prefix(self):

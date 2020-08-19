@@ -140,10 +140,10 @@ class RedisClient(APIClientInterface):
             return any(command == command_type and
                        "transaction_id" in data and data["transaction_id"] == transaction_id
                        for command, data in self._blocking_command_responses.items())
-        logging.info(f"Command {command_type} waiting for response...")
+        logging.debug(f"Command {command_type} waiting for response...")
         wait_until_timeout_blocking(check_if_command_response_received, timeout=120)
         command_output = self._blocking_command_responses.pop(command_type)
-        logging.info(f"Command {command_type} got response {command_output}")
+        logging.debug(f"Command {command_type} got response {command_output}")
         return command_output
 
     def _generate_command_response_callback(self, command_type):

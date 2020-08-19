@@ -33,7 +33,7 @@ class WebsocketMessageReceiver:
                        "transaction_id" in c and c["transaction_id"] == transaction_id
                        for c in self.command_response_buffer)
 
-        logging.info(f"Command {command_name} waiting for response...")
+        logging.debug(f"Command {command_name} waiting for response...")
         wait_until_timeout_blocking(check_if_command_response_received, timeout=120)
         response = next(c
                         for c in self.command_response_buffer

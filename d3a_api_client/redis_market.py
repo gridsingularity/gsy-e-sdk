@@ -44,10 +44,10 @@ class RedisMarketClient:
         self.pubsub.run_in_thread(daemon=True)
 
     def _wait_and_consume_command_response(self, command_type):
-        logging.info(f"Command {command_type} waiting for response...")
+        logging.debug(f"Command {command_type} waiting for response...")
         wait_until_timeout_blocking(lambda: command_type in self._blocking_command_responses, timeout=120)
         command_output = self._blocking_command_responses.pop(command_type)
-        logging.info(f"Command {command_type} got response {command_output}")
+        logging.debug(f"Command {command_type} got response {command_output}")
         return command_output
 
     def list_market_stats(self, market_slot_list):
