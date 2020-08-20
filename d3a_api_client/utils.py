@@ -75,7 +75,6 @@ def get_request(endpoint, data, jwt_token):
 
 
 def request_response_returns_http_200(endpoint, resp):
-    print("RESP", resp.json())
     if resp.status_code != 200:
         logger.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
                      f"Response body: {resp.text}")

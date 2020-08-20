@@ -1,4 +1,6 @@
 import logging
+import traceback
+
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
@@ -47,14 +49,20 @@ class RestMarketClient(RestCommunicationMixin):
         logging.debug(f"A new market was created. Market information: {message}")
 
         def executor_function():
-            self.on_market_cycle(message)
+            try:
+                self.on_market_cycle(message)
+            except Exception as e:
+                logging.error(f"on_market_cycle raised exception: {e}. Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def _on_finish(self, message):
         logging.debug(f"Simulation finished. Information: {message}")
 
         def executor_function():
-            self.on_finish(message)
+            try:
+                self.on_finish(message)
+            except Exception as e:
+                logging.error(f"on_finish raised exception: {e}. Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def on_finish(self, finish_info):
