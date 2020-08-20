@@ -4,6 +4,8 @@ import json
 import logging
 import uuid
 from functools import wraps
+from d3a_interface.utils import key_in_dict_and_not_none
+import ast
 
 
 class AreaNotFoundException(Exception):
@@ -124,6 +126,39 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
                                     f"collaboration with UUID {collab_id}")
     return area_uuid
+
+
+def _get_name_uuid_mapping(serialized_scenario, mapping={}):
+    if key_in_dict_and_not_none(serialized_scenario, "name") and \
+            key_in_dict_and_not_none(serialized_scenario, "uuid"):
+        mapping.update({serialized_scenario['name']: serialized_scenario['uuid']})
+    if key_in_dict_and_not_none(serialized_scenario, "children"):
+        for child in serialized_scenario["children"]:
+            new_mapping = _get_name_uuid_mapping(child, mapping)
+            mapping.update(new_mapping)
+    return mapping
+
+
+def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
+    jwt_key = retrieve_jwt_key_from_server(domain_name)
+    from sgqlc.endpoint.http import HTTPEndpoint
+
+
+    url = f"{domain_name}/graphql/"
+    headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'}
+
+    query = 'query { readConfiguration(uuid: "{' + collab_id + \
+            '}") { scenarioData { latest { serialized } } } }'
+
+    endpoint = HTTPEndpoint(url, headers)
+    data = endpoint(query=query)
+    if key_in_dict_and_not_none(data, 'errors'):
+        return ast.literal_eval(data['errors'][0]['message'])
+    else:
+        area_name_uuid_map = _get_name_uuid_mapping(
+            json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"])
+        )
+        return area_name_uuid_map
 
 
 def logging_decorator(command_name):
