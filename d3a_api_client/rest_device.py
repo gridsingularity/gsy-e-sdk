@@ -146,7 +146,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             try:
                 self.on_market_cycle(message)
             except Exception as e:
-                logging.error(f"on_market_cycle raised exception: {e}. Traceback: {traceback.format_exc()}")
+                logging.error(f"on_market_cycle raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def _on_tick(self, message):
@@ -156,7 +157,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             try:
                 self.on_tick(message)
             except Exception as e:
-                logging.error(f"on_tick raised exception: {e}. Traceback: {traceback.format_exc()}")
+                logging.error(f"on_tick raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def _on_trade(self, message):
@@ -166,7 +168,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             try:
                 self.on_trade(message)
             except Exception as e:
-                logging.error(f"on_trade raised exception: {e}. Traceback: {traceback.format_exc()}")
+                logging.error(f"on_trade raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def _on_finish(self, message):
@@ -176,7 +179,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             try:
                 self.on_finish(message)
             except Exception as e:
-                logging.error(f"on_finish raised exception: {e}. Traceback: {traceback.format_exc()}")
+                logging.error(f"on_finish raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def on_market_cycle(self, market_info):

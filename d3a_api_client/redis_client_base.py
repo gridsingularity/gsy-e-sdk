@@ -1,9 +1,12 @@
 import logging
 import json
 import uuid
+import traceback
+
 from enum import Enum
 from functools import wraps
 from redis import StrictRedis
+
 from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -246,7 +249,11 @@ class RedisClient(APIClientInterface):
         logging.info(f"A new market was created. Market information: {message}")
 
         def executor_function():
-            self.on_market_cycle(message)
+            try:
+                self.on_market_cycle(message)
+            except Exception as e:
+                logging.error(f"_on_market_cycle raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def _on_tick(self, msg):
@@ -254,7 +261,12 @@ class RedisClient(APIClientInterface):
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
 
         def executor_function():
-            self.on_tick(message)
+            try:
+                self.on_tick(message)
+            except Exception as e:
+                logging.error(f"on_tick raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
+
         self.executor.submit(executor_function)
 
     def _on_trade(self, msg):
@@ -262,7 +274,11 @@ class RedisClient(APIClientInterface):
         logging.info(f"A trade took place on the device. Trade information: {message}")
 
         def executor_function():
-            self.on_trade(message)
+            try:
+                self.on_trade(message)
+            except Exception as e:
+                logging.error(f"on_trade raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def _on_finish(self, msg):
@@ -270,7 +286,11 @@ class RedisClient(APIClientInterface):
         logging.info(f"Simulation finished. Information: {message}")
 
         def executor_function():
-            self.on_finish(message)
+            try:
+                self.on_finish(message)
+            except Exception as e:
+                logging.error(f"on_finish raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def _check_buffer_message_matching_command_and_id(self, message):

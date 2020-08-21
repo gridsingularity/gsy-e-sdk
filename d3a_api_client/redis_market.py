@@ -1,8 +1,11 @@
 import logging
 import json
+import traceback
+
 from redis import StrictRedis
-from d3a_interface.utils import wait_until_timeout_blocking
 from concurrent.futures.thread import ThreadPoolExecutor
+
+from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
@@ -75,7 +78,11 @@ class RedisMarketClient:
         logging.info(f"A new market was created. Market information: {message}")
 
         def executor_function():
-            self.on_market_cycle(message)
+            try:
+                self.on_market_cycle(message)
+            except Exception as e:
+                logging.error(f"on_market_cycle raised exception (area_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def on_market_cycle(self, market_info):
@@ -86,7 +93,11 @@ class RedisMarketClient:
         logging.info(f"Simulation finished. Information: {message}")
 
         def executor_function():
-            self.on_finish(message)
+            try:
+                self.on_finish(message)
+            except Exception as e:
+                logging.error(f"on_finish raised exception (area_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def on_finish(self, finish_info):

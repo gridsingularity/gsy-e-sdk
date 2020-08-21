@@ -73,7 +73,8 @@ class Aggregator(RestDeviceClient):
     def list_aggregators(self):
         list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
         if list_of_aggregators is None:
-            raise Exception(f"No aggregators found on {self.aggregator_prefix}")
+            root_logger.error(f"No aggregators found on {self.aggregator_prefix}")
+            list_of_aggregators = []
         return list_of_aggregators
 
     @property
