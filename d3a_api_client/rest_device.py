@@ -1,13 +1,17 @@
 import logging
+import traceback
+
 from threading import Lock
 from concurrent.futures.thread import ThreadPoolExecutor
+
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, get_aggregator_prefix, blocking_post_request, blocking_get_request
+    logging_decorator, get_aggregator_prefix, blocking_post_request
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_interface.utils import RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
@@ -139,28 +143,44 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         logging.debug(f"A new market was created. Market information: {message}")
 
         def executor_function():
-            self.on_market_cycle(message)
+            try:
+                self.on_market_cycle(message)
+            except Exception as e:
+                logging.error(f"on_market_cycle raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def _on_tick(self, message):
         logging.debug(f"Time has elapsed on the device. Progress info: {message}")
 
         def executor_function():
-            self.on_tick(message)
+            try:
+                self.on_tick(message)
+            except Exception as e:
+                logging.error(f"on_tick raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def _on_trade(self, message):
         logging.debug(f"A trade took place on the device. Trade information: {message}")
 
         def executor_function():
-            self.on_trade(message)
+            try:
+                self.on_trade(message)
+            except Exception as e:
+                logging.error(f"on_trade raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def _on_finish(self, message):
         logging.debug(f"Simulation finished. Information: {message}")
 
         def executor_function():
-            self.on_finish(message)
+            try:
+                self.on_finish(message)
+            except Exception as e:
+                logging.error(f"on_finish raised exception (device_uuid: {message['area_uuid']}): {e}."
+                              f" \n Traceback: {traceback.format_exc()}")
         self.callback_thread.submit(executor_function)
 
     def on_market_cycle(self, market_info):

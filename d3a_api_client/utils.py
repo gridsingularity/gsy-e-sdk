@@ -7,6 +7,8 @@ from functools import wraps
 from d3a_interface.utils import key_in_dict_and_not_none
 import ast
 
+logger = logging.getLogger(__name__)
+
 
 class AreaNotFoundException(Exception):
     pass
@@ -40,8 +42,8 @@ def retrieve_jwt_key_from_server(domain_name):
                          "password": os.environ["API_CLIENT_PASSWORD"]}),
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
-        logging.error(f"Request for token authentication failed with status code {resp.status_code}."
-                      f"Response body: {resp.text}")
+        logger.error(f"Request for token authentication failed with status code {resp.status_code}. "
+                     f"Response body: {resp.text}")
         return
     return json.loads(resp.text)["token"]
 
@@ -52,21 +54,17 @@ def post_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    if resp.status_code != 200:
-        logging.error(f"Request to {endpoint} failed with status code {resp.status_code}."
-                      f"Response body: {resp.text} {resp.reason}")
-        return False
-    return True
+    return json.loads(resp.text) if request_response_returns_http_200(endpoint, resp) else None
 
 
 def blocking_post_request(endpoint, data, jwt_token):
     data["transaction_id"] = str(uuid.uuid4())
-    response = requests.post(
+    resp = requests.post(
         endpoint,
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    return json.loads(response.json())
+    return json.loads(resp.text) if request_response_returns_http_200(endpoint, resp) else None
 
 
 def get_request(endpoint, data, jwt_token):
@@ -75,11 +73,16 @@ def get_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
+    return request_response_returns_http_200(endpoint, resp)
+
+
+def request_response_returns_http_200(endpoint, resp):
     if resp.status_code != 200:
-        logging.error(f"Request to {endpoint} failed with status code {resp.status_code}."
-                      f"Response body: {resp.text}")
+        logger.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
+                     f"Response body: {resp.text}")
         return False
-    return True
+    else:
+        return True
 
 
 def get_aggregator_prefix(domain_name, simulation_id):
@@ -88,12 +91,12 @@ def get_aggregator_prefix(domain_name, simulation_id):
 
 def blocking_get_request(endpoint, data, jwt_token):
     data["transaction_id"] = str(uuid.uuid4())
-    response = requests.get(
+    resp = requests.get(
         endpoint,
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    return json.loads(response.json())
+    return json.loads(resp.json()) if request_response_returns_http_200(endpoint, resp) else None
 
 
 def get_area_uuid_from_area_name(serialized_scenario, area_name):
@@ -109,6 +112,8 @@ def get_area_uuid_from_area_name(serialized_scenario, area_name):
 
 def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, domain_name):
     jwt_key = retrieve_jwt_key_from_server(domain_name)
+    if jwt_key is None:
+        return
     from sgqlc.endpoint.http import HTTPEndpoint
 
     url = f"{domain_name}/graphql/"
@@ -165,9 +170,9 @@ def logging_decorator(command_name):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            logging.debug(f'Sending command {command_name} to device.')
+            logger.debug(f'Sending command {command_name} to device.')
             return_value = f(self, *args, **kwargs)
-            logging.debug(f'Command {command_name} responded with: {return_value}.')
+            logger.debug(f'Command {command_name} responded with: {return_value}.')
             return return_value
         return wrapped
     return decorator
