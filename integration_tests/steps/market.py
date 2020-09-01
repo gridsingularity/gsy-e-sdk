@@ -3,6 +3,7 @@ from behave import given, when, then
 from time import sleep
 from d3a_api_client.redis_market import RedisMarketClient
 from d3a_interface.constants_limits import DATE_TIME_FORMAT
+from integration_tests.test_grid_fee import AutoGridFeeUpdateOnMarket
 
 
 @given('the external client is started that connects to {area_id} market')
@@ -32,3 +33,10 @@ def step_impl(context):
     assert "market_stats" in context.list_dso_market_stats_results
     assert set(context.list_dso_market_stats_results["market_stats"].keys()) == \
            {context.market_slot_string_1, context.market_slot_string_2}
+
+
+@when('DSO started the external client that connects to {area_id} market')
+def step_impl(context, area_id):
+    sleep(5)
+    context.device = AutoGridFeeUpdateOnMarket(area_id)
+
