@@ -1,0 +1,56 @@
+"""
+Test file for the market client. Depends on d3a test setup file strategy_tests.external_devices
+"""
+import logging
+from time import sleep
+import traceback
+from pendulum import today
+
+from d3a_interface.constants_limits import DATE_TIME_FORMAT
+from d3a_api_client.redis_market import RedisMarketClient
+
+
+class AutoGridFeeUpdateOnMarket(RedisMarketClient):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.errors = 0
+        self.error_list = []
+        self.dso_info = {}
+        self.status = "running"
+        self.fee_profile = {today().add(minutes=i * 60).format(DATE_TIME_FORMAT): round(i / 10, 3)
+                            for i in range(24)}
+        self.current_time = None
+        self.updated_fee = None
+        self.list_dso_stats = None
+
+    def on_market_cycle(self, market_info):
+
+        try:
+            logging.debug(f"New market information {market_info}")
+            self.current_time = market_info['market_info']['start_time']
+            self.updated_fee = self.change_grid_fees_const(self.fee_profile[self.current_time])
+            logging.debug(f"updated_fee: {self.updated_fee}")
+            self.list_dso_stats = self.list_dso_market_stats([self.current_time])
+            assert float(self.list_dso_stats['market_fee_const']) == \
+                   self.fee_profile[self.current_time] == \
+                   float(self.updated_fee['market_fee_const'])
+
+        except AssertionError as e:
+            print(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
+            self.errors += 1
+            self.error_list.append(e)
+            raise e
+
+    def on_finish(self, finish_info):
+        self.status = "finished"
+
+# Connects one client to the house-2 market
+# market = AutoGridFeeUpdateOnMarket('house-2')
+
+
+# Infinite loop in order to leave the client running on the background
+# placing bids and offers on every market cycle.
+# while True:
+#     sleep(0.5)
+#     if market.status == "finished":
+#         break
