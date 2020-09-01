@@ -36,7 +36,7 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
                    float(self.updated_fee['market_fee_const'])
 
         except AssertionError as e:
-            print(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
+            logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
             self.error_list.append(e)
             raise e
