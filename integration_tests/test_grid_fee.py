@@ -29,7 +29,7 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
             logging.debug(f"New market information {market_info}")
             assert set(market_info.keys()) == {'status', 'event', 'market_info'}
             self.current_time = market_info['market_info']['start_time']
-            self.updated_fee = self.change_grid_fees_const(self.fee_profile[self.current_time])
+            self.updated_fee = self.grid_fees(self.fee_profile[self.current_time])
             assert set(self.updated_fee.keys()) == \
                    {'status', 'command', 'market_fee_const', 'transaction_id'}
             logging.debug(f"updated_fee: {self.updated_fee}")

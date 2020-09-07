@@ -1,6 +1,7 @@
 import logging
 import json
 import traceback
+from slugify import slugify
 
 from redis import StrictRedis
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -11,7 +12,7 @@ from d3a_api_client.constants import MAX_WORKER_THREADS
 
 class RedisMarketClient:
     def __init__(self, area_id, redis_url='redis://localhost:6379'):
-        self.area_id = area_id
+        self.area_id = slugify(area_id, to_lower=True)
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self._subscribe_to_response_channels()
@@ -58,7 +59,7 @@ class RedisMarketClient:
         self.redis_db.publish(f"{self.area_id}/market_stats", json.dumps({"market_slots": market_slot_list}))
         return self._wait_and_consume_command_response("market_stats")
 
-    def change_grid_fees_const(self, fee_cents_kwh):
+    def grid_fees(self, fee_cents_kwh):
         logging.debug(f"Client tries to change grid fees.")
         self.redis_db.publish(f"{self.area_id}/grid_fees", json.dumps({"fee_const": fee_cents_kwh}))
         return self._wait_and_consume_command_response("grid_fees")
