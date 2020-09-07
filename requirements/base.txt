@@ -22,7 +22,7 @@ packaging==20.0           # via tox
 paramiko==2.7.1           # via fabric3
 parse-type==0.5.2         # via behave
 parse==1.14.0             # via behave, parse-type
-pip-tools==4.4.0
+pip-tools==5.2.1
 pluggy==0.13.1            # via tox
 py==1.8.1                 # via tox
 pycparser==2.19           # via cffi
