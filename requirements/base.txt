@@ -40,3 +40,4 @@ urllib3==1.25.8           # via requests
 virtualenv==16.7.9        # via tox
 websockets==8.1
 zipp==2.0.0               # via importlib-metadata
+d3a-interface @ git+https://github.com/gridsingularity/d3a-interface.git
