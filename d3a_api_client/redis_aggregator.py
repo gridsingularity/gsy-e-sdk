@@ -166,28 +166,52 @@ class RedisAggregator:
         logging.info(f"A new market was created. Market information: {message}")
 
         def executor_function():
-            self.on_market_cycle(message)
+            try:
+                self.on_market_cycle(message)
+            except Exception as e:
+                logging.error(
+                    f"on_market_cycle raised exception (device_uuid: {message['area_uuid']}): {e}."
+                    " \n Traceback: {traceback.format_exc()}")
+
         self.executor.submit(executor_function)
 
     def _on_tick(self, message):
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
 
         def executor_function():
-            self.on_tick(message)
+            try:
+                self.on_tick(message)
+            except Exception as e:
+                logging.error(
+                    f"on_tick raised exception (device_uuid: {message['area_uuid']}): {e}."
+                    " \n Traceback: {traceback.format_exc()}")
+
         self.executor.submit(executor_function)
 
     def _on_trade(self, message):
         logging.info(f"A trade took place on the device. Trade information: {message}")
 
         def executor_function():
-            self.on_trade(message)
+            try:
+                self.on_trade(message)
+            except Exception as e:
+                logging.error(
+                    f"on_trade raised exception (device_uuid: {message['area_uuid']}): {e}."
+                    " \n Traceback: {traceback.format_exc()}")
+
         self.executor.submit(executor_function)
 
     def _on_finish(self, message):
         logging.info(f"Simulation finished. Information: {message}")
 
         def executor_function():
-            self.on_finish(message)
+            try:
+                self.on_finish(message)
+            except Exception as e:
+                logging.error(
+                    f"on_finish raised exception (device_uuid: {message['area_uuid']}): {e}."
+                    " \n Traceback: {traceback.format_exc()}")
+
         self.executor.submit(executor_function)
 
     def on_market_cycle(self, market_info):
