@@ -1,11 +1,14 @@
+import traceback
 import logging
 import uuid
 import json
-from redis import StrictRedis
-from d3a_interface.utils import wait_until_timeout_blocking
-from concurrent.futures.thread import ThreadPoolExecutor
-from d3a_api_client.constants import MAX_WORKER_THREADS
 from threading import Lock
+from redis import StrictRedis
+from concurrent.futures.thread import ThreadPoolExecutor
+
+from d3a_interface.utils import wait_until_timeout_blocking
+from d3a_api_client.constants import MAX_WORKER_THREADS
+
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
@@ -169,9 +172,8 @@ class RedisAggregator:
             try:
                 self.on_market_cycle(message)
             except Exception as e:
-                logging.error(
-                    f"on_market_cycle raised exception (device_uuid: {message['area_uuid']}): {e}."
-                    " \n Traceback: {traceback.format_exc()}")
+                root_logger.error(
+                    f"on_market_cycle raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
 
         self.executor.submit(executor_function)
 
@@ -182,9 +184,8 @@ class RedisAggregator:
             try:
                 self.on_tick(message)
             except Exception as e:
-                logging.error(
-                    f"on_tick raised exception (device_uuid: {message['area_uuid']}): {e}."
-                    " \n Traceback: {traceback.format_exc()}")
+                root_logger.error(
+                    f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
 
         self.executor.submit(executor_function)
 
@@ -195,9 +196,8 @@ class RedisAggregator:
             try:
                 self.on_trade(message)
             except Exception as e:
-                logging.error(
-                    f"on_trade raised exception (device_uuid: {message['area_uuid']}): {e}."
-                    " \n Traceback: {traceback.format_exc()}")
+                root_logger.error(
+                    f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
 
         self.executor.submit(executor_function)
 
@@ -208,9 +208,8 @@ class RedisAggregator:
             try:
                 self.on_finish(message)
             except Exception as e:
-                logging.error(
-                    f"on_finish raised exception (device_uuid: {message['area_uuid']}): {e}."
-                    " \n Traceback: {traceback.format_exc()}")
+                root_logger.error(
+                    f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
 
         self.executor.submit(executor_function)
 
