@@ -185,7 +185,7 @@ class RedisAggregator:
                 self.on_tick(message)
             except Exception as e:
                 root_logger.error(
-                    f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
+                    f"on_tick raised exception: {e}. \n Traceback: {traceback.format_exc()}")
 
         self.executor.submit(executor_function)
 
@@ -197,7 +197,7 @@ class RedisAggregator:
                 self.on_trade(message)
             except Exception as e:
                 root_logger.error(
-                    f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
+                    f"_on_trade raised exception: {e}. \n Traceback: {traceback.format_exc()}")
 
         self.executor.submit(executor_function)
 
@@ -209,7 +209,7 @@ class RedisAggregator:
                 self.on_finish(message)
             except Exception as e:
                 root_logger.error(
-                    f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
+                    f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
 
         self.executor.submit(executor_function)
 
