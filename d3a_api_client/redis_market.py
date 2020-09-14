@@ -86,6 +86,8 @@ class RedisMarketClient:
                               f"(market_uuid: {message['market_info']['id']}): {e}."
                               f" \n Traceback: {traceback.format_exc()}")
 
+        self.executor.submit(executor_function)
+
     def on_market_cycle(self, market_info):
         pass
 
