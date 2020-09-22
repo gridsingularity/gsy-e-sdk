@@ -18,6 +18,10 @@ class RestWebsocketAPIException(Exception):
     pass
 
 
+class RedisAPIException(Exception):
+    pass
+
+
 class RestCommunicationMixin:
 
     @property
