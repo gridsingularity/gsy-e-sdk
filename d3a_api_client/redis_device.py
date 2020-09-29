@@ -86,8 +86,7 @@ class RedisDeviceClient(RedisClient):
             )
 
     def unselect_aggregator(self, aggregator_uuid):
-        """not needed ATM"""
-        pass
+        raise NotImplementedError("unselect_aggregator has not be implemented yet.")
 
     @property
     def _channel_prefix(self):

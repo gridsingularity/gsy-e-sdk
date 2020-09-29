@@ -154,8 +154,7 @@ class RedisMarketClient:
             )
 
     def unselect_aggregator(self, aggregator_uuid):
-        """not needed ATM"""
-        pass
+        raise NotImplementedError("unselect_aggregator has not be implemented yet.")
 
     def _wait_and_consume_command_response(self, command_type):
         logging.debug(f"Command {command_type} waiting for response...")
