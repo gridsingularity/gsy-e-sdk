@@ -81,7 +81,7 @@ def get_request(endpoint, data, jwt_token):
 
 
 def request_response_returns_http_200(endpoint, resp):
-    if resp.status_code != 200:
+    if abs(resp.status_code % 200) > 100:
         logger.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
                      f"Response body: {resp.text}")
         return False
@@ -135,7 +135,6 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
                                     f"collaboration with UUID {collab_id}")
     return area_uuid
-
 
 
 def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
