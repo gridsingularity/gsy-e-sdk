@@ -1,12 +1,10 @@
 import logging
 import json
 import uuid
+
 from d3a_api_client.redis_client_base import RedisClient, Commands
 from d3a_interface.utils import wait_until_timeout_blocking
-
-
-class RedisAPIException(Exception):
-    pass
+from d3a_api_client.utils import RedisAPIException
 
 
 class RedisDeviceClient(RedisClient):
@@ -86,6 +84,9 @@ class RedisDeviceClient(RedisClient):
                  f'{self._channel_prefix}/events/trade',
                  f'{self._channel_prefix}/events/finish']
             )
+
+    def unselect_aggregator(self, aggregator_uuid):
+        raise NotImplementedError("unselect_aggregator hasn't been implemented yet.")
 
     @property
     def _channel_prefix(self):

@@ -18,6 +18,10 @@ class RestWebsocketAPIException(Exception):
     pass
 
 
+class RedisAPIException(Exception):
+    pass
+
+
 class RestCommunicationMixin:
 
     @property
@@ -54,7 +58,7 @@ def post_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    return json.loads(resp.text) if request_response_returns_http_200(endpoint, resp) else None
+    return json.loads(resp.text) if request_response_returns_http_2xx(endpoint, resp) else None
 
 
 def blocking_post_request(endpoint, data, jwt_token):
@@ -64,7 +68,7 @@ def blocking_post_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    return json.loads(resp.text) if request_response_returns_http_200(endpoint, resp) else None
+    return json.loads(resp.text) if request_response_returns_http_2xx(endpoint, resp) else None
 
 
 def get_request(endpoint, data, jwt_token):
@@ -73,16 +77,16 @@ def get_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    return request_response_returns_http_200(endpoint, resp)
+    return request_response_returns_http_2xx(endpoint, resp)
 
 
-def request_response_returns_http_200(endpoint, resp):
-    if resp.status_code != 200:
+def request_response_returns_http_2xx(endpoint, resp):
+    if 200 <= resp.status_code <= 299:
+        return True
+    else:
         logger.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
                      f"Response body: {resp.text}")
         return False
-    else:
-        return True
 
 
 def get_aggregator_prefix(domain_name, simulation_id):
@@ -96,7 +100,7 @@ def blocking_get_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    return json.loads(resp.json()) if request_response_returns_http_200(endpoint, resp) else None
+    return json.loads(resp.json()) if request_response_returns_http_2xx(endpoint, resp) else None
 
 
 def get_area_uuid_from_area_name(serialized_scenario, area_name):
@@ -131,7 +135,6 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
                                     f"collaboration with UUID {collab_id}")
     return area_uuid
-
 
 
 def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):

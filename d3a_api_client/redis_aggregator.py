@@ -52,10 +52,10 @@ class RedisAggregator:
         self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):
+        logging.debug(f"AGGREGATORS_BATCH_RESPONSE:: {message}")
         data = json.loads(message['data'])
         if self.aggregator_uuid != data['aggregator_uuid']:
             return
-        logging.info(f"Market Stats. Information: {message}")
         with self.lock:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
             self._transaction_id_response_buffer[data['transaction_id']] = data['responses']
@@ -139,7 +139,7 @@ class RedisAggregator:
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
-    def batch_command(self, batch_command_dict, is_blocking=False):
+    def batch_command(self, batch_command_dict, is_blocking=True):
         """
         batch_dict : dict where keys are device_uuids and values list of commands
         e.g.: batch_dict = {

@@ -2,7 +2,6 @@
 Test file for the market client. Depends on d3a test setup file strategy_tests.external_devices
 """
 import logging
-from time import sleep
 import traceback
 from pendulum import today
 
@@ -29,16 +28,15 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
             logging.debug(f"New market information {market_info}")
             assert set(market_info.keys()) == {'status', 'event', 'market_info'}
             self.current_time = market_info['market_info']['start_time']
-            self.updated_fee = self.grid_fees(self.fee_profile[self.current_time])
+            expected_grid_fee = self.fee_profile[self.current_time]
+            self.updated_fee = self.grid_fees(expected_grid_fee)
             assert set(self.updated_fee.keys()) == \
-                   {'status', 'command', 'market_fee_const', 'transaction_id'}
+                   {'transaction_id', 'area_uuid', 'market_fee_const', 'status', 'command'}
             logging.debug(f"updated_fee: {self.updated_fee}")
+            assert float(self.updated_fee["market_fee_const"]) == expected_grid_fee
             self.list_dso_stats = self.list_dso_market_stats([self.current_time])
             assert set(self.list_dso_stats.keys()) == \
-                   {'status', 'command', 'market_stats', 'fee_type', 'market_fee_const', 'market_fee_percent', 'transaction_id'}
-            assert float(self.list_dso_stats['market_fee_const']) == \
-                   self.fee_profile[self.current_time] == \
-                   float(self.updated_fee['market_fee_const'])
+                   {'status', 'transaction_id', 'market_stats', 'command', 'area_uuid'}
 
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
