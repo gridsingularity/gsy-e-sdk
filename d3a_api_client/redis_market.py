@@ -6,7 +6,7 @@ from slugify import slugify
 from redis import StrictRedis
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_interface.utils import wait_until_timeout_blocking
+from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import RedisAPIException
 
@@ -31,7 +31,7 @@ class RedisMarketClient:
             raise RedisAPIException(f'API is already registered to the market.')
         data = {"name": self.area_slug, "transaction_id": str(uuid.uuid4())}
         self._blocking_command_responses["register"] = data
-        self.redis_db.publish(f'{self.area_slug}/register_participant', json.dumps(data))
+        self.redis_db.publish(f'{self._channel_prefix}/register_participant', json.dumps(data))
 
         if is_blocking:
             try:
@@ -50,7 +50,7 @@ class RedisMarketClient:
 
         data = {"name": self.area_slug, "transaction_id": str(uuid.uuid4())}
         self._blocking_command_responses["unregister"] = data
-        self.redis_db.publish(f'{self.area_slug}/unregister_participant', json.dumps(data))
+        self.redis_db.publish(f'{self._channel_prefix}/unregister_participant', json.dumps(data))
 
         if is_blocking:
             try:
@@ -111,7 +111,7 @@ class RedisMarketClient:
         self.is_active = False
 
     def _check_buffer_message_matching_command_and_id(self, message):
-        if "transaction_id" in message and message["transaction_id"] is not None:
+        if key_in_dict_and_not_none(message, "transaction_id"):
             transaction_id = message["transaction_id"]
             if not any(command in ["register", "unregister"] and "transaction_id" in data and
                        data["transaction_id"] == transaction_id
@@ -154,7 +154,7 @@ class RedisMarketClient:
             )
 
     def unselect_aggregator(self, aggregator_uuid):
-        raise NotImplementedError("unselect_aggregator has not be implemented yet.")
+        raise NotImplementedError("unselect_aggregator hasn't been implemented yet.")
 
     def _wait_and_consume_command_response(self, command_type):
         logging.debug(f"Command {command_type} waiting for response...")
@@ -165,22 +165,22 @@ class RedisMarketClient:
 
     def list_market_stats(self, market_slot_list):
         logging.debug(f"Client tries to read market_stats.")
-        self.redis_db.publish(f"{self.area_slug}/market_stats", json.dumps({"market_slots": market_slot_list}))
+        self.redis_db.publish(f"{self._channel_prefix}/market_stats", json.dumps({"market_slots": market_slot_list}))
         return self._wait_and_consume_command_response("market_stats")
 
     def grid_fees(self, fee_cents_kwh):
         logging.debug(f"Client tries to change grid fees.")
-        self.redis_db.publish(f"{self.area_slug}/grid_fees", json.dumps({"fee_const": fee_cents_kwh}))
+        self.redis_db.publish(f"{self._channel_prefix}/grid_fees", json.dumps({"fee_const": fee_cents_kwh}))
         return self._wait_and_consume_command_response("grid_fees")
 
     def change_grid_fees_percent(self, fee_percent):
         logging.debug(f"Client tries to change grid fees.")
-        self.redis_db.publish(f"{self.area_slug}/grid_fees", json.dumps({"fee_percent": fee_percent}))
+        self.redis_db.publish(f"{self._channel_prefix}/grid_fees", json.dumps({"fee_percent": fee_percent}))
         return self._wait_and_consume_command_response("grid_fees")
 
     def list_dso_market_stats(self, market_slot_list):
         logging.debug(f"Client tries to read dso_market_stats.")
-        self.redis_db.publish(f"{self.area_slug}/dso_market_stats", json.dumps({"market_slots": market_slot_list}))
+        self.redis_db.publish(f"{self._channel_prefix}/dso_market_stats", json.dumps({"market_slots": market_slot_list}))
         return self._wait_and_consume_command_response("dso_market_stats")
 
     def _on_market_cycle(self, msg):

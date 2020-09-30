@@ -7,7 +7,7 @@ from enum import Enum
 from functools import wraps
 from redis import StrictRedis
 
-from d3a_interface.utils import wait_until_timeout_blocking
+from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
@@ -294,7 +294,7 @@ class RedisClient(APIClientInterface):
         self.executor.submit(executor_function)
 
     def _check_buffer_message_matching_command_and_id(self, message):
-        if "transaction_id" in message and message["transaction_id"] is not None:
+        if key_in_dict_and_not_none(message, "transaction_id"):
             transaction_id = message["transaction_id"]
             if not any(command in ["register", "unregister"] and "transaction_id" in data and
                        data["transaction_id"] == transaction_id

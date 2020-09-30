@@ -86,7 +86,7 @@ class RedisDeviceClient(RedisClient):
             )
 
     def unselect_aggregator(self, aggregator_uuid):
-        raise NotImplementedError("unselect_aggregator has not be implemented yet.")
+        raise NotImplementedError("unselect_aggregator hasn't been implemented yet.")
 
     @property
     def _channel_prefix(self):
