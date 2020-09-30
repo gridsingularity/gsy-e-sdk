@@ -52,6 +52,7 @@ class RedisAggregator:
         self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):
+        logging.debug(f"AGGREGATORS_BATCH_RESPONSE:: {message}")
         data = json.loads(message['data'])
         if self.aggregator_uuid != data['aggregator_uuid']:
             return

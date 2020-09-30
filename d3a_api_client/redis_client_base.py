@@ -302,7 +302,7 @@ class RedisClient(APIClientInterface):
                 raise RedisAPIException("There is no matching command response in _blocking_command_responses.")
         else:
             raise RedisAPIException(
-                "the answer message does not contain a valid 'transaction_id' member.")
+                "The answer message does not contain a valid 'transaction_id' member.")
 
     def on_register(self, registration_info):
         pass

@@ -119,7 +119,7 @@ class RedisMarketClient:
                 raise RedisAPIException("There is no matching command response in _blocking_command_responses.")
         else:
             raise RedisAPIException(
-                "the answer message does not contain a valid 'transaction_id' member.")
+                "The answer message does not contain a valid 'transaction_id' member.")
 
     def select_aggregator(self, aggregator_uuid, is_blocking=True, unsubscribe_from_device_events=True):
         if not self.area_uuid:
@@ -139,7 +139,7 @@ class RedisMarketClient:
                 wait_until_timeout_blocking(
                     lambda: self._check_transaction_id_cached_out(transaction_id)
                 )
-                logging.warning(f"Market: {self.area_slug} has selected "
+                logging.warning(f"MARKET: {self.area_slug} has selected "
                                 f"AGGREGATOR: {aggregator_uuid}")
                 return transaction_id
             except AssertionError:
