@@ -24,7 +24,7 @@ class AutoAggregator(RedisAggregator):
                 continue
             if key_in_dict_and_not_none(device_event, "grid_stats_tree"):
                 json_grid_tree = json.dumps(device_event["grid_stats_tree"], indent=2)
-                print(json_grid_tree)
+                logging.warning(json_grid_tree)
             if "available_energy_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["available_energy_kWh"] > 0.0:
                 batch_commands[device_event["area_uuid"]] = [
