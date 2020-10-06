@@ -1,9 +1,11 @@
 import logging
+import json
 from time import sleep
 from pendulum import today
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_interface.constants_limits import DATE_TIME_FORMAT
+from d3a_interface.utils import key_in_dict_and_not_none
 from d3a_api_client.redis_market import RedisMarketClient
 
 
@@ -18,6 +20,11 @@ class AutoAggregator(RedisAggregator):
         batch_commands = {}
 
         for device_event in market_info["content"]:
+            if "device_info" not in device_event or device_event["device_info"] is None:
+                continue
+            if key_in_dict_and_not_none(device_event, "grid_stats_tree"):
+                json_grid_tree = json.dumps(device_event["grid_stats_tree"], indent=2)
+                logging.warning(json_grid_tree)
             if "available_energy_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["available_energy_kWh"] > 0.0:
                 batch_commands[device_event["area_uuid"]] = [
