@@ -58,7 +58,7 @@ class RedisAggregator:
             return
         with self.lock:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
-            self._transaction_id_response_buffer[data['transaction_id']] = data['responses']
+            self._transaction_id_response_buffer[data['transaction_id']] = data
 
         def executor_function():
             self.on_batch_response(data['responses'])
