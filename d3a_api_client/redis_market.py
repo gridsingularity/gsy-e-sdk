@@ -191,9 +191,7 @@ class RedisMarketClient:
             try:
                 self.on_market_cycle(message)
             except Exception as e:
-                logging.error(f"on_market_cycle raised exception "
-                              f"(market_uuid: {message['market_info']['id']}): {e}."
-                              f" \n Traceback: {traceback.format_exc()}")
+                logging.error(f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def on_market_cycle(self, market_info):
@@ -207,9 +205,7 @@ class RedisMarketClient:
             try:
                 self.on_finish(message)
             except Exception as e:
-                logging.error(f"on_finish raised exception "
-                              f"(market_uuid: {message['market_info']['id']}): {e}."
-                              f" \n Traceback: {traceback.format_exc()}")
+                logging.error(f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def on_finish(self, finish_info):

@@ -252,8 +252,7 @@ class RedisClient(APIClientInterface):
             try:
                 self.on_market_cycle(message)
             except Exception as e:
-                logging.error(f"_on_market_cycle raised exception (device_uuid: {message['area_uuid']}): {e}."
-                              f" \n Traceback: {traceback.format_exc()}")
+                logging.error(f"_on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def _on_tick(self, msg):
@@ -264,8 +263,7 @@ class RedisClient(APIClientInterface):
             try:
                 self.on_tick(message)
             except Exception as e:
-                logging.error(f"on_tick raised exception (device_uuid: {message['area_uuid']}): {e}."
-                              f" \n Traceback: {traceback.format_exc()}")
+                logging.error(f"on_tick raised exception: {e}. \n Traceback: {traceback.format_exc()}")
 
         self.executor.submit(executor_function)
 
@@ -277,8 +275,7 @@ class RedisClient(APIClientInterface):
             try:
                 self.on_trade(message)
             except Exception as e:
-                logging.error(f"on_trade raised exception (device_uuid: {message['area_uuid']}): {e}."
-                              f" \n Traceback: {traceback.format_exc()}")
+                logging.error(f"on_trade raised exception: {e}. \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def _on_finish(self, msg):
@@ -289,8 +286,7 @@ class RedisClient(APIClientInterface):
             try:
                 self.on_finish(message)
             except Exception as e:
-                logging.error(f"on_finish raised exception (device_uuid: {message['area_uuid']}): {e}."
-                              f" \n Traceback: {traceback.format_exc()}")
+                logging.error(f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
         self.executor.submit(executor_function)
 
     def _check_buffer_message_matching_command_and_id(self, message):
