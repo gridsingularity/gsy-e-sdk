@@ -6,7 +6,6 @@ from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketT
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, blocking_post_request, get_aggregator_prefix
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_interface.area_validator import validate_area
 
 
 root_logger = logging.getLogger()
