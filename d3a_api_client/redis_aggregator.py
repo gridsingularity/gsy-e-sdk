@@ -30,8 +30,8 @@ class RedisAggregator:
         self._transaction_id_buffer = []
         self._transaction_id_response_buffer = {}
         self.device_uuid_list = []
-        self._subscribe_to_response_channels()
         self._connect_to_simulation(is_blocking=True)
+        self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.lock = Lock()
 
@@ -41,10 +41,10 @@ class RedisAggregator:
             self.aggregator_uuid = aggr_id
 
     def _subscribe_to_response_channels(self):
-        event_channel = f'external-aggregator/*/*/events/all'
+        event_channel = f'external-aggregator/*/{self.aggregator_uuid}/events/all'
         channel_dict = {"aggregator_response": self._aggregator_response_callback,
                         event_channel: self._events_callback_dict,
-                        f"external-aggregator//*/response/batch_commands":
+                        f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
         }
 
