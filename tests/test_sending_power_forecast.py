@@ -16,11 +16,7 @@ class AutoSendForecast(RestDeviceClient):
 
     def on_market_cycle(self, market_info):
         """
-        Places a bid or an offer whenever a new market is created. The amount of energy
-        for the bid/offer depends on the available energy of the PV, or on the required
-        energy of the load.
-        :param market_info: Incoming message containing the newly-created market info
-        :return: None
+        Sends increasing energy forecast to pv and load devices
         """
         root_logger.debug(f"New market information {market_info}")
         self.forecast += 50
