@@ -163,9 +163,9 @@ class RedisMarketClient:
         logging.debug(f"Command {command_type} got response {command_output}")
         return command_output
 
-    def list_market_stats(self, market_slot_list):
-        logging.debug(f"Client tries to read market_stats.")
-        self.redis_db.publish(f"{self._channel_prefix}/market_stats", json.dumps({"market_slots": market_slot_list}))
+    def last_market_stats(self):
+        logging.debug(f"Client tries to last_market_stats.")
+        self.redis_db.publish(f"{self._channel_prefix}/market_stats", json.dumps({}))
         return self._wait_and_consume_command_response("market_stats")
 
     def grid_fees(self, fee_cents_kwh):
