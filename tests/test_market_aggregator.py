@@ -27,11 +27,12 @@ class TestAggregator(Aggregator):
         logging.info(f"{market_info}")
         for area_event in market_info["content"]:
             area_uuid = area_event["area_uuid"]
+            if area_uuid is None:
+                continue
             if area_uuid not in batch_commands:
                 batch_commands[area_uuid] = []
-            market_slot_list = [area_event["start_time"]]
             batch_commands[area_uuid].append({"type": "market_stats",
-                                              "data": {"market_slots": market_slot_list}})
+                                              "data": {}})
             batch_commands[area_uuid].append({"type": "grid_fees",
                                               "data": {"fee_const": self.fee_cents_per_kwh}})
         if batch_commands:

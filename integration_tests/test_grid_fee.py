@@ -17,7 +17,7 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
         self.dso_info = {}
         self.status = "running"
         self.fee_profile = {today().add(minutes=i * 60).format(DATE_TIME_FORMAT): round(i / 10, 3)
-                            for i in range(24)}
+                            for i in range(25)}
         self.current_time = None
         self.updated_fee = None
         self.list_dso_stats = None
@@ -34,7 +34,7 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
                    {'transaction_id', 'area_uuid', 'market_fee_const', 'status', 'command'}
             logging.debug(f"updated_fee: {self.updated_fee}")
             assert float(self.updated_fee["market_fee_const"]) == expected_grid_fee
-            self.list_dso_stats = self.list_dso_market_stats([self.current_time])
+            self.list_dso_stats = self.last_market_dso_stats()
             assert set(self.list_dso_stats.keys()) == \
                    {'status', 'transaction_id', 'market_stats', 'command', 'area_uuid'}
 
@@ -54,6 +54,7 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
 # Infinite loop in order to leave the client running on the background
 # placing bids and offers on every market cycle.
 # while True:
+#     from time import sleep
 #     sleep(0.5)
 #     if market.status == "finished":
 #         break
