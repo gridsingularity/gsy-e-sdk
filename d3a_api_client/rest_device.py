@@ -56,6 +56,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         if posted:
             return_value = self.dispatcher.wait_for_command_response('register', transaction_id)
             self.registered = return_value["registered"]
+            # print("registered")
             return return_value
 
     @logging_decorator('unregister')
@@ -80,19 +81,12 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
                                           "device_uuid": self.device_id}, self.jwt_token)
         self.active_aggregator = None
 
-    @logging_decorator('pv_power_forecast')
-    def set_pv_power_forecast(self, pv_power_forecast):
-        transaction_id, posted = self._post_request('set_pv_power_forecast',
-                                                    {"pv_power_forecast": pv_power_forecast})
+    @logging_decorator('set_power_forecast')
+    def set_power_forecast(self, pv_power_forecast_W):
+        transaction_id, posted = self._post_request('set_power_forecast',
+                                                    {"power_forecast": pv_power_forecast_W})
         if posted:
-            return self.dispatcher.wait_for_command_response('set_pv_power_forecast', transaction_id)
-
-    @logging_decorator('set_load_power_forecast')
-    def set_load_power_forecast(self, pv_power_forecast):
-        transaction_id, posted = self._post_request('set_load_power_forecast',
-                                                    {"load_power_forecast": pv_power_forecast})
-        if posted:
-            return self.dispatcher.wait_for_command_response('set_load_power_forecast', transaction_id)
+            return self.dispatcher.wait_for_command_response('set_power_forecast', transaction_id)
 
     @logging_decorator('offer')
     def offer_energy(self, energy, price):

@@ -31,6 +31,7 @@ class RestCommunicationMixin:
     def _post_request(self, endpoint_suffix, data):
         endpoint = f"{self._url_prefix}/{endpoint_suffix}/"
         data["transaction_id"] = str(uuid.uuid4())
+        # print(endpoint, data)
         return data["transaction_id"], post_request(endpoint, data, self.jwt_token)
 
     def _get_request(self, endpoint_suffix, data):
