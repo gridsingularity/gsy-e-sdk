@@ -56,7 +56,6 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         if posted:
             return_value = self.dispatcher.wait_for_command_response('register', transaction_id)
             self.registered = return_value["registered"]
-            # print("registered")
             return return_value
 
     @logging_decorator('unregister')
