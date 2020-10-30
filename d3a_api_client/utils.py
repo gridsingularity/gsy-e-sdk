@@ -169,3 +169,35 @@ def logging_decorator(command_name):
             return return_value
         return wrapped
     return decorator
+
+
+def list_running_canary_networks_and_devices_with_live_data(domain_name):
+    jwt_key = retrieve_jwt_key_from_server(domain_name)
+    if jwt_key is None:
+        return
+    from sgqlc.endpoint.http import HTTPEndpoint
+
+    url = f"{domain_name}/graphql/"
+    headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'}
+
+    query = '''
+    query {
+      listCanaryNetworks {
+        configurations {
+          uuid
+          scenarioData {
+            forecastStreamAreaMapping
+          }
+        }
+      }
+    }
+    '''
+
+    endpoint = HTTPEndpoint(url, headers)
+    data = endpoint(query=query)
+    print(data)
+
+    return {
+        cn["uuid"]: json.loads(cn["scenarioData"]["forecastStreamAreaMapping"])
+        for cn in data["data"]["listCanaryNetworks"]["configurations"]
+    }
