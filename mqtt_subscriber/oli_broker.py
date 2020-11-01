@@ -1,8 +1,12 @@
 import os
+import logging
+import traceback
 import paho.mqtt.client as mqtt
 
 
 MQTT_PORT = 1883
+MINUTES_IN_HOUR = 60
+MEASUREMENT_PERIOD_MINUTES = 15
 
 
 class MQTTConnection:
@@ -13,22 +17,26 @@ class MQTTConnection:
         self.client.on_message = self.on_message
 
     def on_connect(self, client, userdata, flags, rc):
-        print("Connected with result code "+str(rc))
+        logging.debug(f"Connected with result code {str(rc)}")
 
         for device_name in self.api_clients:
             client.subscribe(f"{device_name}/activeEnergy/*")
 
     def on_message(self, client, userdata, msg):
-        print(msg.topic+" "+str(msg.payload))
+        logging.debug(f"{msg.topic} {str(msg.payload)}")
 
         try:
             device_name = msg.topic.split("/activeEnergy/")[0]
-            self.api_clients[device_name].set_power_forecast(msg.payload["value"])
+            energy = msg.payload["value"]
+            power = energy * (MINUTES_IN_HOUR / MEASUREMENT_PERIOD_MINUTES)
+            self.api_clients[device_name].set_power_forecast(power)
         except Exception as e:
-            print(e)
+            logging.error(f"API Client failed to send power forecasts to d3a with error {e}. "
+                          f"Resuming operation.")
+            logging.error(f"{traceback.format_exc()}")
 
     def run_forever(self):
-        print("Creating MQTT client")
+        logging.debug("Creating MQTT client")
         username = os.environ["MQTT_USERNAME"]
         password = os.environ["MQTT_PASSWORD"]
         domain_name = os.environ["MQTT_DOMAIN_NAME"]

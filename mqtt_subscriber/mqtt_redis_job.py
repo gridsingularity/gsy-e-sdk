@@ -1,4 +1,5 @@
 import logging
+import traceback
 from os import environ, getpid
 from datetime import datetime
 from redis import StrictRedis
@@ -38,7 +39,11 @@ def start(configuration_id, live_data_device_names):
 
     # Connect to the MQTT broker
     mqtt_connection = MQTTConnection(api_clients)
-    mqtt_connection.run_forever()
+    try:
+        mqtt_connection.run_forever()
+    except Exception as e:
+        logging.error(f"MQTT Subscriber failed with error {e}")
+        logging.error(traceback.format_exc())
 
 
 def connect_to_running_canary_networks():
