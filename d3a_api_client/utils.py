@@ -195,7 +195,6 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
 
     endpoint = HTTPEndpoint(url, headers)
     data = endpoint(query=query)
-    print(data)
 
     return {
         cn["uuid"]: json.loads(cn["scenarioData"]["forecastStreamAreaMapping"])

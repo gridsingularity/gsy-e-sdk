@@ -28,17 +28,17 @@ def start(configuration_id, live_data_device_names):
         "autoregister": True
     }
 
-    api_clients = {}
+    mqtt_rest_api_clients_mapping = {}
 
     # Construct the api client
     for device_name in live_data_device_names:
         if device_name in allowed_device_names:
             device_uuid = get_area_uuid_from_area_name_and_collaboration_id(
                 device_args["simulation_id"], device_name, device_args["domain_name"])
-            api_clients[device_name] = RestDeviceClient(device_id=device_uuid, **device_args)
+            mqtt_rest_api_clients_mapping[device_name] = RestDeviceClient(device_id=device_uuid, **device_args)
 
     # Connect to the MQTT broker
-    mqtt_connection = MQTTConnection(api_clients)
+    mqtt_connection = MQTTConnection(mqtt_rest_api_clients_mapping)
     try:
         mqtt_connection.run_forever()
     except Exception as e:
@@ -53,9 +53,9 @@ def connect_to_running_canary_networks():
         return
 
     redis_conn = StrictRedis.from_url(environ.get('REDIS_URL', 'redis://localhost'), retry_on_timeout=True)
-    q = Queue(name="canary_mqtt", connection=redis_conn)
+    queue = Queue(name="canary_mqtt", connection=redis_conn)
     for config_uuid, live_data_devices in cns.items():
-        q.enqueue("mqtt_redis_job.start", config_uuid, live_data_devices)
+        queue.enqueue("mqtt_redis_job.start", config_uuid, live_data_devices)
 
 
 def main():
