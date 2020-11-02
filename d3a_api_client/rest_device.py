@@ -80,6 +80,13 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
                                           "device_uuid": self.device_id}, self.jwt_token)
         self.active_aggregator = None
 
+    @logging_decorator('set_power_forecast')
+    def set_power_forecast(self, pv_power_forecast_W):
+        transaction_id, posted = self._post_request('set_power_forecast',
+                                                    {"power_forecast": pv_power_forecast_W})
+        if posted:
+            return self.dispatcher.wait_for_command_response('set_power_forecast', transaction_id)
+
     @logging_decorator('offer')
     def offer_energy(self, energy, price):
         transaction_id, posted = self._post_request('offer', {"energy": energy, "price": price})
