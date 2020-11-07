@@ -141,7 +141,6 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
     jwt_key = retrieve_jwt_key_from_server(domain_name)
     from sgqlc.endpoint.http import HTTPEndpoint
 
-
     url = f"{domain_name}/graphql/"
     headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'}
 
@@ -185,8 +184,9 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
       listCanaryNetworks {
         configurations {
           uuid
-          scenarioData {
-            forecastStreamAreaMapping
+          resultsStatus
+          scenarioData { 
+            forecastStreamAreaMapping 
           }
         }
       }
@@ -197,6 +197,7 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     data = endpoint(query=query)
 
     return {
-        cn["uuid"]: json.loads(cn["scenarioData"]["forecastStreamAreaMapping"])
+        cn["uuid"]: cn["scenarioData"]["forecastStreamAreaMapping"]
         for cn in data["data"]["listCanaryNetworks"]["configurations"]
+        if cn["resultsStatus"] == "running"
     }

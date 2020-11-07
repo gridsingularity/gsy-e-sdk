@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import traceback
 import paho.mqtt.client as mqtt
@@ -17,17 +18,18 @@ class MQTTConnection:
         self.client.on_message = self.on_message
 
     def on_connect(self, client, userdata, flags, rc):
-        logging.debug(f"Connected with result code {str(rc)}")
+        logging.info(f"Connected with result code {str(rc)}")
 
         for device_name in self.api_clients:
-            client.subscribe(f"{device_name}/activeEnergy/*")
+            client.subscribe(f"{device_name}/activeEnergy/#")
 
     def on_message(self, client, userdata, msg):
-        logging.debug(f"{msg.topic} {str(msg.payload)}")
-
+        logging.info(f"Received mqtt message {msg.topic} {str(msg.payload)}")
         try:
+            payload = json.loads(msg.payload.decode("utf-8"))
+
             device_name = msg.topic.split("/activeEnergy/")[0]
-            energy = msg.payload["value"]
+            energy = payload["value"]
             power = energy * (MINUTES_IN_HOUR / MEASUREMENT_PERIOD_MINUTES)
             self.api_clients[device_name].set_power_forecast(power)
         except Exception as e:
@@ -36,7 +38,7 @@ class MQTTConnection:
             logging.error(f"{traceback.format_exc()}")
 
     def run_forever(self):
-        logging.debug("Creating MQTT client")
+        logging.info("Creating MQTT client")
         username = os.environ["MQTT_USERNAME"]
         password = os.environ["MQTT_PASSWORD"]
         domain_name = os.environ["MQTT_DOMAIN_NAME"]
