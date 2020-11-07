@@ -1,7 +1,9 @@
 pip-tools
+paho-mqtt
 websockets
 redis
 requests
+rq
 tox
 fabric3
 behave
