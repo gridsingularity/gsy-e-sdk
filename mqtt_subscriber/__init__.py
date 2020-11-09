@@ -29,6 +29,11 @@ def generate_topic_api_client_args_mapping():
     logging.info(f"CN mapping {cn_mapping}")
 
     for configuration_id, live_data_device_mapping in cn_mapping.items():
+
+        if not live_data_device_mapping:
+            logging.info(f"No live data for CN {configuration_id}.")
+            continue
+
         live_data_device_mapping = json.loads(live_data_device_mapping)
 
         api_client_args = {
