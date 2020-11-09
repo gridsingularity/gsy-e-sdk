@@ -14,10 +14,6 @@ class AreaNotFoundException(Exception):
     pass
 
 
-class RestWebsocketAPIException(Exception):
-    pass
-
-
 class RedisAPIException(Exception):
     pass
 
