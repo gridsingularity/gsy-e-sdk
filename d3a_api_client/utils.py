@@ -192,7 +192,7 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     endpoint = HTTPEndpoint(url, headers)
     data = endpoint(query=query)
 
-    logging.info(f"Received Canary Network data: {data}")
+    logging.debug(f"Received Canary Network data: {data}")
 
     return {
         cn["uuid"]: cn["scenarioData"]["forecastStreamAreaMapping"]

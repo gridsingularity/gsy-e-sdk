@@ -26,8 +26,6 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.domain_name = domain_name
         if sim_api_domain_name is None:
             sim_api_domain_name = self.domain_name
-        else:
-            sim_api_domain_name = sim_api_domain_name
         self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
         self.websockets_domain_name = websockets_domain_name
         self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)

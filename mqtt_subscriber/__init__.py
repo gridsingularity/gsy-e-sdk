@@ -30,7 +30,7 @@ def generate_topic_api_client_args_mapping():
 
     topic_api_client_mapping = {v: [] for _, v in allowed_devices_name_mapping.items()}
 
-    logging.info(f"CN mapping {cn_mapping}")
+    logging.info(f"Canary Networks mapping {cn_mapping}")
 
     for configuration_id, live_data_device_mapping in cn_mapping.items():
 
