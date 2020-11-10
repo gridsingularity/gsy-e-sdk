@@ -19,17 +19,20 @@ root_logger.setLevel(logging.INFO)
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def __init__(self, simulation_id, device_id, domain_name,
-                 websockets_domain_name, autoregister=False, start_websocket=True):
+                 websockets_domain_name, autoregister=False, start_websocket=True,
+                 sim_api_domain_name=None):
         self.simulation_id = simulation_id
         self.device_id = device_id
         self.domain_name = domain_name
-        self.jwt_token = retrieve_jwt_key_from_server(domain_name)
+        if sim_api_domain_name is None:
+            sim_api_domain_name = self.domain_name
+        self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
         self.websockets_domain_name = websockets_domain_name
         self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
         self.active_aggregator = None
         self.lock = Lock()
         self.jwt_token_refresh = RepeatingTimer(
-            JWT_TOKEN_EXPIRY_IN_SECS - 30, self.refresh_jwt_token, [domain_name]
+            JWT_TOKEN_EXPIRY_IN_SECS - 30, self.refresh_jwt_token, [sim_api_domain_name]
         )
         self.jwt_token_refresh.start()
         if start_websocket:
