@@ -27,14 +27,14 @@ class WebsocketMessageReceiver:
         elif "command" in message:
             self.command_response_buffer.append(message)
 
-    def wait_for_command_response(self, command_name, transaction_id):
+    def wait_for_command_response(self, command_name, transaction_id, timeout=120):
         def check_if_command_response_received():
             return any("command" in c and c["command"] == command_name and
                        "transaction_id" in c and c["transaction_id"] == transaction_id
                        for c in self.command_response_buffer)
 
         logging.debug(f"Command {command_name} waiting for response...")
-        wait_until_timeout_blocking(check_if_command_response_received, timeout=120)
+        wait_until_timeout_blocking(check_if_command_response_received, timeout=timeout)
         response = next(c
                         for c in self.command_response_buffer
                         if "command" in c and c["command"] == command_name and
