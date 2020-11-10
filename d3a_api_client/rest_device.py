@@ -15,6 +15,8 @@ from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
+REGISTER_COMMAND_TIMEOUT = 15*60
+
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
@@ -57,7 +59,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def register(self, is_blocking=True):
         transaction_id, posted = self._post_request('register', {})
         if posted:
-            return_value = self.dispatcher.wait_for_command_response('register', transaction_id)
+            return_value = self.dispatcher.wait_for_command_response(
+                'register', transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
             self.registered = return_value["registered"]
             return return_value
 
@@ -65,7 +68,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def unregister(self, is_blocking):
         transaction_id, posted = self._post_request('unregister', {})
         if posted:
-            return_value = self.dispatcher.wait_for_command_response('unregister', transaction_id)
+            return_value = self.dispatcher.wait_for_command_response(
+                'unregister', transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
             self.registered = False
             return return_value
 
