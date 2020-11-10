@@ -22,7 +22,11 @@ allowed_devices_name_mapping = {
 
 
 def generate_topic_api_client_args_mapping():
-    cn_mapping = list_running_canary_networks_and_devices_with_live_data(environ["API_CLIENT_DOMAIN_NAME"])
+    sim_api_domain_name = environ["API_CLIENT_SIM_API_DOMAIN_NAME"]
+    external_api_domain_name = environ["API_CLIENT_DOMAIN_NAME"]
+    websocket_api_domain_name = environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
+
+    cn_mapping = list_running_canary_networks_and_devices_with_live_data(sim_api_domain_name)
 
     topic_api_client_mapping = {v: [] for _, v in allowed_devices_name_mapping.items()}
 
@@ -38,8 +42,9 @@ def generate_topic_api_client_args_mapping():
 
         api_client_args = {
             "simulation_id": configuration_id,
-            "domain_name": environ["API_CLIENT_DOMAIN_NAME"],
-            "websockets_domain_name": environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"],
+            "domain_name": external_api_domain_name,
+            "sim_api_domain_name": sim_api_domain_name,
+            "websockets_domain_name": websocket_api_domain_name,
             "autoregister": False,
             "start_websocket": False
         }
@@ -51,7 +56,7 @@ def generate_topic_api_client_args_mapping():
             continue
 
         name_uuid_mapping = \
-            get_area_uuid_and_name_mapping_from_simulation_id(configuration_id, environ["API_CLIENT_DOMAIN_NAME"])
+            get_area_uuid_and_name_mapping_from_simulation_id(configuration_id, sim_api_domain_name)
         # It is a prerequisite to have unique area names for this to work.
         uuid_name_mapping = {v: k for k, v in name_uuid_mapping.items()}
 
