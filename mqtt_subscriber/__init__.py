@@ -17,7 +17,8 @@ allowed_devices_name_mapping = {
     "OLI_61": "WIRCON/OLI_61/PV/activeEnergy/Supply",
     "OLI_26": "WIRCON/OLI_26/PV/activeEnergy/Supply",
     "OLI_24": "WIRCON/OLI_24/PV/activeEnergy/Supply",
-    "OLI_23": "WIRCON/OLI_23/PV/activeEnergy/Supply"
+    "OLI_23": "WIRCON/OLI_23/PV/activeEnergy/Supply",
+    "OLI_IDS_3": "EXA/OLI_IDS_3/WPP/activeEnergy/Supply"
 }
 
 
