@@ -4,6 +4,7 @@
 - [D3A API Client](#d3a-api-client)
   * [Overview](#overview)
   * [Installation Instructions](#installation-instructions)
+  * [Authentication for REST API](#authentication-for-rest-api)
   * [How to use the Client](#how-to-use-the-client)
     + [Events](#events)
     + [Trading API](#trading-api)
@@ -31,8 +32,22 @@ Installation of d3a-api-client using pip:
 ```
 pip install git+https://github.com/gridsingularity/d3a-api-client.git
 ```
-
 ---
+
+## Authentication for REST API
+Authentication is done implicitly: The d3a-client is reading the following two variable from the environment
+and requests a auth token from the D3A API which will be reused internally for all communication.
+```
+API_CLIENT_USERNAME
+API_CLIENT_PASSWORD
+```
+On linux bash shell one can set the environmental variables by:
+```
+export API_CLIENT_USERNAME=<username>
+export API_CLIENT_PASSWORD=<password>
+```
+---
+
 ## How to use the Client
 In the following an overview of the functionality of the client and the connection to the D3A is given.
 Code examples can be found under the `tests/` folder.
