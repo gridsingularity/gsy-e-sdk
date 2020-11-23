@@ -4,7 +4,13 @@ import threading
 import traceback
 import websockets
 import json
+from time import time
 from d3a_interface.utils import wait_until_timeout_blocking
+
+
+WEBSOCKET_MAX_CONNECTION_RETRIES = 5
+WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 5
+WEBSOCKET_ERROR_THRESHOLD_SECONDS = 30
 
 
 class WebsocketMessageReceiver:
@@ -55,6 +61,21 @@ async def websocket_coroutine(websocket_uri, websocket_headers, message_dispatch
                                 f"traceback:{traceback.format_exc()}")
 
 
+async def retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=0):
+    ws_connect_time = time()
+    try:
+        await websocket_coroutine(websocket_uri, websocket_headers, message_dispatcher)
+    except Exception as e:
+        logging.warning(f"Connection failed, trying to reconnect.")
+        ws_error_time = time()
+        if ws_error_time - ws_connect_time > WEBSOCKET_ERROR_THRESHOLD_SECONDS:
+            retry_count = 0
+        await asyncio.sleep(WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS)
+        if retry_count >= WEBSOCKET_MAX_CONNECTION_RETRIES:
+            raise e
+        await retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=retry_count+1)
+
+
 class WebsocketThread(threading.Thread):
 
     def __init__(self, sim_id, area_uuid, jwt_token, domain_name, dispatcher, *args, **kwargs):
@@ -72,6 +93,6 @@ class WebsocketThread(threading.Thread):
         asyncio.set_event_loop(event_loop)
         websockets_uri = f"{self.domain_name}/{self.sim_id}/{self.area_uuid}/"
         event_loop.run_until_complete(
-            websocket_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
+            retry_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
         )
         event_loop.close()
