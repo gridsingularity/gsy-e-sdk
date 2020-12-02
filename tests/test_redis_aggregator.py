@@ -43,7 +43,7 @@ class AutoAggregator(RedisAggregator):
                       "price": 30,
                       "energy": device_event["device_info"]["energy_requirement_kWh"] / 2},
                      {"type": "list_bids"},
-                     {"type": "list_market_stats", "data": {"market_slots": marker_list}}
+                     {"type": "last_market_stats", "data": {}}
                      ]
 
         if batch_commands:
@@ -86,7 +86,7 @@ logging.info(f"SELECTED: {selected}")
 redis_market = RedisMarketClient('house-2')
 market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
 
-list_market_stats_results = redis_market.list_market_stats([market_slot_string])
+last_market_stats_results = redis_market.last_market_stats()
 
 while not aggregator.is_finished:
     sleep(0.5)

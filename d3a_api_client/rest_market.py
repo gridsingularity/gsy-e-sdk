@@ -44,8 +44,8 @@ class RestMarketClient(RestCommunicationMixin):
         self.active_aggregator = None
 
     @logging_decorator('market_stats')
-    def list_market_stats(self, selected_markets):
-        transaction_id, posted = self._get_request('market-stats', {"market_slots": selected_markets})
+    def last_market_stats(self):
+        transaction_id, posted = self._get_request('market-stats', {})
         if posted:
             return self.dispatcher.wait_for_command_response('market_stats', transaction_id)
 

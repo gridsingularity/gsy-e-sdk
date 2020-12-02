@@ -115,7 +115,7 @@ area_uuid = get_area_uuid_from_area_name_and_collaboration_id(
 
 rest_market = RestMarketClient(simulation_id, area_uuid, domain_name, websocket_domain_name)
 market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
-list_market_stats_results = rest_market.list_market_stats([market_slot_string])
+last_market_stats = rest_market.last_market_stats()
 
 while not aggr.is_finished:
     sleep(0.5)
