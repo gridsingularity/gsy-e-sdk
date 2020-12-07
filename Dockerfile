@@ -4,7 +4,7 @@ ADD . /app
 
 WORKDIR /app
 
-RUN pip install --upgrade pip
+RUN easy_install pip==20.2.4
 RUN pip install -e .
 
 ENTRYPOINT ["python"]
