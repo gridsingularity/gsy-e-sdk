@@ -4,7 +4,9 @@ ADD . /app
 
 WORKDIR /app
 
-RUN easy_install pip==20.2.4
+# TODO remove in the frame of D3ASIM-3093:
+RUN pip install -U pip==20.2.4
+
 RUN pip install -e .
 
 ENTRYPOINT ["python"]
