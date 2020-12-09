@@ -20,7 +20,7 @@ class RestMarketClient(RestCommunicationMixin):
         self.device_id = area_id
         self.domain_name = domain_name
         self.jwt_token = retrieve_jwt_key_from_server(domain_name)
-
+        self._create_jwt_refresh_timer(domain_name)
         self.dispatcher = WebsocketMessageReceiver(self)
         self.websocket_thread = WebsocketThread(simulation_id, area_id, self.jwt_token,
                                                 websockets_domain_name, self.dispatcher)
