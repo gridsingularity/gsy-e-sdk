@@ -6,6 +6,8 @@ import uuid
 from functools import wraps
 from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping
 import ast
+from d3a_interface.utils import RepeatingTimer
+from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,16 @@ class RedisAPIException(Exception):
 
 
 class RestCommunicationMixin:
+
+    def _create_jwt_refresh_timer(self, sim_api_domain_name):
+        self.jwt_refresh_timer = RepeatingTimer(
+            JWT_TOKEN_EXPIRY_IN_SECS - 30, self._refresh_jwt_token, [sim_api_domain_name]
+        )
+        self.jwt_refresh_timer.daemon = True
+        self.jwt_refresh_timer.start()
+
+    def _refresh_jwt_token(self, domain_name):
+        self.jwt_token = retrieve_jwt_key_from_server(domain_name)
 
     @property
     def _url_prefix(self):
