@@ -1,23 +1,25 @@
 """
 Test file for the device client (Load, PV, and Storage). Depends on d3a test setup file strategy_tests.external_devices
 """
-import os
 import json
 import logging
-import sys
+
 import argparse
 from time import sleep
-from random import randint
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
+
 # parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--simulation_id", type=str, help="Simulation uuid")
-parser.add_argument("--load_names", nargs='+')
-parser.add_argument("--pv_names", nargs='+')
-parser.add_argument("--storage_names", nargs='+')
+parser.add_argument("--simulation_id", type=str, help="Simulation uuid", required=True)
+parser.add_argument("--load_names", nargs='+', default=[])
+parser.add_argument("--pv_names", nargs='+', default=[])
+parser.add_argument("--storage_names", nargs='+', default=[])
 args = parser.parse_args()
 connected_devices = []
+
+domain_name = 'https://d3aweb-dev.gridsingularity.com'
+websockets_domain_name = 'wss://d3aweb-dev.gridsingularity.com/external-ws'
 
 
 class AutoOfferBidOnMarket(RestDeviceClient):
@@ -104,10 +106,9 @@ for load_name in args.load_names:
     load = AutoOfferBidOnMarket(
         simulation_id=args.simulation_id,
         device_id=get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, load_name,
-            'https://d3aweb-dev.gridsingularity.com'),
-        domain_name='https://d3aweb-dev.gridsingularity.com',
-        websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
+            args.simulation_id, load_name, domain_name),
+        domain_name=domain_name,
+        websockets_domain_name=websockets_domain_name,
         autoregister=True)
     connected_devices.append(load)
 for pv_name in args.pv_names:
@@ -116,10 +117,9 @@ for pv_name in args.pv_names:
     pv = AutoOfferBidOnMarket(
         simulation_id=args.simulation_id,
         device_id=get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, pv_name,
-            'https://d3aweb-dev.gridsingularity.com'),
-        domain_name='https://d3aweb-dev.gridsingularity.com',
-        websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
+            args.simulation_id, pv_name, domain_name),
+        domain_name=domain_name,
+        websockets_domain_name=websockets_domain_name,
         autoregister=True)
     connected_devices.append(pv)
 for storage_name in args.storage_names:
@@ -128,10 +128,9 @@ for storage_name in args.storage_names:
     pv = AutoOfferBidOnMarket(
         simulation_id=args.simulation_id,
         device_id=get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, storage_name,
-            'https://d3aweb-dev.gridsingularity.com'),
-        domain_name='https://d3aweb-dev.gridsingularity.com',
-        websockets_domain_name='wss://d3aweb-dev.gridsingularity.com/external-ws',
+            args.simulation_id, storage_name, domain_name),
+        domain_name=domain_name,
+        websockets_domain_name=websockets_domain_name,
         autoregister=True)
     connected_devices.append(pv)
 # Infinite loop in order to leave the client running on the background
