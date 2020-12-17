@@ -7,7 +7,7 @@
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.8]
+        python: [3.8]
 
     steps:
       - uses: actions/checkout@v2
