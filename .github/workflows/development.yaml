@@ -18,7 +18,7 @@
       - name: Install Tox
         run: pip install tox
       - name: Run Tox
-        env:
-          TOXENV:travis
-        # Run tox using the version of Python in `PATH`
         run: tox -e $TOXENV
+        env:
+          TOXENV: travis
+   
