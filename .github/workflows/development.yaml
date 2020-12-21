@@ -1,0 +1,26 @@
+ name: d3a-api-client-CI
+ on:
+  pull_request
+
+ jobs:
+  build:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python: [3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install Tox
+        run: pip install tox
+      - name: Run Tox
+        run: tox -e $TOXENV
+        env:
+          TOXENV: travis
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+   
