@@ -18,8 +18,8 @@ parser.add_argument("--storage_names", nargs='+', default=[])
 args = parser.parse_args()
 connected_devices = []
 
-domain_name = 'https://d3aweb-dev.gridsingularity.com'
-websockets_domain_name = 'wss://d3aweb-dev.gridsingularity.com/external-ws'
+domain_name = 'https://d3aweb-staging.gridsingularity.com'
+websockets_domain_name = 'wss://d3aweb-staging.gridsingularity.com/external-ws'
 
 
 class AutoOfferBidOnMarket(RestDeviceClient):
