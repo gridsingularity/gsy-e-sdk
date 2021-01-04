@@ -21,12 +21,12 @@ class AutoSendForecast(RestDeviceClient):
         root_logger.debug(f"New market information {market_info}")
         self.forecast += 50
         if "available_energy_kWh" in market_info["device_info"]:
-            root_logger.info(f"self.set_pv_power_forecast({self.forecast})")
-            response = self.set_power_forecast(self.forecast)
+            root_logger.info(f"self.set_pv_energy_forecast({self.forecast})")
+            response = self.set_energy_forecast(self.forecast)
 
         if "energy_requirement_kWh" in market_info["device_info"]:
-            root_logger.info(f"self.set_load_power_forecast({self.forecast})")
-            response = self.set_power_forecast(self.forecast)
+            root_logger.info(f"self.set_load_energy_forecast({self.forecast})")
+            response = self.set_energy_forecast(self.forecast)
 
     def on_tick(self, tick_info):
         logging.debug(f"Progress information on the device: {tick_info}")
