@@ -62,7 +62,7 @@ by overriding the corresponding methods.
 - when the simulation has finished, the `on_finished` method is called
 ---
 
-### Trading API
+### Asset API
 #### How to create a connection to a Device
 The constructor of the API class can connect and register automatically to a running collaboration:
 - `REST`
@@ -108,7 +108,7 @@ device_client.unregister()
     ```device_client.device_info()```
 ---
 
-### Market/DSO API
+### Grid Operator API
 #### How to create a connection to a Market
 - `REST`
     (here the market uuid has to be obtained first)
