@@ -36,7 +36,7 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
             assert float(self.updated_fee["market_fee_const"]) == expected_grid_fee
             self.list_dso_stats = self.last_market_dso_stats()
             assert set(self.list_dso_stats.keys()) == \
-                   {'status', 'transaction_id', 'market_stats', 'command', 'area_uuid'}
+                   {'transaction_id', 'market_stats', 'area_uuid', 'name', 'command', 'status'}
 
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
