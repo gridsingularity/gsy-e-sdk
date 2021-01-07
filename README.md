@@ -199,7 +199,7 @@ The energy consumption or demand for PV and Load devices can be set for the next
 the following command 
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):
 ```
-device_client.set_energy_forecast(<pv_energy_forecast_W>)
+device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
 ```
 
 ---
