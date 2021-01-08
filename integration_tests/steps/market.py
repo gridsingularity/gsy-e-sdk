@@ -20,7 +20,7 @@ def step_impl(context):
         try:
             last_market_stats = context.device.last_market_stats()
             assert list(last_market_stats.keys()) == \
-                   ['status', 'area_uuid', 'command', 'market_stats', 'transaction_id']
+                   ['status', 'name', 'area_uuid', 'command', 'market_stats', 'transaction_id']
             sleep(2)
             time_out += 2
         except AssertionError as e:
