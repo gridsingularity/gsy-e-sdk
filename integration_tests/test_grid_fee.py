@@ -38,6 +38,7 @@ class AutoGridFeeUpdateOnMarket(RedisMarketClient):
             assert set(self.list_dso_stats.keys()) == \
                    {'name', 'command', 'area_uuid', 'status', 'transaction_id', 'market_stats'}
 
+
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1

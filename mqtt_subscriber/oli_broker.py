@@ -45,14 +45,13 @@ class MQTTConnection:
             payload = json.loads(msg.payload.decode("utf-8"))
 
             energy = payload["value"]
-            power = energy * (MINUTES_IN_HOUR / MEASUREMENT_PERIOD_MINUTES)
 
             # Transmit power values to CN
             for api_args in self.topic_api_client_dict[msg.topic]:
-                RestDeviceClient(**api_args).set_power_forecast(power, do_not_wait=True)
+                RestDeviceClient(**api_args).set_energy_forecast(energy, do_not_wait=True)
 
         except Exception as e:
-            logging.error(f"API Client failed to send power forecasts to d3a with error {e}. "
+            logging.error(f"API Client failed to send energy forecasts to d3a with error {e}. "
                           f"Resuming operation.")
             logging.error(f"{traceback.format_exc()}")
 

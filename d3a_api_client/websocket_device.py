@@ -6,11 +6,8 @@ import websockets
 import json
 from time import time
 from d3a_interface.utils import wait_until_timeout_blocking
-
-
-WEBSOCKET_MAX_CONNECTION_RETRIES = 5
-WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 5
-WEBSOCKET_ERROR_THRESHOLD_SECONDS = 30
+from d3a_api_client.constants import WEBSOCKET_ERROR_THRESHOLD_SECONDS, WEBSOCKET_MAX_CONNECTION_RETRIES, \
+    WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS
 
 
 class WebsocketMessageReceiver:
