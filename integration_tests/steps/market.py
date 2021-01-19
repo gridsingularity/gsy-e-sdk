@@ -19,8 +19,9 @@ def step_impl(context):
     while context.device.wait_script and time_out < 180:
         try:
             last_market_stats = context.device.last_market_stats()
-            assert list(last_market_stats.keys()) == \
-                   ['status', 'name', 'area_uuid', 'command', 'market_stats', 'transaction_id']
+            assert set(last_market_stats.keys()) == \
+                   {'status', 'name', 'area_uuid', 'command', 'market_stats', 'transaction_id'}
+
             sleep(2)
             time_out += 2
         except AssertionError as e:
