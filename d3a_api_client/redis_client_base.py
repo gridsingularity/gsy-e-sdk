@@ -10,7 +10,10 @@ from redis import StrictRedis
 from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
+
+from d3a_api_client.commands import ClientCommand, ClientCommandList
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.enums import Commands
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -29,20 +32,11 @@ def registered_connection(f):
     return wrapped
 
 
-class Commands(Enum):
-    OFFER = 1
-    BID = 2
-    DELETE_OFFER = 3
-    DELETE_BID = 4
-    LIST_OFFERS = 5
-    LIST_BIDS = 6
-    DEVICE_INFO = 7
-
-
 class RedisClient(APIClientInterface):
     def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379',
                  pubsub_thread=None):
         super().__init__(area_id, client_id, autoregister, redis_url)
+        self.commands_buffer = ClientCommandList()
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         # TODO: Replace area_id (which is a area name slug now) with "area_uuid"
@@ -313,4 +307,12 @@ class RedisClient(APIClientInterface):
         pass
 
     def on_finish(self, finish_info):
+        pass
+
+    def add_to_batch(self, area_uuid: str, ):
+        command = ClientCommand(area_uuid=area_uuid)
+        self.commands_buffer.append(command)
+        return command
+
+    def batch_command(self):
         pass

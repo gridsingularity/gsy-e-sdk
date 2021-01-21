@@ -107,14 +107,8 @@ class Aggregator(RestDeviceClient):
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
-    def batch_command(self, batch_command_dict):
-        """
-        batch_dict : dict where keys are device_uuids and values list of commands
-        e.g.: batch_dict = {
-                        "dev_uuid1": [{"energy": 10, "rate": 30, "type": "offer"}, {"energy": 9, "rate": 12, "type": "bid"}],
-                        "dev_uuid2": [{"energy": 20, "rate": 60, "type": "bid"}, {"type": "list_market_stats"}]
-                        }
-        """
+    def batch_command(self):
+        batch_command_dict = self.commands_buffer.execute()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id, posted = self._post_request(
             'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
