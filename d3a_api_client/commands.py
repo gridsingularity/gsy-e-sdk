@@ -49,7 +49,7 @@ class ClientCommand:
 
     def execute(self) -> dict:
         if self.area_uuid:
-            return {self.area_uuid: {"type": command_enum_to_command_name(self.action)}}
+            return {self.area_uuid: {"type": command_enum_to_command_name(self.action), **self.callback_args}}
 
 
 class ClientCommandList(Command, list):
