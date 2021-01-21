@@ -9,7 +9,7 @@ class Command(ABC):
         pass
 
 
-class ClientCommand:
+class ClientCommand(Command):
 
     def __init__(self, area_uuid):
         super(ClientCommand, self).__init__()
