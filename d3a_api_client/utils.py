@@ -214,9 +214,9 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     }
 
 
-def execute_function_util(self, function_name: str, message, root_logger):
+def execute_function_util(function: callable, function_name, root_logger):
     try:
-        getattr(self, function_name)(message)
+        function()
     except Exception as e:
         root_logger.error(
             f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")

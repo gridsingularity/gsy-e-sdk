@@ -6,7 +6,6 @@ from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunication
     logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
-
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.ERROR)
 
@@ -63,14 +62,16 @@ class RestMarketClient(RestCommunicationMixin):
     def _on_market_cycle(self, message):
         logging.debug(f"A new market was created. Market information: {message}")
         function_name = "on_market_cycle"
-
-        self.callback_thread.submit(execute_function_util,function_name=function_name, message=message,root_logger=root_logger)
+        function = lambda: self.on_market_cycle(message)
+        self.callback_thread.submit(execute_function_util, function, function_name=function_name, message=message,
+                                    root_logger=root_logger)
 
     def _on_finish(self, message):
         logging.debug(f"Simulation finished. Information: {message}")
         function_name = "on_finish"
-
-        self.callback_thread.submit(execute_function_util,function_name=function_name,message=message,root_logger=root_logger)
+        function = lambda: self.on_finish(message)
+        self.callback_thread.submit(execute_function_util, function=function, function_name=function_name,
+                                    root_logger=root_logger)
 
     def on_finish(self, finish_info):
         pass

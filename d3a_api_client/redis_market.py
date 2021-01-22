@@ -81,6 +81,7 @@ class RedisMarketClient:
                 return
             else:
                 self._blocking_command_responses[command_type] = message
+
         return _command_received
 
     def _subscribe_to_response_channels(self):
@@ -188,8 +189,9 @@ class RedisMarketClient:
         message = json.loads(msg["data"])
         logging.info(f"A new market was created. Market information: {message}")
         function_name = "on_market_cycle"
-
-        self.executor.submit(execute_function_util, function_name=function_name, message=message, root_logger=root_logger)
+        function = lambda: self.on_market_cycle(message)
+        self.executor.submit(execute_function_util, function=function, function_name=function_name,
+                             root_logger=root_logger)
 
     def on_market_cycle(self, market_info):
         pass
@@ -198,8 +200,10 @@ class RedisMarketClient:
         message = json.loads(msg["data"])
         logging.info(f"Simulation finished. Information: {message}")
         function_name = "on_finish"
+        function = lambda: self.on_finish(message)
 
-        self.executor.submit(execute_function_util, function_name=function_name, message=message, root_logger=root_logger)
+        self.executor.submit(execute_function_util, function=function, function_name=function_name,
+                             root_logger=root_logger)
 
     def on_finish(self, finish_info):
         pass

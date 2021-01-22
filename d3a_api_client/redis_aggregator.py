@@ -46,7 +46,7 @@ class RedisAggregator:
                         event_channel: self._events_callback_dict,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
-        }
+                        }
 
         self.pubsub.psubscribe(**channel_dict)
         self.pubsub.run_in_thread(daemon=True)
@@ -62,6 +62,7 @@ class RedisAggregator:
 
         def executor_function():
             self.on_batch_response(data['responses'])
+
         self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
@@ -168,29 +169,30 @@ class RedisAggregator:
     def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")
         function_name = "on_market_cycle"
-
-        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+        function = lambda: self.on_market_cycle(message)
+        self.executor.submit(execute_function_util, function=function, function_name=function_name,
                              root_logger=root_logger)
 
     def _on_tick(self, message):
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
         function_name = "on_tick"
-
-        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+        function = lambda: self.on_tick(message)
+        self.executor.submit(execute_function_util, function=function, function_name=function_name,
                              root_logger=root_logger)
 
     def _on_trade(self, message):
         logging.info(f"A trade took place on the device. Trade information: {message}")
         function_name = "on_trade"
+        function = lambda: self.on_trade(message)
 
-        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+        self.executor.submit(execute_function_util, function=function, function_name=function_name,
                              root_logger=root_logger)
 
     def _on_finish(self, message):
         logging.info(f"Simulation finished. Information: {message}")
         function_name = "on_finish"
-
-        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+        function = lambda: self.on_finish(message)
+        self.executor.submit(execute_function_util, function=function, function_name=function_name,
                              root_logger=root_logger)
 
     def on_market_cycle(self, market_info):

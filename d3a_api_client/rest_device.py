@@ -11,7 +11,7 @@ from d3a_api_client.constants import MAX_WORKER_THREADS
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 
-REGISTER_COMMAND_TIMEOUT = 15*60
+REGISTER_COMMAND_TIMEOUT = 15 * 60
 
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
@@ -144,29 +144,29 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def _on_market_cycle(self, message):
         logging.debug(f"A new market was created. Market information: {message}")
         function_name = "on_market_cycle"
-
-        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+        function = lambda: self.on_market_cycle(message)
+        self.callback_thread.submit(execute_function_util, function=function, function_name=function_name,
                                     root_logger=root_logger)
 
     def _on_tick(self, message):
         logging.debug(f"Time has elapsed on the device. Progress info: {message}")
         function_name = "on_tick"
-
-        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+        function = lambda: self.on_tick(message)
+        self.callback_thread.submit(execute_function_util, function=function, function_name=function_name,
                                     root_logger=root_logger)
 
     def _on_trade(self, message):
         logging.debug(f"A trade took place on the device. Trade information: {message}")
         function_name = "on_trade"
-
-        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+        function = lambda: self.on_trade(message)
+        self.callback_thread.submit(execute_function_util, function=function, function_name=function_name,
                                     root_logger=root_logger)
 
     def _on_finish(self, message):
         logging.debug(f"Simulation finished. Information: {message}")
         function_name = "on_finish"
-
-        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+        function = lambda: self.on_finish(message)
+        self.callback_thread.submit(execute_function_util, function=function, function_name=function_name,
                                     root_logger=root_logger)
 
     def on_market_cycle(self, market_info):
