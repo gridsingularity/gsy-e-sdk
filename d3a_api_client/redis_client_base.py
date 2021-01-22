@@ -36,7 +36,7 @@ class RedisClient(APIClientInterface):
     def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379',
                  pubsub_thread=None):
         super().__init__(area_id, client_id, autoregister, redis_url)
-        self.commands_buffer = ClientCommandList()
+        self._commands_buffer = []
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         # TODO: Replace area_id (which is a area name slug now) with "area_uuid"
@@ -309,9 +309,13 @@ class RedisClient(APIClientInterface):
     def on_finish(self, finish_info):
         pass
 
-    def add_to_batch(self, area_uuid: str, ):
-        command = ClientCommand(area_uuid=area_uuid)
-        self.commands_buffer.append(command)
+    def add_to_batch(self, ):
+        """
+        A property which is meant to be accessed prefixed by a chain function from the ClientCommand class
+        This command will be added to the batch commands buffer
+        """
+        command = ClientCommand()
+        self._commands_buffer.append(command)
         return command
 
     def batch_command(self):

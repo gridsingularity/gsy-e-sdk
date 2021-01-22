@@ -4,7 +4,7 @@ import traceback
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_api_client import APIClientInterface
-from d3a_api_client.commands import ClientCommand, ClientCommandList
+from d3a_api_client.commands import ClientCommand
 from d3a_api_client.enums import Commands
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
@@ -32,7 +32,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.websockets_domain_name = websockets_domain_name
         self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
         self.active_aggregator = None
-        self.commands_buffer = ClientCommandList()
+        self._commands_buffer = []
         if start_websocket:
             self.start_websocket_connection()
 
@@ -198,9 +198,14 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def on_finish(self, finish_info):
         pass
 
-    def add_to_batch(self, area_uuid: str, ):
-        command = ClientCommand(area_uuid=area_uuid)
-        self.commands_buffer.append(command)
+    @property
+    def commands(self):
+        """
+        A property which is meant to be accessed prefixed by a chain function from the ClientCommand class
+        This command will be added to the batch commands buffer
+        """
+        command = ClientCommand()
+        self._commands_buffer.append(command)
         return command
 
     def batch_command(self):
