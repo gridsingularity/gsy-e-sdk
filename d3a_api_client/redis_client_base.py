@@ -1,7 +1,6 @@
 import logging
 import json
 import uuid
-import traceback
 
 from enum import Enum
 from functools import wraps
@@ -11,6 +10,7 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.utils import execute_function_util
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -247,47 +247,33 @@ class RedisClient(APIClientInterface):
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A new market was created. Market information: {message}")
+        function_name = "on_market_cycle"
 
-        def executor_function():
-            try:
-                self.on_market_cycle(message)
-            except Exception as e:
-                logging.error(f"_on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+                             root_logger=root_logger)
 
     def _on_tick(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
+        function_name = "on_tick"
 
-        def executor_function():
-            try:
-                self.on_tick(message)
-            except Exception as e:
-                logging.error(f"on_tick raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-
-        self.executor.submit(executor_function)
+        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+                             root_logger=root_logger)
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A trade took place on the device. Trade information: {message}")
+        function_name = "on_trade"
 
-        def executor_function():
-            try:
-                self.on_trade(message)
-            except Exception as e:
-                logging.error(f"on_trade raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+                             root_logger=root_logger)
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Simulation finished. Information: {message}")
-
-        def executor_function():
-            try:
-                self.on_finish(message)
-            except Exception as e:
-                logging.error(f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        function_name = "on_finish"
+        self.executor.submit(execute_function_util, function_name=function_name, message=message,
+                             root_logger=root_logger)
 
     def _check_buffer_message_matching_command_and_id(self, message):
         if key_in_dict_and_not_none(message, "transaction_id"):

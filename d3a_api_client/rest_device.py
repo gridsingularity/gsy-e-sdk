@@ -1,12 +1,11 @@
 import logging
-import traceback
 
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, get_aggregator_prefix, blocking_post_request
+    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
@@ -144,43 +143,31 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def _on_market_cycle(self, message):
         logging.debug(f"A new market was created. Market information: {message}")
+        function_name = "on_market_cycle"
 
-        def executor_function():
-            try:
-                self.on_market_cycle(message)
-            except Exception as e:
-                logging.error(f"on_market_cycle raised exception): {e}. \n Traceback: {traceback.format_exc()}")
-        self.callback_thread.submit(executor_function)
+        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+                                    root_logger=root_logger)
 
     def _on_tick(self, message):
         logging.debug(f"Time has elapsed on the device. Progress info: {message}")
+        function_name = "on_tick"
 
-        def executor_function():
-            try:
-                self.on_tick(message)
-            except Exception as e:
-                logging.error(f"on_tick raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.callback_thread.submit(executor_function)
+        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+                                    root_logger=root_logger)
 
     def _on_trade(self, message):
         logging.debug(f"A trade took place on the device. Trade information: {message}")
+        function_name = "on_trade"
 
-        def executor_function():
-            try:
-                self.on_trade(message)
-            except Exception as e:
-                logging.error(f"on_trade raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.callback_thread.submit(executor_function)
+        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+                                    root_logger=root_logger)
 
     def _on_finish(self, message):
         logging.debug(f"Simulation finished. Information: {message}")
+        function_name = "on_finish"
 
-        def executor_function():
-            try:
-                self.on_finish(message)
-            except Exception as e:
-                logging.error(f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.callback_thread.submit(executor_function)
+        self.callback_thread.submit(execute_function_util, function_name=function_name, message=message,
+                                    root_logger=root_logger)
 
     def on_market_cycle(self, market_info):
         if not self.registered:

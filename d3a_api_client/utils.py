@@ -1,4 +1,5 @@
 import os
+import traceback
 import requests
 import json
 import logging
@@ -211,3 +212,11 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
         for cn in data["data"]["listCanaryNetworks"]["configurations"]
         if cn["resultsStatus"] == "running"
     }
+
+
+def execute_function_util(self, function_name: str, message, root_logger):
+    try:
+        getattr(self, function_name)(message)
+    except Exception as e:
+        root_logger.error(
+            f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
