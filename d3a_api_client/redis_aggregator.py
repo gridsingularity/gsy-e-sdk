@@ -11,7 +11,7 @@ from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
-RedisAggregator
+
 
 class RedisAPIException(Exception):
     pass
