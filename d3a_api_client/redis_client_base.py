@@ -11,7 +11,7 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_api_client.commands import ClientCommand, ClientCommandList
+from d3a_api_client.commands import ClientCommand
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.enums import Commands
 
