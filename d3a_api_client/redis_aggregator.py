@@ -168,32 +168,28 @@ class RedisAggregator:
 
     def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")
-        function_name = "on_market_cycle"
         function = lambda: self.on_market_cycle(message)
-        self.executor.submit(execute_function_util, function=function, function_name=function_name,
-                             root_logger=root_logger)
+        self.executor.submit(execute_function_util, function=function, function_name="on_market_cycle",
+                             )
 
     def _on_tick(self, message):
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
-        function_name = "on_tick"
         function = lambda: self.on_tick(message)
-        self.executor.submit(execute_function_util, function=function, function_name=function_name,
-                             root_logger=root_logger)
+        self.executor.submit(execute_function_util, function=function, function_name="on_tick",
+                             )
 
     def _on_trade(self, message):
         logging.info(f"A trade took place on the device. Trade information: {message}")
-        function_name = "on_trade"
         function = lambda: self.on_trade(message)
 
-        self.executor.submit(execute_function_util, function=function, function_name=function_name,
-                             root_logger=root_logger)
+        self.executor.submit(execute_function_util, function=function, function_name="on_trade",
+                             )
 
     def _on_finish(self, message):
         logging.info(f"Simulation finished. Information: {message}")
-        function_name = "on_finish"
         function = lambda: self.on_finish(message)
-        self.executor.submit(execute_function_util, function=function, function_name=function_name,
-                             root_logger=root_logger)
+        self.executor.submit(execute_function_util, function=function, function_name="on_finish",
+                             )
 
     def on_market_cycle(self, market_info):
         pass

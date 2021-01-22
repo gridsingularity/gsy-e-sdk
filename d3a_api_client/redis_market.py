@@ -9,8 +9,6 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import RedisAPIException, execute_function_util
 
-root_logger = logging.getLogger()
-
 
 class RedisMarketClient:
     def __init__(self, area_id, redis_url='redis://localhost:6379', autoregister=True):
@@ -188,10 +186,9 @@ class RedisMarketClient:
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A new market was created. Market information: {message}")
-        function_name = "on_market_cycle"
         function = lambda: self.on_market_cycle(message)
-        self.executor.submit(execute_function_util, function=function, function_name=function_name,
-                             root_logger=root_logger)
+        self.executor.submit(execute_function_util, function=function, function_name="on_market_cycle",
+                             )
 
     def on_market_cycle(self, market_info):
         pass
@@ -199,11 +196,10 @@ class RedisMarketClient:
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Simulation finished. Information: {message}")
-        function_name = "on_finish"
         function = lambda: self.on_finish(message)
 
-        self.executor.submit(execute_function_util, function=function, function_name=function_name,
-                             root_logger=root_logger)
+        self.executor.submit(execute_function_util, function=function, function_name="on_finish",
+                             )
 
     def on_finish(self, finish_info):
         pass
