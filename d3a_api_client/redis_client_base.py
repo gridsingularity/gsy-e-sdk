@@ -1,7 +1,6 @@
 import logging
 import json
 import uuid
-import traceback
 
 from enum import Enum
 from functools import wraps
@@ -11,6 +10,7 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.utils import execute_function_util
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -26,6 +26,7 @@ def registered_connection(f):
         if not self.is_active:
             raise RedisAPIException(f'Registration has not completed yet.')
         return f(self, *args, **kwargs)
+
     return wrapped
 
 
@@ -143,6 +144,7 @@ class RedisClient(APIClientInterface):
             return any(command == command_type and
                        "transaction_id" in data and data["transaction_id"] == transaction_id
                        for command, data in self._blocking_command_responses.items())
+
         logging.debug(f"Command {command_type} waiting for response...")
         wait_until_timeout_blocking(check_if_command_response_received, timeout=120)
         command_output = self._blocking_command_responses.pop(command_type)
@@ -164,6 +166,7 @@ class RedisClient(APIClientInterface):
                 return
             else:
                 self._blocking_command_responses[command_type] = message
+
         return _command_received
 
     def _publish_and_wait(self, command_type, data):
@@ -234,6 +237,7 @@ class RedisClient(APIClientInterface):
 
         def executor_function():
             self.on_register(message)
+
         self.executor.submit(executor_function)
 
     def _on_unregister(self, msg):
@@ -247,47 +251,30 @@ class RedisClient(APIClientInterface):
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A new market was created. Market information: {message}")
-
-        def executor_function():
-            try:
-                self.on_market_cycle(message)
-            except Exception as e:
-                logging.error(f"_on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        function = lambda: self.on_market_cycle(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_market_cycle")
 
     def _on_tick(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
-
-        def executor_function():
-            try:
-                self.on_tick(message)
-            except Exception as e:
-                logging.error(f"on_tick raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-
-        self.executor.submit(executor_function)
+        function = lambda: self.on_tick(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_tick")
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A trade took place on the device. Trade information: {message}")
-
-        def executor_function():
-            try:
-                self.on_trade(message)
-            except Exception as e:
-                logging.error(f"on_trade raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        function = lambda: self.on_trade(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_trade")
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Simulation finished. Information: {message}")
-
-        def executor_function():
-            try:
-                self.on_finish(message)
-            except Exception as e:
-                logging.error(f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        function = lambda: self.on_finish(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_finish")
 
     def _check_buffer_message_matching_command_and_id(self, message):
         if key_in_dict_and_not_none(message, "transaction_id"):

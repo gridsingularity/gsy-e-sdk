@@ -1,6 +1,5 @@
 import logging
 import json
-import traceback
 import uuid
 from slugify import slugify
 from redis import StrictRedis
@@ -8,7 +7,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import RedisAPIException
+from d3a_api_client.utils import RedisAPIException, execute_function_util
 
 
 class RedisMarketClient:
@@ -80,11 +79,12 @@ class RedisMarketClient:
                 return
             else:
                 self._blocking_command_responses[command_type] = message
+
         return _command_received
 
     def _subscribe_to_response_channels(self):
         channel_subs = {f"{self._channel_prefix}/response/{command_name}":
-                        self._generate_command_response_callback(command_name)
+                            self._generate_command_response_callback(command_name)
                         for command_name in ["market_stats", "grid_fees", "dso_market_stats"]}
         channel_subs.update({
             f'{self._channel_prefix}/response/register_participant': self._on_register,
@@ -186,13 +186,9 @@ class RedisMarketClient:
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A new market was created. Market information: {message}")
-
-        def executor_function():
-            try:
-                self.on_market_cycle(message)
-            except Exception as e:
-                logging.error(f"on_market_cycle raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        function = lambda: self.on_market_cycle(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_market_cycle")
 
     def on_market_cycle(self, market_info):
         pass
@@ -200,13 +196,10 @@ class RedisMarketClient:
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Simulation finished. Information: {message}")
+        function = lambda: self.on_finish(message)
 
-        def executor_function():
-            try:
-                self.on_finish(message)
-            except Exception as e:
-                logging.error(f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-        self.executor.submit(executor_function)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_finish")
 
     def on_finish(self, finish_info):
         pass

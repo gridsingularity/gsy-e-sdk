@@ -1,4 +1,3 @@
-import traceback
 import logging
 import uuid
 import json
@@ -8,6 +7,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.utils import execute_function_util
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -46,7 +46,7 @@ class RedisAggregator:
                         event_channel: self._events_callback_dict,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
-        }
+                        }
 
         self.pubsub.psubscribe(**channel_dict)
         self.pubsub.run_in_thread(daemon=True)
@@ -62,6 +62,7 @@ class RedisAggregator:
 
         def executor_function():
             self.on_batch_response(data['responses'])
+
         self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
@@ -167,51 +168,28 @@ class RedisAggregator:
 
     def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")
-
-        def executor_function():
-            try:
-                self.on_market_cycle(message)
-            except Exception as e:
-                root_logger.error(
-                    f"on_market_cycle raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
-
-        self.executor.submit(executor_function)
+        function = lambda: self.on_market_cycle(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_market_cycle")
 
     def _on_tick(self, message):
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
-
-        def executor_function():
-            try:
-                self.on_tick(message)
-            except Exception as e:
-                root_logger.error(
-                    f"on_tick raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-
-        self.executor.submit(executor_function)
+        function = lambda: self.on_tick(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_tick")
 
     def _on_trade(self, message):
         logging.info(f"A trade took place on the device. Trade information: {message}")
+        function = lambda: self.on_trade(message)
 
-        def executor_function():
-            try:
-                self.on_trade(message)
-            except Exception as e:
-                root_logger.error(
-                    f"_on_trade raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-
-        self.executor.submit(executor_function)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_trade")
 
     def _on_finish(self, message):
         logging.info(f"Simulation finished. Information: {message}")
-
-        def executor_function():
-            try:
-                self.on_finish(message)
-            except Exception as e:
-                root_logger.error(
-                    f"on_finish raised exception: {e}. \n Traceback: {traceback.format_exc()}")
-
-        self.executor.submit(executor_function)
+        function = lambda: self.on_finish(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_finish")
 
     def on_market_cycle(self, market_info):
         pass
