@@ -1,6 +1,6 @@
 import logging
 
-from d3a_api_client.commands import ClientCommand
+from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.utils import logging_decorator, blocking_get_request, \
     blocking_post_request
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
@@ -50,6 +50,7 @@ class Aggregator(RestDeviceClient):
         self.accept_all_devices = accept_all_devices
         self.device_uuid_list = []
         self.aggregator_uuid = None
+        self._client_command_buffer = ClientCommandBuffer()
         self._connect_to_simulation()
 
     def _connect_to_simulation(self):
@@ -108,11 +109,19 @@ class Aggregator(RestDeviceClient):
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
+    @property
+    def commands(self):
+        """
+        A property which is meant to be accessed prefixed to a chained function from the ClientCommandBuffer class
+        This command will be added to the batch commands buffer
+        """
+        return self._client_command_buffer
+
     def batch_command(self):
-        batch_command_dict = ClientCommand.execute_batch(self._commands_buffer)
+        batch_command_dict = self._client_command_buffer.execute_batch()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id, posted = self._post_request(
             'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
         if posted:
-            self._commands_buffer.clear()
+            self._client_command_buffer.clear()
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)

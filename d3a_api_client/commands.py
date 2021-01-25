@@ -1,69 +1,70 @@
-from abc import ABC, abstractmethod
-
 from d3a_api_client.enums import Commands, command_enum_to_command_name
 
 
-class Command(ABC):
-    @abstractmethod
-    def execute(self):
-        pass
-
-
-class ClientCommand(Command):
+class ClientCommandBuffer:
 
     def __init__(self, ):
-        super(ClientCommand, self).__init__()
-        self.area_uuid = None
-        self.action = None
-        self.callback = None
-        self.callback_args = {}
+        self._commands_buffer = []
 
     def offer_energy(self, area_uuid, energy, price):
-        self.area_uuid = area_uuid
-        self.callback_args = {energy, price}
-        self.action = Commands.OFFER
+        area_uuid = area_uuid
+        callback_args = {energy, price}
+        action = Commands.OFFER
+        self.execute(area_uuid, action, callback_args)
 
     def offer_energy_rate(self, area_uuid, energy, rate):
-        self.area_uuid = area_uuid
-        self.callback_args = {energy, rate}
-        self.action = Commands.OFFER
+        area_uuid = area_uuid
+        callback_args = {energy, rate}
+        action = Commands.OFFER
+        self.execute(area_uuid, action, callback_args)
 
     def bid_energy(self, area_uuid, energy, rate):
-        self.area_uuid = area_uuid
-        self.callback_args = {energy, rate}
-        self.action = Commands.OFFER
+        area_uuid = area_uuid
+        callback_args = {energy, rate}
+        action = Commands.OFFER
+        self.execute(area_uuid, action, callback_args)
 
     def delete_offer(self, area_uuid, offer_id):
-        self.area_uuid = area_uuid
-        self.callback_args = {"offer_id": offer_id}
-        self.action = Commands.DELETE_OFFER
+        area_uuid = area_uuid
+        callback_args = {"offer_id": offer_id}
+        action = Commands.DELETE_OFFER
+        self.execute(area_uuid, action, callback_args)
 
     def delete_bid(self, area_uuid, bid_id):
-        self.area_uuid = area_uuid
-        self.callback_args = {"bid_id": bid_id}
-        self.action = Commands.DELETE_OFFER
+        area_uuid = area_uuid
+        callback_args = {"bid_id": bid_id}
+        action = Commands.DELETE_OFFER
+        self.execute(area_uuid, action, callback_args)
 
     def list_offers(self, area_uuid):
-        self.area_uuid = area_uuid
-        self.action = Commands.LIST_OFFERS
+        area_uuid = area_uuid
+        action = Commands.LIST_OFFERS
+        callback_args = {}
+        self.execute(area_uuid, action, callback_args)
 
     def list_bids(self, area_uuid):
-        self.area_uuid = area_uuid
-        self.action = Commands.LIST_BIDS
+        area_uuid = area_uuid
+        action = Commands.LIST_BIDS
+        callback_args = {}
+        self.execute(area_uuid, action, callback_args)
 
     def device_info(self, area_uuid):
-        self.area_uuid = area_uuid
-        self.action = Commands.DEVICE_INFO
+        area_uuid = area_uuid
+        action = Commands.DEVICE_INFO
+        callback_args = {}
+        self.execute(area_uuid, action, callback_args)
 
-    def execute(self) -> dict:
-        if self.area_uuid and self.action:
-            return {self.area_uuid: {"type": command_enum_to_command_name(self.action), **self.callback_args}}
+    def execute(self, area_uuid, action, callback_args):
+        if area_uuid and action:
+            self._commands_buffer.append(
+                {area_uuid: {"type": command_enum_to_command_name(action), **callback_args}})
 
-    @staticmethod
-    def execute_batch(commands:list):
+    def clear(self):
+        self._commands_buffer.clear()
+
+    def execute_batch(self):
         batch_command_dict = {}
-        for command in commands:
-            command_dict = command.execute()
+        for command_dict in self._commands_buffer:
             area_uuid = command_dict.keys()[0]
             if area_uuid not in batch_command_dict.keys():
                 batch_command_dict[area_uuid] = []
