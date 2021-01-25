@@ -30,5 +30,10 @@ setup(
     package_dir={"d3a_api_client": "d3a_api_client"},
     package_data={},
     install_requires=REQUIREMENTS,
+    entry_points={
+        'console_scripts': [
+            'd3a-api-client = cli:main',
+        ]
+    },
     zip_safe=False,
 )
