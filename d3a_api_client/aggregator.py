@@ -110,7 +110,7 @@ class Aggregator(RestDeviceClient):
         return True
 
     @property
-    def commands(self):
+    def add_to_batch_commands(self):
         """
         A property which is meant to be accessed prefixed to a chained function from the ClientCommandBuffer class
         This command will be added to the batch commands buffer
