@@ -63,13 +63,13 @@ class RestMarketClient(RestCommunicationMixin):
         logging.debug(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_market_cycle",)
+                                    function_name="on_market_cycle")
 
     def _on_finish(self, message):
         logging.debug(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_finish",)
+                                    function_name="on_finish")
 
     def on_finish(self, finish_info):
         pass

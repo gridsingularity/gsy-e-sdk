@@ -145,25 +145,25 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         logging.debug(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_market_cycle",)
+                                    function_name="on_market_cycle")
 
     def _on_tick(self, message):
         logging.debug(f"Time has elapsed on the device. Progress info: {message}")
         function = lambda: self.on_tick(message)
         self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_tick",)
+                                    function_name="on_tick")
 
     def _on_trade(self, message):
         logging.debug(f"A trade took place on the device. Trade information: {message}")
         function = lambda: self.on_trade(message)
         self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_trade",)
+                                    function_name="on_trade")
 
     def _on_finish(self, message):
         logging.debug(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_finish",)
+                                    function_name="on_finish")
 
     def on_market_cycle(self, market_info):
         if not self.registered:
