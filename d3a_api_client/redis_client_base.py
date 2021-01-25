@@ -301,3 +301,6 @@ class RedisClient(APIClientInterface):
 
     def on_finish(self, finish_info):
         pass
+
+    def on_event_or_response(self, message):
+        pass

@@ -205,3 +205,6 @@ class RedisAggregator:
 
     def on_batch_response(self, message):
         pass
+
+    def on_event_or_response(self, message):
+        pass

@@ -76,3 +76,6 @@ class RestMarketClient(RestCommunicationMixin):
 
     def on_market_cycle(self, market_info):
         pass
+
+    def on_event_or_response(self, message):
+        pass
