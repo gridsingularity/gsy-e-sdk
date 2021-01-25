@@ -57,10 +57,6 @@ def main(log_level):
               help="Simulation setup module use]")
 def run(setup_module_name, **kwargs):
 
-    # Force the multiprocessing start method to be 'fork' on macOS.
-    if platform.system() == 'Darwin':
-        multiprocessing.set_start_method('fork')
-
     try:
         exec(open(f"./{setup_module_name}").read())
 
