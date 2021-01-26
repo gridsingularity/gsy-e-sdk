@@ -169,6 +169,7 @@ class RedisAggregator:
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
+        self._client_command_buffer.clear()
 
     def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")
