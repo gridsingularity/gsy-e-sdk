@@ -15,12 +15,11 @@ parser.add_argument("--simulation_id", type=str, help="Simulation uuid", require
 parser.add_argument("--load_names", nargs='+', default=[])
 parser.add_argument("--pv_names", nargs='+', default=[])
 parser.add_argument("--storage_names", nargs='+', default=[])
+parser.add_argument("--domain_name", nargs='+', default=[])
+parser.add_argument("--websockets_domain_name", nargs='+', default=[])
+
 args = parser.parse_args()
 connected_devices = []
-
-domain_name = 'https://d3aweb-staging.gridsingularity.com'
-websockets_domain_name = 'wss://d3aweb-staging.gridsingularity.com/external-ws'
-
 
 class AutoOfferBidOnMarket(RestDeviceClient):
     def __init__(self, *args, **kwargs):
@@ -106,9 +105,9 @@ for load_name in args.load_names:
     load = AutoOfferBidOnMarket(
         simulation_id=args.simulation_id,
         device_id=get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, load_name, domain_name),
-        domain_name=domain_name,
-        websockets_domain_name=websockets_domain_name,
+            args.simulation_id, load_name, args.domain_name),
+        domain_name=args.domain_name,
+        websockets_domain_name=args.websockets_domain_name,
         autoregister=True)
     connected_devices.append(load)
 for pv_name in args.pv_names:
@@ -117,9 +116,9 @@ for pv_name in args.pv_names:
     pv = AutoOfferBidOnMarket(
         simulation_id=args.simulation_id,
         device_id=get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, pv_name, domain_name),
-        domain_name=domain_name,
-        websockets_domain_name=websockets_domain_name,
+            args.simulation_id, pv_name, args.domain_name),
+        domain_name=args.domain_name,
+        websockets_domain_name=args.websockets_domain_name,
         autoregister=True)
     connected_devices.append(pv)
 for storage_name in args.storage_names:
@@ -128,9 +127,9 @@ for storage_name in args.storage_names:
     pv = AutoOfferBidOnMarket(
         simulation_id=args.simulation_id,
         device_id=get_area_uuid_from_area_name_and_collaboration_id(
-            args.simulation_id, storage_name, domain_name),
-        domain_name=domain_name,
-        websockets_domain_name=websockets_domain_name,
+            args.simulation_id, storage_name, args.domain_name),
+        domain_name=args.domain_name,
+        websockets_domain_name=args.websockets_domain_name,
         autoregister=True)
     connected_devices.append(pv)
 # Infinite loop in order to leave the client running on the background
