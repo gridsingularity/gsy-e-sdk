@@ -45,7 +45,6 @@ def step_impl(context):
 @then('the on_event_or_response is called for different events')
 def step_impl(context):
     # Check if the market event triggered both the on_market_cycle and on_event_or_response
-    print(context.device.events)
     assert context.device.events == {'event', 'command',
                                      'tick', 'register',
                                      'offer_delete', 'trade',
