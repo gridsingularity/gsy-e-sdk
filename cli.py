@@ -17,20 +17,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import importlib
 import logging
-import os
-import platform
-import multiprocessing
 import click
 
 from click.types import Choice
 from click_default_group import DefaultGroup
 from colorlog.colorlog import ColoredFormatter
 from logging import getLogger
-from multiprocessing import Process
 
 from d3a_interface.exceptions import D3AException
+from d3a_interface.utils import iterate_over_all_modules
 
-from d3a_api_client.utils import available_client_setups
+import d3a_api_client.setups as setups
+from d3a_api_client.constants import SETUP_FILE_PATH
 
 log = getLogger(__name__)
 
@@ -54,7 +52,8 @@ def main(log_level):
     root_logger.addHandler(handler)
 
 
-_setup_modules = available_client_setups
+modules_path = setups if SETUP_FILE_PATH is None else [SETUP_FILE_PATH,]
+_setup_modules = iterate_over_all_modules(modules_path)
 
 
 @main.command()

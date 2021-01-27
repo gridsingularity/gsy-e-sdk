@@ -1,18 +1,15 @@
 import os
 import traceback
 from pkgutil import walk_packages
-
+import ast
 import requests
 import json
 import logging
 import uuid
 from functools import wraps
-from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping
-import ast
-from d3a_interface.utils import RepeatingTimer
+from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 
-import d3a_api_client.setups as setups
 logger = logging.getLogger(__name__)
 
 
@@ -223,17 +220,3 @@ def execute_function_util(function: callable, function_name):
     except Exception as e:
         logger.error(
             f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
-
-
-def iterate_over_all_client_setup():
-    module_list = []
-    client_modules_path = setups.__path__
-    for loader, module_name, is_pkg in walk_packages(client_modules_path):
-        if is_pkg:
-            loader.find_module(module_name).load_module(module_name)
-        else:
-            module_list.append(module_name)
-    return module_list
-
-
-available_client_setups = iterate_over_all_client_setup()
