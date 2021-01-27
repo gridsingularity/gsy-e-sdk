@@ -186,14 +186,18 @@ class RedisClient(APIClientInterface):
         return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
 
     @registered_connection
-    def bid_energy(self, energy, price):
+    def bid_energy(self, energy, price, replace_existing=True):
         logging.info(f"Client tries to place a bid for {energy} kWh at {price} cents.")
-        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
+        return self._publish_and_wait(
+            Commands.BID,
+            {"energy": energy, "price": price, 'replace_existing': replace_existing})
 
     @registered_connection
-    def bid_energy_rate(self, energy, rate):
+    def bid_energy_rate(self, energy, rate, replace_existing=True):
         logging.info(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
-        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
+        return self._publish_and_wait(
+            Commands.BID,
+            {"energy": energy, "price": rate * energy, 'replace_existing': replace_existing})
 
     @registered_connection
     def delete_offer(self, offer_id=None):
