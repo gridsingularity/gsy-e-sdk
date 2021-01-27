@@ -84,6 +84,8 @@ class RedisAggregator:
         elif "event" in payload and payload["event"] == "finish":
             self._on_finish(payload)
 
+        self.on_event_or_response(payload)
+
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
 

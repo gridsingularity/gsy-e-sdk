@@ -69,8 +69,9 @@ class RedisClient(APIClientInterface):
         channel_subs[f'{self._channel_prefix}/events/tick'] = self._on_tick
         channel_subs[f'{self._channel_prefix}/events/trade'] = self._on_trade
         channel_subs[f'{self._channel_prefix}/events/finish'] = self._on_finish
+        channel_subs[f'{self._channel_prefix}/*'] = self._on_event_or_response
 
-        self.pubsub.subscribe(**channel_subs)
+        self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
             self.pubsub.run_in_thread(daemon=True)
 
@@ -254,6 +255,13 @@ class RedisClient(APIClientInterface):
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
+
+    def _on_event_or_response(self, msg):
+        message = json.loads(msg["data"])
+        logging.info(f"A new message was received. Message information: {message}")
+        function = lambda: self.on_event_or_response(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_event_or_response")
 
     def _on_tick(self, msg):
         message = json.loads(msg["data"])

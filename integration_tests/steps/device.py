@@ -42,6 +42,18 @@ def step_impl(context):
                                          redis_url='redis://localhost:6379/')
 
 
+@then('the on_event_or_response is called for different events')
+def step_impl(context):
+    # Check if the market event triggered both the on_market_cycle and on_event_or_response
+    print(context.device.events)
+    assert context.device.events == {'event', 'command',
+                                     'tick', 'register',
+                                     'offer_delete', 'trade',
+                                     'offer', 'unregister',
+                                     'list_offers', 'market'}
+    assert context.device.is_on_market_cycle_called
+
+
 @when('the external client is started with test_ess_bid_connection')
 def step_impl(context):
     # Wait for d3a to activate all areas
