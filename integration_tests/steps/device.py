@@ -3,6 +3,7 @@ from os import system
 from time import sleep
 from math import isclose
 from integration_tests.test_load_connection import AutoBidOnLoadDevice
+from integration_tests.test_on_event_or_response import RandomDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
 from integration_tests.test_ess_bid_connection import AutoBidOnESSDevice
 from integration_tests.test_ess_offer_connection import AutoOfferOnESSDevice
@@ -48,6 +49,15 @@ def step_impl(context):
     sleep(5)
     # Connects one client to the load device
     context.device = AutoBidOnESSDevice('storage', autoregister=True,
+                                        redis_url='redis://localhost:6379/')
+
+
+@when('the external client is started with a random connection')
+def step_impl(context):
+    # Wait for d3a to activate all areas
+    sleep(5)
+    # Connects one client to the load device
+    context.device = RandomDevice('storage', autoregister=True,
                                         redis_url='redis://localhost:6379/')
 
 

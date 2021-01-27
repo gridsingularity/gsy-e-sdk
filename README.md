@@ -11,6 +11,7 @@
     + [Market/DSO API](#marketdso-api)
     + [Aggregator Connection](#aggregator-connection)
     + [Hardware API](#hardware-api)
+  * [Run a predefined script from the cli](#cli-manual)
 
 
 ## Overview
@@ -203,3 +204,7 @@ device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
 ```
 
 ---
+## Interacting with the CLI
+You can run one of the setup scripts residing in the `d3a_api_client.tests` folder from the terminal.
+In order to run a module you can use the following command
+`d3a-api-client run --setup {module_name}`

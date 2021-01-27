@@ -43,4 +43,5 @@ pv = AutoOfferBidOnMarket('pv', autoregister=True)
 # Infinite loop in order to leave the client running on the background
 # placing bids and offers on every market cycle.
 while True:
+    print("hey")
     sleep(0.5)

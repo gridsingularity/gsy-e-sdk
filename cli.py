@@ -15,6 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+import importlib
 import logging
 import os
 import platform
@@ -29,6 +30,7 @@ from multiprocessing import Process
 
 from d3a_interface.exceptions import D3AException
 
+from d3a_api_client.utils import available_client_setups
 
 log = getLogger(__name__)
 
@@ -52,13 +54,19 @@ def main(log_level):
     root_logger.addHandler(handler)
 
 
+_setup_modules = available_client_setups
+
+
 @main.command()
-@click.option('--setup', 'setup_module_name', default="default_2a",
-              help="Simulation setup module use]")
-def run(setup_module_name, **kwargs):
+@click.option('--setup', 'module_name', default="auto_offer_bid_on_device",
+              help="Setup module of client script. Available modules: [{}]".format(
+                  ', '.join(_setup_modules)))
+def run(module_name, **kwargs):
 
     try:
-        exec(open(f"./{setup_module_name}").read())
+        importlib.import_module(f"d3a_api_client.setups.{module_name}")
 
     except D3AException as ex:
         raise click.BadOptionUsage(ex.args[0])
+    except ModuleNotFoundError as ex:
+        log.error("Could not find the specified module")
