@@ -15,9 +15,12 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
         self.latest_stats = {}
         self.market_info = {}
         self.device_bills = {}
+        self.is_on_market_cycle_called = False
+        self.events = set()
         super().__init__(*args, **kwargs)
 
     def on_market_cycle(self, market_info):
+        self.is_on_market_cycle_called = True
         try:
             assert "available_energy_kWh" in market_info["device_info"]
             available_energy = market_info["device_info"]["available_energy_kWh"]
@@ -66,3 +69,10 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
             self.error_list.append(e)
             raise e
 
+    def on_event_or_response(self, message):
+        if "command" in message.keys():
+            self.events.add("command")
+            self.events.add(message["command"])
+        if "event" in message.keys():
+            self.events.add("event")
+            self.events.add(message["event"])
