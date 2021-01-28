@@ -1,5 +1,5 @@
 import logging
-
+import os
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_api_client import APIClientInterface
@@ -16,8 +16,10 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
-    def __init__(self, simulation_id, device_id, domain_name,
-                 websockets_domain_name, autoregister=False, start_websocket=True,
+    def __init__(self, simulation_id, device_id,
+                 domain_name=os.environ["API_CLIENT_DOMAIN_NAME"],
+                 websockets_domain_name=os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"],
+                 autoregister=False, start_websocket=True,
                  sim_api_domain_name=None):
         self.simulation_id = simulation_id
         self.device_id = device_id
