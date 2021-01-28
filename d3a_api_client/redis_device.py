@@ -41,8 +41,8 @@ class RedisDeviceClient(RedisClient):
         channel_subs[f'{self._channel_prefix}/events/trade'] = self._on_trade
         channel_subs[f'{self._channel_prefix}/events/finish'] = self._on_finish
         channel_subs["aggregator_response"] = self._aggregator_response_callback
-
-        self.pubsub.subscribe(**channel_subs)
+        channel_subs[f'{self._channel_prefix}/*'] = self._on_event_or_response
+        self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
             self.pubsub.run_in_thread(daemon=True)
 

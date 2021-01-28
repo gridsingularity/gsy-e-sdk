@@ -14,6 +14,7 @@ Scenario: API client can connect successfully to a PV device and perform all ope
    When the external client is started with test_pv_connection
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
+   And the on_event_or_response is called for different events
 
 Scenario: External ESS agent not allowed to overcharge the Storage State
    Given redis container is started
