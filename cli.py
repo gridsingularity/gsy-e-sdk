@@ -29,7 +29,6 @@ from d3a_interface.utils import iterate_over_all_modules
 
 import d3a_api_client.setups as setups
 from d3a_api_client.constants import SETUP_FILE_PATH
-
 log = getLogger(__name__)
 
 
@@ -52,7 +51,7 @@ def main(log_level):
     root_logger.addHandler(handler)
 
 
-modules_path = setups if SETUP_FILE_PATH is None else [SETUP_FILE_PATH,]
+modules_path = setups.__path__ if SETUP_FILE_PATH is None else [SETUP_FILE_PATH, ]
 _setup_modules = iterate_over_all_modules(modules_path)
 
 
