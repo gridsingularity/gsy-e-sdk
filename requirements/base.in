@@ -12,3 +12,6 @@ sgqlc
 awesome-slugify
 pytest
 parameterized
+click
+click-default-group
+colorlog
