@@ -44,7 +44,7 @@ class ClientCommandBuffer:
     def execute_batch(self):
         batch_command_dict = {}
         for command_dict in self._commands_buffer:
-            area_uuid = command_dict.keys()[0]
+            area_uuid = list(command_dict.keys())[0]
             if area_uuid not in batch_command_dict.keys():
                 batch_command_dict[area_uuid] = []
             batch_command_dict[area_uuid].append(command_dict[area_uuid])

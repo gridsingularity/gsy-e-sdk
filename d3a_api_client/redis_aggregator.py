@@ -168,6 +168,7 @@ class RedisAggregator:
                 wait_until_timeout_blocking(
                     lambda: not self._check_transaction_id_cached_out(transaction_id)
                 )
+                self._client_command_buffer.clear()
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
