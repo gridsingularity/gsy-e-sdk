@@ -62,9 +62,13 @@ _setup_modules = iterate_over_all_modules(modules_path)
                   ', '.join(_setup_modules)))
 @click.option('-u', 'username', type=str, help="Your username")
 @click.option('-p', 'password', type=str, help="Your password")
-def run(module_name, username, password, **kwargs):
+@click.option('-d', 'domain_name', type=str, help="Enter api-client domain name")
+@click.option('-w', 'web_socket', type=str, help="Enter api-client web-socket")
+def run(module_name, username, password, domain_name, web_socket, **kwargs):
     os.environ["API_CLIENT_USERNAME"] = username
     os.environ["API_CLIENT_PASSWORD"] = password
+    os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
+    os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
 
     try:
         importlib.import_module(f"d3a_api_client.setups.{module_name}")
