@@ -10,7 +10,7 @@ from functools import wraps
 from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class AreaNotFoundException(Exception):
@@ -177,6 +177,21 @@ def logging_decorator(command_name):
             return return_value
         return wrapped
     return decorator
+
+
+def log_bid_response(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        response_value = func(self, *args, **kwargs)
+        command_info = json.loads(response_value['bid'])
+
+        logger.info((
+            f"{command_info.get('buyer_origin')} BID "
+            f"{round(command_info.get('energy'), 4)} kWh "
+            f"at {round(command_info.get('price') / command_info.get('energy'), 2)}/kWh"))
+
+        return response_value
+    return wrapped
 
 
 def list_running_canary_networks_and_devices_with_live_data(domain_name):

@@ -1,3 +1,4 @@
+import json
 import logging
 
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -5,7 +6,8 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util
+    logging_decorator, log_bid_response, get_aggregator_prefix, blocking_post_request, \
+    execute_function_util
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
@@ -96,6 +98,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             return self.dispatcher.wait_for_command_response('offer', transaction_id)
 
     @logging_decorator('bid')
+    @log_bid_response
     def bid_energy(self, energy, price, replace_existing=True):
         transaction_id, posted = self._post_request(
             'bid', {'energy': energy, 'price': price, 'replace_existing': replace_existing})
@@ -103,6 +106,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             return self.dispatcher.wait_for_command_response('bid', transaction_id)
 
     @logging_decorator('bid')
+    @log_bid_response
     def bid_energy_rate(self, energy, rate, replace_existing=True):
         transaction_id, posted = self._post_request(
             'bid', {
