@@ -175,6 +175,12 @@ translates to
 ```
 aggregator.add_to_batch_commands.bid_energy(<device_uuid>, <energy>, <price_cents>)
 ```
+These also can be chained as follow:
+```
+aggregator.add_to_batch_commands.bid_energy(<device_uuid>, <energy>, <price_cents>)\
+                                .offer_energy(<device_uuid>, <energy>, <price_cents>)\
+                                .device_info(<device_uuid>)
+```
 Finally, the batch commands are sent to the D3A via the following command:
 ```
 aggregator.execute_batch_command()
