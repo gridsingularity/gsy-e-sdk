@@ -183,8 +183,11 @@ def log_bid_response(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
         response_value = func(self, *args, **kwargs)
-        command_info = json.loads(response_value['bid'])
+        if 'error' in response_value:
+            logger.error(response_value['error'])
+            return response_value
 
+        command_info = json.loads(response_value['bid'])
         logger.info((
             f"{command_info.get('buyer_origin')} BID "
             f"{round(command_info.get('energy'), 4)} kWh "
