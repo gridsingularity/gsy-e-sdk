@@ -8,8 +8,6 @@ from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunication
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
 
 REGISTER_COMMAND_TIMEOUT = 15 * 60
 

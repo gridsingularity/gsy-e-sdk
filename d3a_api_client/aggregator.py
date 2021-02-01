@@ -8,10 +8,6 @@ from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
-
 class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
     def __init__(self, rest_client):
         super().__init__(rest_client)
@@ -73,7 +69,7 @@ class Aggregator(RestDeviceClient):
     def list_aggregators(self):
         list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
         if list_of_aggregators is None:
-            root_logger.error(f"No aggregators found on {self.aggregator_prefix}")
+            logging.error(f"No aggregators found on {self.aggregator_prefix}")
             list_of_aggregators = []
         return list_of_aggregators
 

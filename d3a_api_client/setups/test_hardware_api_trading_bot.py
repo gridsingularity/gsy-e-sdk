@@ -7,9 +7,6 @@ from time import sleep
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
 
 class AutoOfferBidHardwareApi(RestDeviceClient):
 
@@ -21,16 +18,16 @@ class AutoOfferBidHardwareApi(RestDeviceClient):
         :param market_info: Incoming message containing the newly-created market info
         :return: None
         """
-        root_logger.debug(f"New market information {market_info}")
+        logging.debug(f"New market information {market_info}")
         if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
             energy_forecast = market_info["device_info"]["energy_requirement_kWh"]
             bid = self.bid_energy_rate(energy_forecast / 2, 3)
-            root_logger.info(f"Bid placed on the new market: {bid}")
+            logging.info(f"Bid placed on the new market: {bid}")
 
         if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
             energy_forecast = market_info["device_info"]["available_energy_kWh"]
             offer = self.offer_energy_rate(energy_forecast/2, 1)
-            root_logger.info(f"Offer placed on the new market: {offer}")
+            logging.info(f"Offer placed on the new market: {offer}")
 
     def on_tick(self, tick_info):
         logging.debug(f"Progress information on the device: {tick_info}")

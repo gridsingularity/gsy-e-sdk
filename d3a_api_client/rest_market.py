@@ -7,9 +7,6 @@ from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunication
     logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.ERROR)
-
 
 class RestMarketClient(RestCommunicationMixin):
 
