@@ -1,4 +1,5 @@
 import logging
+import os
 
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
@@ -12,8 +13,8 @@ root_logger.setLevel(logging.ERROR)
 
 class RestMarketClient(RestCommunicationMixin):
 
-    def __init__(self, simulation_id, area_id, domain_name,
-                 websockets_domain_name):
+    def __init__(self, simulation_id, area_id, domain_name=os.environ["API_CLIENT_DOMAIN_NAME"],
+                 websockets_domain_name=os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]):
         self.simulation_id = simulation_id
         self.device_id = area_id
         self.domain_name = domain_name
