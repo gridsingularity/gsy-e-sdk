@@ -11,34 +11,34 @@ class ClientCommandBuffer:
         return len(self._commands_buffer)
 
     def offer_energy(self, area_uuid, energy, price):
-        self._add_to_buffer(area_uuid, Commands.OFFER, {"energy": energy, "price": price})
+        return self._add_to_buffer(area_uuid, Commands.OFFER, {"energy": energy, "price": price})
 
     def offer_energy_rate(self, area_uuid, energy, rate):
-        self._add_to_buffer(area_uuid, Commands.OFFER, {"energy": energy, "rate": rate})
+        return self._add_to_buffer(area_uuid, Commands.OFFER, {"energy": energy, "rate": rate})
 
     def bid_energy(self, area_uuid, energy, price):
-        self._add_to_buffer(area_uuid, Commands.BID, {"energy": energy, "price": price})
+        return self._add_to_buffer(area_uuid, Commands.BID, {"energy": energy, "price": price})
 
     def bid_energy_rate(self, area_uuid, energy, rate):
-        self._add_to_buffer(area_uuid, Commands.BID, {"energy": energy, "rate": rate})
+        return self._add_to_buffer(area_uuid, Commands.BID, {"energy": energy, "rate": rate})
 
     def delete_offer(self, area_uuid, offer_id):
-        self._add_to_buffer(area_uuid, Commands.DELETE_OFFER, {"offer_id": offer_id})
+        return self._add_to_buffer(area_uuid, Commands.DELETE_OFFER, {"offer_id": offer_id})
 
     def delete_bid(self, area_uuid, bid_id):
-        self._add_to_buffer(area_uuid, Commands.DELETE_BID, {"bid_id": bid_id})
+        return self._add_to_buffer(area_uuid, Commands.DELETE_BID, {"bid_id": bid_id})
 
     def list_offers(self, area_uuid):
-        self._add_to_buffer(area_uuid, Commands.LIST_OFFERS, {})
+        return self._add_to_buffer(area_uuid, Commands.LIST_OFFERS, {})
 
     def list_bids(self, area_uuid):
-        self._add_to_buffer(area_uuid, Commands.LIST_BIDS, {})
+        return self._add_to_buffer(area_uuid, Commands.LIST_BIDS, {})
 
     def device_info(self, area_uuid):
-        self._add_to_buffer(area_uuid, Commands.DEVICE_INFO, {})
+        return self._add_to_buffer(area_uuid, Commands.DEVICE_INFO, {})
 
     def last_market_stats(self, area_uuid):
-        self._add_to_buffer(area_uuid, "last_market_stats", {})
+        return self._add_to_buffer(area_uuid, "last_market_stats", {})
 
     def _add_to_buffer(self, area_uuid, action, args):
         if area_uuid and action:
