@@ -10,7 +10,7 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util
+from d3a_api_client.utils import execute_function_util, log_bid_response
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -186,6 +186,7 @@ class RedisClient(APIClientInterface):
         return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
 
     @registered_connection
+    @log_bid_response
     def bid_energy(self, energy, price, replace_existing=True):
         logging.info(f"Client tries to place a bid for {energy} kWh at {price} cents.")
         return self._publish_and_wait(
@@ -193,6 +194,7 @@ class RedisClient(APIClientInterface):
             {"energy": energy, "price": price, 'replace_existing': replace_existing})
 
     @registered_connection
+    @log_bid_response
     def bid_energy_rate(self, energy, rate, replace_existing=True):
         logging.info(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
         return self._publish_and_wait(
