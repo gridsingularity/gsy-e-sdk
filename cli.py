@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import importlib
 import logging
 import click
+import os
 
 from click.types import Choice
 from click_default_group import DefaultGroup
@@ -59,7 +60,17 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @click.option('--setup', 'module_name', default="auto_offer_bid_on_device",
               help="Setup module of client script. Available modules: [{}]".format(
                   ', '.join(_setup_modules)))
-def run(module_name, **kwargs):
+@click.option('-u', 'username', type=str, help="Your username")
+@click.option('-p', 'password', type=str, help="Your password")
+@click.option('-d', 'domain_name', default='https://d3aweb.gridsingularity.com',
+              type=str, help="Enter api-client domain name")
+@click.option('-w', 'web_socket', default='wss://d3aweb.gridsingularity.com/external-ws',
+              type=str, help="Enter api-client web-socket")
+def run(module_name, username, password, domain_name, web_socket, **kwargs):
+    os.environ["API_CLIENT_USERNAME"] = username
+    os.environ["API_CLIENT_PASSWORD"] = password
+    os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
+    os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
 
     try:
         importlib.import_module(f"d3a_api_client.setups.{module_name}")

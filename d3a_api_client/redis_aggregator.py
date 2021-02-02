@@ -11,9 +11,6 @@ from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
 
 class RedisAPIException(Exception):
     pass

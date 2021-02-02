@@ -15,8 +15,8 @@ parser.add_argument("--simulation_id", type=str, help="Simulation uuid", require
 parser.add_argument("--load_names", nargs='+', default=[])
 parser.add_argument("--pv_names", nargs='+', default=[])
 parser.add_argument("--storage_names", nargs='+', default=[])
-parser.add_argument("--domain_name", nargs='+', default=[])
-parser.add_argument("--websockets_domain_name", nargs='+', default=[])
+parser.add_argument("--domain_name", type=str, help="domain_name", required=True)
+parser.add_argument("--websockets_domain_name", type=str, help="websocket_name", required=True)
 
 args = parser.parse_args()
 connected_devices = []
