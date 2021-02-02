@@ -5,7 +5,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util
+    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util, log_market_progression
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 root_logger = logging.getLogger()
@@ -140,6 +140,13 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def on_register(self, registration_info):
         pass
+
+    def _on_event_or_response(self, message):
+        logging.debug(f"A new message was received. Message information: {message}")
+        log_market_progression(message)
+        function = lambda: self.on_event_or_response(message)
+        self.callback_thread.submit(execute_function_util, function=function,
+                                    function_name="on_event_or_response")
 
     def _on_market_cycle(self, message):
         logging.debug(f"A new market was created. Market information: {message}")

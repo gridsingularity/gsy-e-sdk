@@ -1,12 +1,12 @@
 import os
 import traceback
-from pkgutil import walk_packages
 import ast
 import requests
 import json
 import logging
 import uuid
 from functools import wraps
+from tabulate import tabulate
 from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 
@@ -220,3 +220,23 @@ def execute_function_util(function: callable, function_name):
     except Exception as e:
         logger.error(
             f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
+
+
+def log_market_progression(message):
+    try:
+        event = message.get("event", None)
+        if event not in ["tick", "market"]:
+            return
+        headers = ["event", ]
+        table_data = [event, ]
+        data_dict = message.get("content")[0] if "content" in message.keys() else message
+        if "slot_completion" in data_dict.keys():
+            headers.append("slot_completion")
+            table_data.append(data_dict.get("slot_completion"))
+        if "start_time" in data_dict.keys():
+            headers.extend(["start_time", "duration_min", ])
+            table_data.extend([data_dict.get("start_time"), data_dict.get("duration_min")])
+
+        logger.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
+    except Exception as e:
+        logging.warning(f"Error while logging market progression {e}")

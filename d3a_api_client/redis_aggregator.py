@@ -7,7 +7,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util
+from d3a_api_client.utils import execute_function_util, log_market_progression
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
@@ -84,7 +84,7 @@ class RedisAggregator:
         elif "event" in payload and payload["event"] == "finish":
             self._on_finish(payload)
 
-        self.on_event_or_response(payload)
+        self._on_event_or_response(payload)
 
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
@@ -167,6 +167,13 @@ class RedisAggregator:
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
+
+    def _on_event_or_response(self, message):
+        logging.info(f"A new message was received. Message information: {message}")
+        log_market_progression(message)
+        function = lambda: self.on_event_or_response(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_event_or_response")
 
     def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")
