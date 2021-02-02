@@ -60,15 +60,17 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @click.option('--setup', 'module_name', default="auto_offer_bid_on_device",
               help="Setup module of client script. Available modules: [{}]".format(
                   ', '.join(_setup_modules)))
-@click.option('-u', 'username', type=str, help="Your username")
-@click.option('-p', 'password', type=str, help="Your password")
+@click.option('-u', 'username', type=str, help="Your username", default=None)
+@click.option('-p', 'password', type=str, help="Your password", default=None)
 @click.option('-d', 'domain_name', default='https://d3aweb.gridsingularity.com',
               type=str, help="Enter api-client domain name")
 @click.option('-w', 'web_socket', default='wss://d3aweb.gridsingularity.com/external-ws',
               type=str, help="Enter api-client web-socket")
 def run(module_name, username, password, domain_name, web_socket, **kwargs):
-    os.environ["API_CLIENT_USERNAME"] = username
-    os.environ["API_CLIENT_PASSWORD"] = password
+    if username is not None:
+        os.environ["API_CLIENT_USERNAME"] = username
+    if password is not None:
+        os.environ["API_CLIENT_PASSWORD"] = password
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
 
