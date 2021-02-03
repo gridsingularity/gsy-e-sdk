@@ -2,6 +2,8 @@ from behave import given, when, then
 from os import system
 from time import sleep
 from math import isclose
+
+from integration_tests.test_aggregator_batch_commands import BatchAggregator
 from integration_tests.test_load_connection import AutoBidOnLoadDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
 from integration_tests.test_ess_bid_connection import AutoBidOnESSDevice
@@ -29,6 +31,16 @@ def step_impl(context):
     # Connects one client to the load device
     context.device = AutoBidOnLoadDevice('load', autoregister=True,
                                          redis_url='redis://localhost:6379/')
+    sleep(3)
+    assert context.device.is_active is True
+
+
+@when('the external client is started with test_aggregator_batch_commands')
+def step_impl(context):
+    # Wait for d3a to activate all areas
+    sleep(5)
+    # Connects one client to the load device
+    context.device = BatchAggregator(aggregator_name="My_aggregator")
     sleep(3)
     assert context.device.is_active is True
 

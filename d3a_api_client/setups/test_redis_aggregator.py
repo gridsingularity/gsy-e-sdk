@@ -13,7 +13,7 @@ class AutoAggregator(RedisAggregator):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.is_finished = False
+        self.is_buffer_empty = True
 
     def on_market_cycle(self, market_info):
         logging.info(f"AGGREGATOR_MARKET_INFO: {market_info}")
@@ -27,27 +27,23 @@ class AutoAggregator(RedisAggregator):
                 logging.warning(json_grid_tree)
             if "available_energy_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["available_energy_kWh"] > 0.0:
-                batch_commands[device_event["area_uuid"]] = [
-                    {"type": "offer",
-                     "price": 1,
-                     "energy": device_event["device_info"]["available_energy_kWh"] / 2},
-                    {"type": "list_offers"}]
-
+                self.add_to_batch_commands.offer_energy(area_uuid=device_event["area_uuid"], price=1,
+                                                        energy=device_event["device_info"]["available_energy_kWh"] / 2) \
+                    .list_offers(area_uuid=device_event["area_uuid"])
+                self.is_buffer_empty = False
             if "energy_requirement_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["energy_requirement_kWh"] > 0.0:
                 market_slot_string_1 = today().format(DATE_TIME_FORMAT)
                 market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
                 marker_list = [market_slot_string_1, market_slot_string_2]
-                batch_commands[device_event["area_uuid"]] =\
-                    [{"type": "bid",
-                      "price": 30,
-                      "energy": device_event["device_info"]["energy_requirement_kWh"] / 2},
-                     {"type": "list_bids"},
-                     {"type": "last_market_stats", "data": {}}
-                     ]
-
-        if batch_commands:
-            response = self.batch_command(batch_commands)
+                self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"], price=30,
+                                                      energy=device_event["device_info"]["energy_requirement_kWh"] / 2) \
+                    .list_bids(area_uuid=device_event["area_uuid"]) \
+                    .last_market_stats(area_uuid=device_event["area_uuid"])
+                self.is_buffer_empty = False
+        if not self.is_buffer_empty:
+            response = self.execute_batch_commands(batch_commands)
+            self.is_buffer_empty = True
             logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
