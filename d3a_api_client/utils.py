@@ -230,7 +230,7 @@ def log_market_progression(message):
         headers = ["event", ]
         table_data = [event, ]
         data_dict = message.get("content")[0] if "content" in message.keys() else message
-        if "slot_completion" in data_dict.keys():
+        if "slot_completion" in data_dict:
             headers.append("slot_completion")
             table_data.append(data_dict.get("slot_completion"))
         if "start_time" in data_dict.keys():
