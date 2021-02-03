@@ -194,7 +194,6 @@ class RedisMarketClient:
 
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
@@ -204,7 +203,6 @@ class RedisMarketClient:
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
 
         self.executor.submit(execute_function_util, function=function,
