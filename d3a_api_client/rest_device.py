@@ -1,11 +1,11 @@
 import logging
-import os
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util
+    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util, \
+    domain_name_from_env, websocket_domain_name_from_env
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
@@ -15,8 +15,8 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def __init__(self, simulation_id, device_id,
-                 domain_name=os.environ["API_CLIENT_DOMAIN_NAME"],
-                 websockets_domain_name=os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"],
+                 domain_name=domain_name_from_env,
+                 websockets_domain_name=websocket_domain_name_from_env,
                  autoregister=False, start_websocket=True,
                  sim_api_domain_name=None):
         self.simulation_id = simulation_id

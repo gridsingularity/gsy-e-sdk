@@ -1,10 +1,10 @@
 """
 Test file for the device client. Depends on d3a test setup file strategy_tests.external_devices
 """
-from d3a_api_client.redis_market import RedisMarketClient
+from d3a_api_client.types import market_client_type
 
 
-class AutoLastMarketStats(RedisMarketClient):
+class AutoLastMarketStats(market_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
         self.error_list = []

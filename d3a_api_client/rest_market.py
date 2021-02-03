@@ -6,12 +6,13 @@ from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketT
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env
 
 
 class RestMarketClient(RestCommunicationMixin):
 
-    def __init__(self, simulation_id, area_id, domain_name=os.environ["API_CLIENT_DOMAIN_NAME"],
-                 websockets_domain_name=os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]):
+    def __init__(self, simulation_id, area_id, domain_name=domain_name_from_env,
+                 websockets_domain_name=websocket_domain_name_from_env):
         self.simulation_id = simulation_id
         self.device_id = area_id
         self.domain_name = domain_name

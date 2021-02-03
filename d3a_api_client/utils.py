@@ -1,6 +1,5 @@
 import os
 import traceback
-from pkgutil import walk_packages
 import ast
 import requests
 import json
@@ -9,6 +8,8 @@ import uuid
 from functools import wraps
 from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+
 
 logger = logging.getLogger(__name__)
 
@@ -220,3 +221,9 @@ def execute_function_util(function: callable, function_name):
     except Exception as e:
         logger.error(
             f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
+
+
+domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
+
+
+websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
