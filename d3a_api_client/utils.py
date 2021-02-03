@@ -11,9 +11,6 @@ from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
 
 
-logger = logging.getLogger(__name__)
-
-
 class AreaNotFoundException(Exception):
     pass
 
@@ -56,7 +53,7 @@ def retrieve_jwt_key_from_server(domain_name):
                          "password": os.environ["API_CLIENT_PASSWORD"]}),
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
-        logger.error(f"Request for token authentication failed with status code {resp.status_code}. "
+        logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
                      f"Response body: {resp.text}")
         return
     return json.loads(resp.text)["token"]
@@ -94,7 +91,7 @@ def request_response_returns_http_2xx(endpoint, resp):
     if 200 <= resp.status_code <= 299:
         return True
     else:
-        logger.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
+        logging.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
                      f"Response body: {resp.text}")
         return False
 
@@ -172,9 +169,9 @@ def logging_decorator(command_name):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            logger.debug(f'Sending command {command_name} to device.')
+            logging.debug(f'Sending command {command_name} to device.')
             return_value = f(self, *args, **kwargs)
-            logger.debug(f'Command {command_name} responded with: {return_value}.')
+            logging.debug(f'Command {command_name} responded with: {return_value}.')
             return return_value
         return wrapped
     return decorator
@@ -219,7 +216,7 @@ def execute_function_util(function: callable, function_name):
     try:
         function()
     except Exception as e:
-        logger.error(
+        logging.error(
             f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
 
 
