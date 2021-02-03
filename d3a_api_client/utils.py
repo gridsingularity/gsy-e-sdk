@@ -233,7 +233,7 @@ def log_market_progression(message):
         if "slot_completion" in data_dict:
             headers.append("slot_completion")
             table_data.append(data_dict.get("slot_completion"))
-        if "start_time" in data_dict.keys():
+        if "start_time" in data_dict:
             headers.extend(["start_time", "duration_min", ])
             table_data.extend([data_dict.get("start_time"), data_dict.get("duration_min")])
 
