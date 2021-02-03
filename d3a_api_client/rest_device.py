@@ -159,6 +159,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
                                     function_name="on_tick")
 
     def _on_trade(self, message):
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'),4)} kWh "
+                     f"at {round(message.get('price'), 2)}/kWh -->")
         function = lambda: self.on_trade(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_trade")
