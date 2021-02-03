@@ -2,6 +2,8 @@ from behave import given, when, then
 from os import system
 from time import sleep
 from math import isclose
+
+from integration_tests.test_aggregator_batch_commands import BatchAggregator
 from integration_tests.test_load_connection import AutoBidOnLoadDevice
 from integration_tests.test_pv_connection import AutoOfferOnPVDevice
 from integration_tests.test_ess_bid_connection import AutoBidOnESSDevice
@@ -20,7 +22,7 @@ def step_impl(context, setup_file):
     sleep(3)
     system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ '
            f'--net integtestnet d3a-tests -l INFO run -t 1s -s 60m --setup {setup_file} '
-           f'--no-export --seed 0')
+           f'--no-export --seed 0 --enable-external-connection')
 
 
 @when('the external client is started with test_load_connection')
@@ -30,6 +32,16 @@ def step_impl(context):
     # Connects one client to the load device
     context.device = AutoBidOnLoadDevice('load', autoregister=True,
                                          redis_url='redis://localhost:6379/')
+    sleep(3)
+    assert context.device.is_active is True
+
+
+@when('the external client is started with test_aggregator_batch_commands')
+def step_impl(context):
+    # Wait for d3a to activate all areas
+    sleep(5)
+    # Connects one client to the aggregator
+    context.device = BatchAggregator(aggregator_name="My_aggregator")
     sleep(3)
     assert context.device.is_active is True
 
@@ -52,6 +64,17 @@ def step_impl(context):
     # Connects one client to the load device
     context.device = AutoOfferOnPVDevice('pv', autoregister=True,
                                          redis_url='redis://localhost:6379/')
+
+
+@then('the on_event_or_response is called for different events')
+def step_impl(context):
+    # Check if the market event triggered both the on_market_cycle and on_event_or_response
+    assert context.device.events == {'event', 'command',
+                                     'tick', 'register',
+                                     'offer_delete', 'trade',
+                                     'offer', 'unregister',
+                                     'list_offers', 'market'}
+    assert context.device.is_on_market_cycle_called
 
 
 @when('the external client is started with test_ess_bid_connection')

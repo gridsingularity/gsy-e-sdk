@@ -4,10 +4,10 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 import logging
 import json
 import traceback
-from d3a_api_client.redis_device import RedisDeviceClient
+from d3a_api_client.types import device_client_type
 
 
-class AutoBidOnLoadDevice(RedisDeviceClient):
+class AutoBidOnLoadDevice(device_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
         self.error_list = []
@@ -38,8 +38,8 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
                 # Validate that the bid was deleted from the market
                 empty_listing = self.list_bids()
                 assert not any(b for b in empty_listing["bid_list"] if b["id"] == bid_info["id"])
-                # Place the bid with a price that will be acceptable for trading
-                bid = self.bid_energy(energy_requirement, 33 * energy_requirement)
+                # Place the bid with a rate that will be acceptable for trading
+                bid = self.bid_energy_rate(energy_requirement, 33)
                 bid_info = json.loads(bid["bid"])
                 assert bid_info["price"] == 33 * energy_requirement
                 assert bid_info["energy"] == energy_requirement
@@ -47,8 +47,7 @@ class AutoBidOnLoadDevice(RedisDeviceClient):
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
             assert set(self.device_bills.keys()) == \
-                   {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost', 'market_fee',
-                    'type', 'penalty_energy', 'penalty_cost', 'totals_with_penalties'}
+                   {'earned', 'bought', 'total_energy', 'total_cost', 'market_fee', 'type', 'spent', 'sold'}
             assert "last_market_stats" in market_info
             assert set(market_info["last_market_stats"]) == \
                    {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'median_trade_rate',

@@ -4,10 +4,10 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 import json
 import traceback
 import logging
-from d3a_api_client.redis_device import RedisDeviceClient
+from d3a_api_client.types import device_client_type
 
 
-class AutoOfferOnPVDevice(RedisDeviceClient):
+class AutoOfferOnPVDevice(device_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
         self.error_list = []
@@ -15,9 +15,12 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
         self.latest_stats = {}
         self.market_info = {}
         self.device_bills = {}
+        self.is_on_market_cycle_called = False
+        self.events = set()
         super().__init__(*args, **kwargs)
 
     def on_market_cycle(self, market_info):
+        self.is_on_market_cycle_called = True
         try:
             assert "available_energy_kWh" in market_info["device_info"]
             available_energy = market_info["device_info"]["available_energy_kWh"]
@@ -38,8 +41,8 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
                 # Validate that the offer was deleted from the market
                 empty_listing = self.list_offers()
                 assert not any(o for o in empty_listing["offer_list"] if o["id"] == offer_info["id"])
-                # Place the offer with a price that will be acceptable for trading
-                offer = self.offer_energy(available_energy, 10 * available_energy)
+                # Place the offer with a rate that will be acceptable for trading
+                offer = self.offer_energy_rate(available_energy, 10)
                 offer_info = json.loads(offer["offer"])
                 assert offer_info["price"] == 10 * available_energy
                 assert offer_info["energy"] == available_energy
@@ -47,9 +50,7 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
             assert set(self.device_bills.keys()) == \
-                   {'bought', 'sold', 'spent', 'earned', 'total_energy', 'total_cost',
-                    'market_fee', 'type', 'penalty_energy', 'penalty_cost',
-                    'totals_with_penalties'}
+                   {'earned', 'bought', 'total_energy', 'total_cost', 'market_fee', 'type', 'spent', 'sold'}
             assert "last_market_stats" in market_info
             logging.info(f"last_market_stats: {market_info['last_market_stats']}")
             assert set(market_info["last_market_stats"].keys()) == \
@@ -68,3 +69,10 @@ class AutoOfferOnPVDevice(RedisDeviceClient):
             self.error_list.append(e)
             raise e
 
+    def on_event_or_response(self, message):
+        if "command" in message.keys():
+            self.events.add("command")
+            self.events.add(message["command"])
+        if "event" in message.keys():
+            self.events.add("event")
+            self.events.add(message["event"])

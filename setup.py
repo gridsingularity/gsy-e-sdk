@@ -16,7 +16,7 @@ with open("README.md", "r") as readme:
     README = readme.read()
 
 # *IMPORTANT*: Don't manually change the version here. Use the 'bumpversion' utility.
-VERSION = '0.4.0'
+VERSION = '0.10.0'
 
 setup(
     name="d3a-api-client",
@@ -30,5 +30,10 @@ setup(
     package_dir={"d3a_api_client": "d3a_api_client"},
     package_data={},
     install_requires=REQUIREMENTS,
+    entry_points={
+        'console_scripts': [
+            'd3a-api-client = cli:main',
+        ]
+    },
     zip_safe=False,
 )

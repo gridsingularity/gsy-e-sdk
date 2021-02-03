@@ -1,14 +1,13 @@
 import asyncio
 import logging
-import json
 import threading
 import traceback
 import websockets
+import json
+from time import time
 from d3a_interface.utils import wait_until_timeout_blocking
-
-
-class RestWebsocketAPIException(Exception):
-    pass
+from d3a_api_client.constants import WEBSOCKET_ERROR_THRESHOLD_SECONDS, WEBSOCKET_MAX_CONNECTION_RETRIES, \
+    WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS
 
 
 class WebsocketMessageReceiver:
@@ -31,14 +30,17 @@ class WebsocketMessageReceiver:
         elif "command" in message:
             self.command_response_buffer.append(message)
 
-    def wait_for_command_response(self, command_name, transaction_id):
+        if "event" in message or "command" in message:
+            self.client.on_event_or_response(message)
+
+    def wait_for_command_response(self, command_name, transaction_id, timeout=120):
         def check_if_command_response_received():
             return any("command" in c and c["command"] == command_name and
                        "transaction_id" in c and c["transaction_id"] == transaction_id
                        for c in self.command_response_buffer)
 
-        logging.info(f"Command {command_name} waiting for response...")
-        wait_until_timeout_blocking(check_if_command_response_received, timeout=120)
+        logging.debug(f"Command {command_name} waiting for response...")
+        wait_until_timeout_blocking(check_if_command_response_received, timeout=timeout)
         response = next(c
                         for c in self.command_response_buffer
                         if "command" in c and c["command"] == command_name and
@@ -55,8 +57,23 @@ async def websocket_coroutine(websocket_uri, websocket_headers, message_dispatch
                 logging.debug(f"Websocket received message {message}")
                 message_dispatcher.received_message(json.loads(message.decode('utf-8')))
             except Exception as e:
-                logging.error(f"Error while receiving message: {str(e)}")
-                logging.error(traceback.format_exc())
+                raise Exception(f"Error while receiving message: {str(e)}, "
+                                f"traceback:{traceback.format_exc()}")
+
+
+async def retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=0):
+    ws_connect_time = time()
+    try:
+        await websocket_coroutine(websocket_uri, websocket_headers, message_dispatcher)
+    except Exception as e:
+        logging.warning(f"Connection failed, trying to reconnect.")
+        ws_error_time = time()
+        if ws_error_time - ws_connect_time > WEBSOCKET_ERROR_THRESHOLD_SECONDS:
+            retry_count = 0
+        await asyncio.sleep(WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS)
+        if retry_count >= WEBSOCKET_MAX_CONNECTION_RETRIES:
+            raise e
+        await retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=retry_count+1)
 
 
 class WebsocketThread(threading.Thread):
@@ -76,8 +93,6 @@ class WebsocketThread(threading.Thread):
         asyncio.set_event_loop(event_loop)
         websockets_uri = f"{self.domain_name}/{self.sim_id}/{self.area_uuid}/"
         event_loop.run_until_complete(
-            websocket_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
+            retry_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
         )
         event_loop.close()
-
-

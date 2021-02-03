@@ -1,16 +1,16 @@
 import logging
 import json
 import uuid
-from enum import Enum
+
 from functools import wraps
 from redis import StrictRedis
-from d3a_interface.utils import wait_until_timeout_blocking
+
+from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+from d3a_api_client.enums import Commands
+from d3a_api_client.utils import execute_function_util
 
 
 class RedisAPIException(Exception):
@@ -23,35 +23,28 @@ def registered_connection(f):
         if not self.is_active:
             raise RedisAPIException(f'Registration has not completed yet.')
         return f(self, *args, **kwargs)
+
     return wrapped
 
 
-class Commands(Enum):
-    OFFER = 1
-    BID = 2
-    DELETE_OFFER = 3
-    DELETE_BID = 4
-    LIST_OFFERS = 5
-    LIST_BIDS = 6
-    DEVICE_INFO = 7
-
-
 class RedisClient(APIClientInterface):
-    def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379'):
+    def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379',
+                 pubsub_thread=None):
         super().__init__(area_id, client_id, autoregister, redis_url)
         self.redis_db = StrictRedis.from_url(redis_url)
-        self.pubsub = self.redis_db.pubsub()
+        self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         # TODO: Replace area_id (which is a area name slug now) with "area_uuid"
         self.area_id = area_id
         self.client_id = client_id
+        self.device_uuid = None
         self.is_active = False
         self._blocking_command_responses = {}
-        self._subscribe_to_response_channels()
+        self._subscribe_to_response_channels(pubsub_thread)
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         if autoregister:
-            self.register(is_blocking=False)
+            self.register(is_blocking=True)
 
-    def _subscribe_to_response_channels(self):
+    def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
             self._response_topics[c]: self._generate_command_response_callback(c)
             for c in Commands
@@ -63,18 +56,19 @@ class RedisClient(APIClientInterface):
         channel_subs[f'{self._channel_prefix}/events/tick'] = self._on_tick
         channel_subs[f'{self._channel_prefix}/events/trade'] = self._on_trade
         channel_subs[f'{self._channel_prefix}/events/finish'] = self._on_finish
+        channel_subs[f'{self._channel_prefix}/*'] = self._on_event_or_response
 
-        self.pubsub.subscribe(**channel_subs)
-        self.pubsub.run_in_thread(daemon=True)
+        self.pubsub.psubscribe(**channel_subs)
+        if pubsub_thread is None:
+            self.pubsub.run_in_thread(daemon=True)
 
     def register(self, is_blocking=False):
         logging.info(f"Trying to register to {self.area_id} as client {self.client_id}")
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
-
         data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
-        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
         self._blocking_command_responses["register"] = data
+        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
 
         if is_blocking:
             try:
@@ -92,8 +86,8 @@ class RedisClient(APIClientInterface):
             raise RedisAPIException(f'API is already unregistered from the market.')
 
         data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
-        self.redis_db.publish(f'{self.area_id}/unregister_participant', json.dumps(data))
         self._blocking_command_responses["unregister"] = data
+        self.redis_db.publish(f'{self.area_id}/unregister_participant', json.dumps(data))
 
         if is_blocking:
             try:
@@ -138,10 +132,11 @@ class RedisClient(APIClientInterface):
             return any(command == command_type and
                        "transaction_id" in data and data["transaction_id"] == transaction_id
                        for command, data in self._blocking_command_responses.items())
-        logging.info(f"Command {command_type} waiting for response...")
+
+        logging.debug(f"Command {command_type} waiting for response...")
         wait_until_timeout_blocking(check_if_command_response_received, timeout=120)
         command_output = self._blocking_command_responses.pop(command_type)
-        logging.info(f"Command {command_type} got response {command_output}")
+        logging.debug(f"Command {command_type} got response {command_output}")
         return command_output
 
     def _generate_command_response_callback(self, command_type):
@@ -159,6 +154,7 @@ class RedisClient(APIClientInterface):
                 return
             else:
                 self._blocking_command_responses[command_type] = message
+
         return _command_received
 
     def _publish_and_wait(self, command_type, data):
@@ -172,9 +168,19 @@ class RedisClient(APIClientInterface):
         return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": price})
 
     @registered_connection
+    def offer_energy_rate(self, energy, rate):
+        logging.debug(f"Client tries to place an offer for {energy} kWh at {rate} cents/kWh.")
+        return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
+
+    @registered_connection
     def bid_energy(self, energy, price):
         logging.info(f"Client tries to place a bid for {energy} kWh at {price} cents.")
         return self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
+
+    @registered_connection
+    def bid_energy_rate(self, energy, rate):
+        logging.info(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
+        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
 
     @registered_connection
     def delete_offer(self, offer_id=None):
@@ -219,6 +225,7 @@ class RedisClient(APIClientInterface):
 
         def executor_function():
             self.on_register(message)
+
         self.executor.submit(executor_function)
 
     def _on_unregister(self, msg):
@@ -232,45 +239,48 @@ class RedisClient(APIClientInterface):
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A new market was created. Market information: {message}")
+        function = lambda: self.on_market_cycle(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_market_cycle")
 
-        def executor_function():
-            self.on_market_cycle(message)
-        self.executor.submit(executor_function)
+    def _on_event_or_response(self, msg):
+        message = json.loads(msg["data"])
+        logging.info(f"A new message was received. Message information: {message}")
+        function = lambda: self.on_event_or_response(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_event_or_response")
 
     def _on_tick(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Time has elapsed on the device. Progress info: {message}")
-
-        def executor_function():
-            self.on_tick(message)
-        self.executor.submit(executor_function)
+        function = lambda: self.on_tick(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_tick")
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A trade took place on the device. Trade information: {message}")
-
-        def executor_function():
-            self.on_trade(message)
-        self.executor.submit(executor_function)
+        function = lambda: self.on_trade(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_trade")
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"Simulation finished. Information: {message}")
-
-        def executor_function():
-            self.on_finish(message)
-        self.executor.submit(executor_function)
+        function = lambda: self.on_finish(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_finish")
 
     def _check_buffer_message_matching_command_and_id(self, message):
-        if "transaction_id" in message and message["transaction_id"] is not None:
+        if key_in_dict_and_not_none(message, "transaction_id"):
             transaction_id = message["transaction_id"]
-            if not any(command == "register" and "transaction_id" in data and
+            if not any(command in ["register", "unregister"] and "transaction_id" in data and
                        data["transaction_id"] == transaction_id
                        for command, data in self._blocking_command_responses.items()):
                 raise RedisAPIException("There is no matching command response in _blocking_command_responses.")
         else:
             raise RedisAPIException(
-                "the answer message does not contain a valid 'transaction_id' member.")
+                "The answer message does not contain a valid 'transaction_id' member.")
 
     def on_register(self, registration_info):
         pass
@@ -286,3 +296,7 @@ class RedisClient(APIClientInterface):
 
     def on_finish(self, finish_info):
         pass
+
+    def on_event_or_response(self, message):
+        pass
+
