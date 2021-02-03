@@ -3,7 +3,7 @@ import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util
+    logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util, log_market_progression
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env
 
@@ -56,6 +56,13 @@ class RestMarketClient(RestCommunicationMixin):
         transaction_id, posted = self._get_request('dso-market-stats', {"market_slots": selected_markets})
         if posted:
             return self.dispatcher.wait_for_command_response('dso_market_stats', transaction_id)
+
+    def _on_event_or_response(self, message):
+        logging.info(f"A new message was received. Message information: {message}")
+        log_market_progression(message)
+        function = lambda: self.on_event_or_response(message)
+        self.callback_thread.submit(execute_function_util, function=function,
+                                    function_name="on_event_or_response")
 
     def _on_market_cycle(self, message):
         function = lambda: self.on_market_cycle(message)
