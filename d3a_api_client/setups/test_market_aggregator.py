@@ -11,6 +11,7 @@ class TestAggregator(Aggregator):
         super().__init__(*args, **kwargs)
         self.is_finished = False
         self.fee_cents_per_kwh = 0
+        self.is_buffer_empty = True
 
     def on_market_cycle(self, market_info):
         """
@@ -22,21 +23,18 @@ class TestAggregator(Aggregator):
             return
         if "content" not in market_info:
             return
-        batch_commands = {}
         self.fee_cents_per_kwh += 1
         logging.info(f"{market_info}")
         for area_event in market_info["content"]:
             area_uuid = area_event["area_uuid"]
             if area_uuid is None:
                 continue
-            if area_uuid not in batch_commands:
-                batch_commands[area_uuid] = []
-            batch_commands[area_uuid].append({"type": "market_stats",
-                                              "data": {}})
-            batch_commands[area_uuid].append({"type": "grid_fees",
-                                              "data": {"fee_const": self.fee_cents_per_kwh}})
-        if batch_commands:
-            response = self.batch_command(batch_commands)
+            self.add_to_batch_commands.last_market_stats(area_uuid=area_uuid).\
+                grid_fees(area_uuid=area_uuid, fee_cents_kwh=self.fee_cents_per_kwh)
+            self.is_buffer_empty = False
+        if not self.is_buffer_empty:
+            response = self.execute_batch_commands()
+            self.is_buffer_empty = True
             logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):

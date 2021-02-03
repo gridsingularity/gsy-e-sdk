@@ -9,6 +9,7 @@ class AutoAggregator(RedisAggregator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_finished = False
+        self.is_buffer_empty = True
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
@@ -19,17 +20,15 @@ class AutoAggregator(RedisAggregator):
             if "energy_to_buy" in device_event["device_info"] and \
                     device_event["device_info"]["energy_to_buy"] > 0.0:
                 buy_energy = device_event["device_info"]["energy_to_buy"] / 2
-                batch_commands[device_event["area_uuid"]] = [
-                    {"type": "bid",
-                     "price": 31 * buy_energy,
-                     "energy": buy_energy},
-                    {"type": "list_bids"}]
+                self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"],
+                                                      price=31 * buy_energy, energy=buy_energy).\
+                    list_bids(area_uuid=device_event["area_uuid"])
+                self.is_buffer_empty = False
 
-        logging.info(f"batch_commands: {batch_commands}")
-
-        if batch_commands:
-            self.batch_command(batch_commands)
-            logging.info(f"Batch command placed on the new market")
+        if not self.is_buffer_empty:
+            response = self.execute_batch_commands(batch_commands)
+            self.is_buffer_empty = True
+            logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
         logging.info(f"AGGREGATOR_TICK_INFO: {tick_info}")

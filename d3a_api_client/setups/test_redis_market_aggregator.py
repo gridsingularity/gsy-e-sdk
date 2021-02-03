@@ -10,6 +10,7 @@ class AutoAggregator(RedisAggregator):
         super().__init__(*args, **kwargs)
         self.is_finished = False
         self.fee_cents_per_kwh = 0
+        self.is_buffer_empty = True
 
     def on_market_cycle(self, market_info):
         """
@@ -17,20 +18,18 @@ class AutoAggregator(RedisAggregator):
         that are controlled by the aggregator
         """
         logging.info(f"AGGREGATOR_MARKET_INFO: {market_info}")
-        batch_commands = {}
         self.fee_cents_per_kwh += 1
         for area_event in market_info["content"]:
             area_uuid = area_event["area_uuid"]
             if area_uuid is None:
                 continue
-            if area_uuid not in batch_commands:
-                batch_commands[area_uuid] = []
-            batch_commands[area_uuid].append({"type": "dso_market_stats",
-                                              "data": {}})
-            batch_commands[area_uuid].append({"type": "grid_fees",
-                                              "data": {"fee_const": self.fee_cents_per_kwh}})
-        if batch_commands:
-            response = self.batch_command(batch_commands, is_blocking=True)
+            self.add_to_batch_commands.last_market_dso_stats(area_uuid=area_uuid).\
+                grid_fees(area_uuid=area_uuid, fee_cents_kwh=self.fee_cents_per_kwh)
+            self.is_buffer_empty = False
+
+        if not self.is_buffer_empty:
+            response = self.execute_batch_commands(is_blocking=True)
+            self.is_buffer_empty = True
             logging.warning(f"Batch command placed on the new market: {response}")
         logging.info(f"---------------------------")
 
