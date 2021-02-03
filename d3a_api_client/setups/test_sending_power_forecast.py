@@ -7,9 +7,6 @@ from time import sleep
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
 
 class AutoSendForecast(RestDeviceClient):
     forecast = 0
@@ -18,14 +15,14 @@ class AutoSendForecast(RestDeviceClient):
         """
         Sends increasing energy forecast to pv and load devices
         """
-        root_logger.debug(f"New market information {market_info}")
+        logging.debug(f"New market information {market_info}")
         self.forecast += 50
         if "available_energy_kWh" in market_info["device_info"]:
-            root_logger.info(f"self.set_pv_energy_forecast({self.forecast})")
+            logging.info(f"self.set_pv_energy_forecast({self.forecast})")
             response = self.set_energy_forecast(self.forecast)
 
         if "energy_requirement_kWh" in market_info["device_info"]:
-            root_logger.info(f"self.set_load_energy_forecast({self.forecast})")
+            logging.info(f"self.set_load_energy_forecast({self.forecast})")
             response = self.set_energy_forecast(self.forecast)
 
     def on_tick(self, tick_info):

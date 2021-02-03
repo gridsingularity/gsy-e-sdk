@@ -3,9 +3,6 @@ from time import sleep
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_market import RedisMarketClient
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
 
 class AutoAggregator(RedisAggregator):
 

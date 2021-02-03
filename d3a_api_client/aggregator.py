@@ -1,15 +1,12 @@
 import logging
 
+from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.utils import logging_decorator, blocking_get_request, \
     blocking_post_request
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.constants import MAX_WORKER_THREADS
-
-
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
 
 
 class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -49,6 +46,7 @@ class Aggregator(RestDeviceClient):
         self.accept_all_devices = accept_all_devices
         self.device_uuid_list = []
         self.aggregator_uuid = None
+        self._client_command_buffer = ClientCommandBuffer()
         self._connect_to_simulation()
 
     def _connect_to_simulation(self):
@@ -73,7 +71,7 @@ class Aggregator(RestDeviceClient):
     def list_aggregators(self):
         list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
         if list_of_aggregators is None:
-            root_logger.error(f"No aggregators found on {self.aggregator_prefix}")
+            logging.error(f"No aggregators found on {self.aggregator_prefix}")
             list_of_aggregators = []
         return list_of_aggregators
 
@@ -107,16 +105,21 @@ class Aggregator(RestDeviceClient):
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
-    def batch_command(self, batch_command_dict):
+    @property
+    def add_to_batch_commands(self):
         """
-        batch_dict : dict where keys are device_uuids and values list of commands
-        e.g.: batch_dict = {
-                        "dev_uuid1": [{"energy": 10, "rate": 30, "type": "offer"}, {"energy": 9, "rate": 12, "type": "bid"}],
-                        "dev_uuid2": [{"energy": 20, "rate": 60, "type": "bid"}, {"type": "list_market_stats"}]
-                        }
+        A property which is meant to be accessed prefixed to a chained function from the ClientCommandBuffer class
+        This command will be added to the batch commands buffer
         """
+        return self._client_command_buffer
+
+    def execute_batch_commands(self):
+        batch_command_dict = self._client_command_buffer.execute_batch()
+        if not batch_command_dict:
+            return
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id, posted = self._post_request(
             'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
         if posted:
+            self._client_command_buffer.clear()
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)

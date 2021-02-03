@@ -2,7 +2,6 @@ import logging
 import json
 import uuid
 
-from enum import Enum
 from functools import wraps
 from redis import StrictRedis
 
@@ -11,9 +10,8 @@ from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util, log_market_progression
-
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+from d3a_api_client.enums import Commands
+from d3a_api_client.utils import execute_function_util
 
 
 class RedisAPIException(Exception):
@@ -28,16 +26,6 @@ def registered_connection(f):
         return f(self, *args, **kwargs)
 
     return wrapped
-
-
-class Commands(Enum):
-    OFFER = 1
-    BID = 2
-    DELETE_OFFER = 3
-    DELETE_BID = 4
-    LIST_OFFERS = 5
-    LIST_BIDS = 6
-    DEVICE_INFO = 7
 
 
 class RedisClient(APIClientInterface):
@@ -313,3 +301,4 @@ class RedisClient(APIClientInterface):
 
     def on_event_or_response(self, message):
         pass
+

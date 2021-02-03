@@ -27,27 +27,20 @@ class TestAggregator(Aggregator):
         if "content" not in market_info:
             return
 
-        batch_commands = {}
-
         for device_event in market_info["content"]:
             if "available_energy_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["available_energy_kWh"] > 0.0:
-                batch_commands[device_event["area_uuid"]] = [
-                    {"type": "offer",
-                     "price": 1,
-                     "energy": device_event["device_info"]["available_energy_kWh"] / 2},
-                    {"type": "list_offers"}]
+                self.add_to_batch_commands.offer_energy(device_event["area_uuid"], price=1,
+                                                        energy=device_event["device_info"]["available_energy_kWh"] / 2)
+                self.add_to_batch_commands.list_offers(device_event["area_uuid"])
 
             if "energy_requirement_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["energy_requirement_kWh"] > 0.0:
-                batch_commands[device_event["area_uuid"]] =\
-                    [{"type": "bid",
-                      "price": 30,
-                      "energy": device_event["device_info"]["energy_requirement_kWh"] / 2},
-                     {"type": "list_bids"}]
+                self.add_to_batch_commands.bid_energy(device_event["area_uuid"], price=30,
+                                                      energy=device_event["device_info"]["energy_requirement_kWh"] / 2)
+                self.add_to_batch_commands.list_bids(device_event["area_uuid"])
 
-        if batch_commands:
-            response = self.batch_command(batch_commands)
+            response = self.execute_batch_commands()
             logging.debug(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
