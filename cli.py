@@ -62,16 +62,18 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @click.option('--setup', 'setup_module_name', default="auto_offer_bid_on_device",
               help="Setup module of client script. Available modules: [{}]".format(
                   ', '.join(_setup_modules)))
-@click.option('-u', '--username', default="", type=str, help="D3A username")
-@click.option('-p', '--password', default="", type=str, help="D3A password")
+@click.option('-u', '--username', default=None, type=str, help="D3A username")
+@click.option('-p', '--password', default=None, type=str, help="D3A password")
 @click.option('-d', '--domain-name', default=DEFAULT_DOMAIN_NAME,
               type=str, help="D3A domain name")
 @click.option('-w', '--web-socket', default=DEFAULT_WEBSOCKET_DOMAIN,
               type=str, help="D3A websocket URL")
 @click.option('--run-on-redis', is_flag=True, default=False, help="Start the client using the Redis API")
 def run(setup_module_name, username, password, domain_name, web_socket, run_on_redis, **kwargs):
-    os.environ["API_CLIENT_USERNAME"] = username
-    os.environ["API_CLIENT_PASSWORD"] = password
+    if username is not None:
+        os.environ["API_CLIENT_USERNAME"] = username
+    if password is not None:
+        os.environ["API_CLIENT_PASSWORD"] = password
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"

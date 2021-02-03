@@ -61,6 +61,7 @@ by overriding the corresponding methods.
 - when a new market cycle is triggered the `on_market_cycle` method is called
 - when a new tick has started, the `on_tick` method is called
 - when the simulation has finished, the `on_finished` method is called
+- when any event arrives , the `on_event_or_response` method is called
 ---
 
 ### Asset API
@@ -163,33 +164,26 @@ device.unselect_aggregator(aggregator.aggregator_uuid)
 ```
 
 #### How to send batch commands
-Commands all or individual connected devices or markets can be send in one batch.
+Commands to all or individual connected devices or markets can be send in one batch.
 All device or market specific functions can be sent via commands that are
-dictionary representations of the functions and their parameters.
-An individual command is a dictionary that contains the keys `type` and `data`. With `type` one selects 
-the function to be called for the device or market and `data` contains the parameters needed for the
-function.
-For example, the call of 
+accumulated and added to buffer.
+For example, to add the following call to the buffer 
 ```
 device_client.bid_energy(<energy>, <price_cents>)
 ```
 translates to 
 ```
-{"type": "bid_energy", "data": {"energy": <energy>, "price": <price_cents>}}
+aggregator.add_to_batch_commands.bid_energy(<device_uuid>, <energy>, <price_cents>)
 ```
-
-These dictionary commands should be accumulated in a dictionary with `area_uuids` (device or market uuids) 
-as keys and the list of batch commands as values:
+These also can be chained as follow:
 ```
-batch_commands={
-    <area1_uuid>: [{"type": "list_bids", "data": {}}, 
-                   {"type": "bid_energy", "data": {"energy": 1, "price": 2}}],
-    <area2_uuid>: [{"type": "list_bids", "data": {}}]
-                }
+aggregator.add_to_batch_commands.bid_energy(<device_uuid>, <energy>, <price_cents>)\
+                                .offer_energy(<device_uuid>, <energy>, <price_cents>)\
+                                .device_info(<device_uuid>)
 ```
 Finally, the batch commands are sent to the D3A via the following command:
 ```
-aggregator.batch_command(batch_commands)
+aggregator.execute_batch_command()
 ```
 ---
 

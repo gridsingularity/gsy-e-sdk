@@ -6,6 +6,8 @@ from redis import StrictRedis
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking
+
+from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util
 
@@ -27,6 +29,7 @@ class RedisAggregator:
         self._transaction_id_buffer = []
         self._transaction_id_response_buffer = {}
         self.device_uuid_list = []
+        self._client_command_buffer = ClientCommandBuffer()
         self._connect_to_simulation(is_blocking=True)
         self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
@@ -139,14 +142,18 @@ class RedisAggregator:
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
-    def batch_command(self, batch_command_dict, is_blocking=True):
+    @property
+    def add_to_batch_commands(self):
         """
-        batch_dict : dict where keys are device_uuids and values list of commands
-        e.g.: batch_dict = {
-                        "dev_uuid1": [{"energy": 10, "rate": 30, "type": "offer"}, {"energy": 9, "rate": 12, "type": "bid"}],
-                        "dev_uuid2": [{"energy": 20, "rate": 60, "type": "bid"}, {"type": "list_market_stats"}]
-                        }
+        A property which is meant to be accessed prefixed to a chained function from the ClientCommandBuffer class
+        This command will be added to the batch commands buffer
         """
+        return self._client_command_buffer
+
+    def execute_batch_commands(self, is_blocking=True):
+        batch_command_dict = self._client_command_buffer.execute_batch()
+        if not batch_command_dict:
+            return
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id = str(uuid.uuid4())
         batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
@@ -155,15 +162,16 @@ class RedisAggregator:
         batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
         self.redis_db.publish(batch_channel, json.dumps(batched_command))
         self._transaction_id_buffer.append(transaction_id)
-
         if is_blocking:
             try:
                 wait_until_timeout_blocking(
                     lambda: not self._check_transaction_id_cached_out(transaction_id)
                 )
+                self._client_command_buffer.clear()
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
+        self._client_command_buffer.clear()
 
     def _on_market_cycle(self, message):
         logging.info(f"A new market was created. Market information: {message}")

@@ -12,21 +12,19 @@ class AutoAggregator(RedisAggregator):
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
-        batch_commands = {}
 
         for device_event in market_info["content"]:
-            if "energy_to_sell" in device_event["device_info"] and \
+            if device_event["device_info"] and "energy_to_sell" in device_event["device_info"] and \
+                     device_event["device_info"] and \
                     device_event["device_info"]["energy_to_sell"] > 0.0:
                 sell_energy = device_event["device_info"]["energy_to_sell"] / 2
-                batch_commands[device_event["area_uuid"]] = [
-                    {"type": "offer",
-                     "price": 15 * sell_energy,
-                     "energy": sell_energy},
-                    {"type": "list_offers"}]
+                self.add_to_batch_commands.offer_energy(device_event["area_uuid"],
+                                                        price=15 * sell_energy,
+                                                        energy=sell_energy)
+                self.add_to_batch_commands.list_offers(device_event["area_uuid"])
 
-        if batch_commands:
-            self.batch_command(batch_commands)
             logging.info(f"Batch command placed on the new market")
+            self.execute_batch_commands()
 
     def on_tick(self, tick_info):
         logging.info(f"AGGREGATOR_TICK_INFO: {tick_info}")
@@ -41,7 +39,7 @@ class AutoAggregator(RedisAggregator):
 
 aggregator = AutoAggregator(
     aggregator_name="faizan_aggregator",
-    autoregister=True)
+    )
 
 sleep(10)
 # aggregator.delete_aggregator(is_blocking=True)
