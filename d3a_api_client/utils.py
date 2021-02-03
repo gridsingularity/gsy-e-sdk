@@ -93,7 +93,7 @@ def request_response_returns_http_2xx(endpoint, resp):
         return True
     else:
         logging.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
-                     f"Response body: {resp.text}")
+                     f"Response body: {json.loads(resp.text).get('error')}")
         return False
 
 
@@ -236,9 +236,10 @@ def log_market_progression(message):
             headers.extend(["start_time", "duration_min", ])
             table_data.extend([data_dict.get("start_time"), data_dict.get("duration_min")])
 
-        logger.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
+        logging.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
     except Exception as e:
         logging.warning(f"Error while logging market progression {e}")
+
 
 domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
 

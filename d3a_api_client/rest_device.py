@@ -66,7 +66,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
                                           "device_uuid": self.device_id}, self.jwt_token)
-        self.active_aggregator = response["aggregator_uuid"]
+        self.active_aggregator = response["aggregator_uuid"] if response else None
 
     @logging_decorator('unselect-aggregator')
     def unselect_aggregator(self, aggregator_uuid):
