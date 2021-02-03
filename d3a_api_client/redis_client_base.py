@@ -174,12 +174,12 @@ class RedisClient(APIClientInterface):
 
     @registered_connection
     def bid_energy(self, energy, price):
-        logging.info(f"Client tries to place a bid for {energy} kWh at {price} cents.")
+        logging.debug(f"Client tries to place a bid for {energy} kWh at {price} cents.")
         return self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
 
     @registered_connection
     def bid_energy_rate(self, energy, rate):
-        logging.info(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
+        logging.debug(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
         return self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
 
     @registered_connection
@@ -238,7 +238,6 @@ class RedisClient(APIClientInterface):
 
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
@@ -252,21 +251,18 @@ class RedisClient(APIClientInterface):
 
     def _on_tick(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"Time has elapsed on the device. Progress info: {message}")
         function = lambda: self.on_tick(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_tick")
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"A trade took place on the device. Trade information: {message}")
         function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_finish")

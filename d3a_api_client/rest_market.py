@@ -1,5 +1,4 @@
 import logging
-import os
 
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
@@ -59,13 +58,11 @@ class RestMarketClient(RestCommunicationMixin):
             return self.dispatcher.wait_for_command_response('dso_market_stats', transaction_id)
 
     def _on_market_cycle(self, message):
-        logging.debug(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_market_cycle")
 
     def _on_finish(self, message):
-        logging.debug(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_finish")

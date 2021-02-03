@@ -139,7 +139,7 @@ class RedisMarketClient:
                 wait_until_timeout_blocking(
                     lambda: self._check_transaction_id_cached_out(transaction_id)
                 )
-                logging.warning(f"MARKET: {self.area_slug} has selected "
+                logging.info(f"MARKET: {self.area_slug} has selected "
                                 f"AGGREGATOR: {aggregator_uuid}")
                 return transaction_id
             except AssertionError:
