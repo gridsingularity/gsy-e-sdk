@@ -9,6 +9,8 @@ from functools import wraps
 from tabulate import tabulate
 from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+
 
 logger = logging.getLogger(__name__)
 
@@ -240,3 +242,9 @@ def log_market_progression(message):
         logger.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
     except Exception as e:
         logging.warning(f"Error while logging market progression {e}")
+
+domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
+
+
+websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
+

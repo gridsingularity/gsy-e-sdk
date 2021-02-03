@@ -4,10 +4,10 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 import logging
 import json
 import traceback
-from d3a_api_client.redis_device import RedisDeviceClient
+from d3a_api_client.types import device_client_type
 
 
-class AutoBidOnLoadDevice(RedisDeviceClient):
+class AutoBidOnLoadDevice(device_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
         self.error_list = []
