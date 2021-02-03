@@ -19,6 +19,7 @@ import importlib
 import logging
 import click
 import os
+import sys
 
 from click.types import Choice
 from click_default_group import DefaultGroup
@@ -68,8 +69,11 @@ _setup_modules = iterate_over_all_modules(modules_path)
               type=str, help="D3A domain name")
 @click.option('-w', '--web-socket', default=DEFAULT_WEBSOCKET_DOMAIN,
               type=str, help="D3A websocket URL")
+@click.option('-j', '--json-file-name', type=str,
+              help="JSON Filename containing info related to simulation")
 @click.option('--run-on-redis', is_flag=True, default=False, help="Start the client using the Redis API")
-def run(setup_module_name, username, password, domain_name, web_socket, run_on_redis, **kwargs):
+def run(setup_module_name, username, password, domain_name, web_socket, json_file_name,
+        run_on_redis, **kwargs):
     if username is not None:
         os.environ["API_CLIENT_USERNAME"] = username
     if password is not None:
@@ -77,9 +81,14 @@ def run(setup_module_name, username, password, domain_name, web_socket, run_on_r
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
+    os.environ["JSON_FILE_PATH"] = os.path.join(modules_path[0], json_file_name)
 
     try:
-        importlib.import_module(f"d3a_api_client.setups.{setup_module_name}")
+        if SETUP_FILE_PATH:
+            sys.path.append(SETUP_FILE_PATH)
+            importlib.import_module(f"{setup_module_name}")
+        else:
+            importlib.import_module(f"d3a_api_client.setups.{setup_module_name}")
 
     except D3AException as ex:
         raise click.BadOptionUsage(ex.args[0])

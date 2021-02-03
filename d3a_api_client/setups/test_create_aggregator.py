@@ -1,3 +1,6 @@
+import os
+import json
+
 from pendulum import today
 import logging
 from time import sleep
@@ -53,8 +56,11 @@ class TestAggregator(Aggregator):
         self.is_finished = True
 
 
-import os
-simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
+with open(os.environ['JSON_FILE_PATH']) as json_file:
+    config_info = json.load(json_file)
+
+
+simulation_id = config_info['uuid']
 domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
 websocket_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
 
