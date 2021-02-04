@@ -10,17 +10,19 @@ from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util, log_market_progression
+from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 
 
 class RedisAPIException(Exception):
     pass
 
 
-class RedisAggregator:
+class RedisAggregator(GridFeeCalculation):
 
     def __init__(self, aggregator_name, accept_all_devices=True,
                  redis_url='redis://localhost:6379'):
 
+        super().__init__()
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
@@ -34,6 +36,7 @@ class RedisAggregator:
         self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.lock = Lock()
+        self.latest_grid_stats_tree = {}
 
     def _connect_to_simulation(self, is_blocking=True):
         if self.aggregator_uuid is None:
@@ -181,6 +184,7 @@ class RedisAggregator:
                              function_name="on_event_or_response")
 
     def _on_market_cycle(self, message):
+        self._handle_grid_stats(message)
         logging.info(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,

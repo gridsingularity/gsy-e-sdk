@@ -7,6 +7,7 @@ from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketT
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 
 
 class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -33,14 +34,15 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
             self.command_response_buffer.append(message)
 
 
-class Aggregator(RestDeviceClient):
+class Aggregator(RestDeviceClient, GridFeeCalculation):
 
     def __init__(self, simulation_id, domain_name, aggregator_name,
                  websockets_domain_name, accept_all_devices=True):
-        super().__init__(
-            simulation_id=simulation_id, device_id="", domain_name=domain_name,
-            websockets_domain_name=websockets_domain_name, autoregister=False,
-            start_websocket=False)
+        RestDeviceClient.__init__(self, simulation_id=simulation_id, device_id="",
+                                  domain_name=domain_name,
+                                  websockets_domain_name=websockets_domain_name,
+                                  autoregister=False, start_websocket=False)
+        GridFeeCalculation.__init__(self)
 
         self.aggregator_name = aggregator_name
         self.accept_all_devices = accept_all_devices
@@ -123,3 +125,7 @@ class Aggregator(RestDeviceClient):
         if posted:
             self._client_command_buffer.clear()
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
+
+    def _on_market_cycle(self, message):
+        self._handle_grid_stats(message)
+        super()._on_market_cycle(message)
