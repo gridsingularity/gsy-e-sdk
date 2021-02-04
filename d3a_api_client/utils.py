@@ -246,3 +246,16 @@ domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_N
 
 websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
 
+
+def log_bid_offer_confirmation(message):
+    try:
+        if message.get("status") == "ready":
+            event = message.get("command")
+            data_dict = json.loads(message.get(event))
+            energy = data_dict.get("energy")
+            price = data_dict.get("price")
+            trader = data_dict.get("seller" if event=="offer" else "buyer")
+            logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
+                         f"{round(energy, 2)} kWh at {price} cts/kWh")
+    except Exception as e:
+        logging.error(f"Error logging bid/offer info. Error details: {e}")

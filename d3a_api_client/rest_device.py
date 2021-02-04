@@ -5,7 +5,7 @@ from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util, log_market_progression, \
-    domain_name_from_env, websocket_domain_name_from_env
+    domain_name_from_env, websocket_domain_name_from_env, log_bid_offer_confirmation
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
@@ -86,27 +86,35 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def offer_energy(self, energy, price):
         transaction_id, posted = self._post_request('offer', {"energy": energy, "price": price})
         if posted:
-            return self.dispatcher.wait_for_command_response('offer', transaction_id)
+            response = self.dispatcher.wait_for_command_response('offer', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('offer')
     def offer_energy_rate(self, energy, rate):
         transaction_id, posted = self._post_request(
             'offer', {"energy": energy, "price": rate * energy})
         if posted:
-            return self.dispatcher.wait_for_command_response('offer', transaction_id)
+            response = self.dispatcher.wait_for_command_response('offer', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('bid')
     def bid_energy(self, energy, price):
         transaction_id, posted = self._post_request('bid', {"energy": energy, "price": price})
         if posted:
-            return self.dispatcher.wait_for_command_response('bid', transaction_id)
+            response = self.dispatcher.wait_for_command_response('bid', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('bid')
     def bid_energy_rate(self, energy, rate):
         transaction_id, posted = self._post_request(
             'bid', {"energy": energy, "price": rate * energy})
         if posted:
-            return self.dispatcher.wait_for_command_response('bid', transaction_id)
+            response = self.dispatcher.wait_for_command_response('bid', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('delete offer')
     def delete_offer(self, offer_id=None):

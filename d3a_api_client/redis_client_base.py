@@ -9,7 +9,7 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util, log_market_progression
+from d3a_api_client.utils import execute_function_util, log_market_progression, log_bid_offer_confirmation
 from d3a_api_client.enums import Commands
 from d3a_api_client.utils import execute_function_util
 
@@ -165,23 +165,31 @@ class RedisClient(APIClientInterface):
 
     @registered_connection
     def offer_energy(self, energy, price):
-        logging.debug(f"Client tries to place an offer for {energy} kWh at {price} cents.")
-        return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": price})
+        logging.error(f"Client tries to place an offer for {energy} kWh at {price} cents.")
+        response = self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": price})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def offer_energy_rate(self, energy, rate):
         logging.debug(f"Client tries to place an offer for {energy} kWh at {rate} cents/kWh.")
-        return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
+        response = self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def bid_energy(self, energy, price):
-        logging.debug(f"Client tries to place a bid for {energy} kWh at {price} cents.")
-        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
+        logging.debug(f"{self.area_id}Client tries to place a bid for {energy} kWh at {price} cents.")
+        response = self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def bid_energy_rate(self, energy, rate):
         logging.debug(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
-        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
+        response = self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def delete_offer(self, offer_id=None):
