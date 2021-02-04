@@ -258,4 +258,4 @@ def log_bid_offer_confirmation(message):
             logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
                          f"{round(energy, 2)} kWh at {price} cts/kWh")
     except Exception as e:
-        logging.error(f"Error logging bid/offer info. Error details: {e}")
+        logging.error(f"Logging bid/offer info failed.{e}")
