@@ -20,7 +20,6 @@
       - name: Run Tox
         run: tox -e $TOXENV
         env:
-          TOXENV: travis
+          TOXENV: ci
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-   

@@ -1,17 +1,17 @@
 import logging
-import os
 
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util
+    logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util, log_market_progression
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env
 
 
 class RestMarketClient(RestCommunicationMixin):
 
-    def __init__(self, simulation_id, area_id, domain_name=os.environ["API_CLIENT_DOMAIN_NAME"],
-                 websockets_domain_name=os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]):
+    def __init__(self, simulation_id, area_id, domain_name=domain_name_from_env,
+                 websockets_domain_name=websocket_domain_name_from_env):
         self.simulation_id = simulation_id
         self.device_id = area_id
         self.domain_name = domain_name
@@ -30,7 +30,7 @@ class RestMarketClient(RestCommunicationMixin):
         response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
                                           "device_uuid": self.device_id}, self.jwt_token)
-        self.active_aggregator = response["aggregator_uuid"]
+        self.active_aggregator = response["aggregator_uuid"] if response else None
 
     @logging_decorator('unselect-aggregator')
     def unselect_aggregator(self, aggregator_uuid):
@@ -57,14 +57,19 @@ class RestMarketClient(RestCommunicationMixin):
         if posted:
             return self.dispatcher.wait_for_command_response('dso_market_stats', transaction_id)
 
+    def _on_event_or_response(self, message):
+        logging.info(f"A new message was received. Message information: {message}")
+        log_market_progression(message)
+        function = lambda: self.on_event_or_response(message)
+        self.callback_thread.submit(execute_function_util, function=function,
+                                    function_name="on_event_or_response")
+
     def _on_market_cycle(self, message):
-        logging.debug(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_market_cycle")
 
     def _on_finish(self, message):
-        logging.debug(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_finish")

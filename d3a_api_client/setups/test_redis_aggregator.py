@@ -68,6 +68,7 @@ load = RedisDeviceClient('load', autoregister=True)
 pv = RedisDeviceClient('pv', autoregister=True)
 
 selected = load.select_aggregator(aggregator.aggregator_uuid)
+selected = load.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
 
 selected = pv.select_aggregator(aggregator.aggregator_uuid)

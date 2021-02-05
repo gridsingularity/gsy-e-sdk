@@ -6,10 +6,10 @@ import traceback
 from pendulum import today
 
 from d3a_interface.constants_limits import DATE_TIME_FORMAT
-from d3a_api_client.redis_market import RedisMarketClient
+from d3a_api_client.types import market_client_type
 
 
-class AutoGridFeeUpdateOnMarket(RedisMarketClient):
+class AutoGridFeeUpdateOnMarket(market_client_type):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.errors = 0
