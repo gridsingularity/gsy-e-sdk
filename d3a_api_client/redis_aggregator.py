@@ -49,7 +49,7 @@ class RedisAggregator:
                         }
 
         self.pubsub.psubscribe(**channel_dict)
-        self.pubsub.run_in_thread(daemon=True)
+        self.redis_thread = self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):
         logging.debug(f"AGGREGATORS_BATCH_RESPONSE:: {message}")

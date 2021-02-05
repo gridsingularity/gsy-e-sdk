@@ -94,7 +94,7 @@ class RedisMarketClient:
         })
 
         self.pubsub.subscribe(**channel_subs)
-        self.pubsub.run_in_thread(daemon=True)
+        self.redis_thread = self.pubsub.run_in_thread(daemon=True)
 
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer

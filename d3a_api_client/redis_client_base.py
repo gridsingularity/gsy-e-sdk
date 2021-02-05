@@ -60,7 +60,7 @@ class RedisClient(APIClientInterface):
 
         self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
-            self.pubsub.run_in_thread(daemon=True)
+            self.redis_thread = self.pubsub.run_in_thread(daemon=True)
 
     def register(self, is_blocking=False):
         logging.info(f"Trying to register to {self.area_id} as client {self.client_id}")

@@ -10,6 +10,7 @@ from d3a_api_client.utils import RedisAPIException
 class RedisDeviceClient(RedisClient):
     def __init__(self, device_id, autoregister=True, redis_url='redis://localhost:6379',
                  pubsub_thread=None):
+
         self.device_id = device_id
         self._transaction_id_buffer = []
         super().__init__(device_id, None, autoregister, redis_url, pubsub_thread)
@@ -44,7 +45,7 @@ class RedisDeviceClient(RedisClient):
         channel_subs[f'{self._channel_prefix}/*'] = self._on_event_or_response
         self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
-            self.pubsub.run_in_thread(daemon=True)
+            self.redis_thread = self.pubsub.run_in_thread(daemon=True)
 
     def _aggregator_response_callback(self, message):
         data = json.loads(message['data'])

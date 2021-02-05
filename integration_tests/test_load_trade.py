@@ -4,11 +4,11 @@ Test file for the device client. Depends on d3a test setup file strategy_tests.e
 import logging
 import json
 import traceback
-from d3a_api_client.redis_device import RedisDeviceClient
 from math import isclose
+from d3a_api_client.types import device_client_type
 
 
-class TestLoadTrades(RedisDeviceClient):
+class TestLoadTrades(device_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
         self.error_list = []
@@ -43,13 +43,13 @@ class TestLoadTrades(RedisDeviceClient):
     def on_trade(self, trade_info):
         try:
             assert set(trade_info.keys()) == {"device_info", "event", "event_type", "trade_id", "time", "price",
-                                              "energy", "fee_price", "residual_id", "seller", "buyer", "bid_id"}
+                                              "energy", "fee_price", "residual_id", "seller", "buyer", "bid_id",
+                                              "area_uuid"}
             assert trade_info["event"] == "trade"
             assert trade_info["event_type"] == "buy"
             assert isclose(trade_info["fee_price"], 0.0)
             assert all(trade_info[member] is not None for member in ["trade_id", "time", "price", "energy"])
             assert isclose(trade_info["price"] / trade_info["energy"], 33.0)
-            assert trade_info["residual_id"] == 'None'
             assert trade_info["seller"] == "anonymous"
             assert trade_info["buyer"] == self.area_id
             self.trade_counter += 1
