@@ -11,7 +11,6 @@ class TestAggregator(Aggregator):
         super().__init__(*args, **kwargs)
         self.is_finished = False
         self.fee_cents_per_kwh = 0
-        self.is_buffer_empty = True
 
     def on_market_cycle(self, market_info):
         """
@@ -31,10 +30,8 @@ class TestAggregator(Aggregator):
                 continue
             self.add_to_batch_commands.last_market_stats(area_uuid=area_uuid).\
                 grid_fees(area_uuid=area_uuid, fee_cents_kwh=self.fee_cents_per_kwh)
-            self.is_buffer_empty = False
-        if not self.is_buffer_empty:
+        if self.len_commands_buffer:
             response = self.execute_batch_commands()
-            self.is_buffer_empty = True
             logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):

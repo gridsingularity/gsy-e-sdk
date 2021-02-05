@@ -12,7 +12,6 @@ from d3a_api_client.redis_market import RedisMarketClient
 class BatchAggregator(RedisAggregator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.is_buffer_empty = True
         self.errors = 0
         self.status = "running"
         self._setup()
@@ -40,7 +39,6 @@ class BatchAggregator(RedisAggregator):
                 self.add_to_batch_commands.offer_energy(area_uuid=device_event["area_uuid"], price=1,
                                                         energy=device_event["device_info"]["available_energy_kWh"] / 2) \
                     .list_offers(area_uuid=device_event["area_uuid"])
-                self.is_buffer_empty = False
 
                 if "energy_requirement_kWh" in device_event["device_info"] and \
                         device_event["device_info"]["energy_requirement_kWh"] > 0.0:
@@ -49,15 +47,13 @@ class BatchAggregator(RedisAggregator):
                                                                      "energy_requirement_kWh"] / 2) \
                         .list_bids(area_uuid=device_event["area_uuid"]) \
                         .last_market_stats(area_uuid=device_event["area_uuid"])
-                    self.is_buffer_empty = False
 
-            if not self.is_buffer_empty:
+            if self.len_commands_buffer:
                 if not self._client_command_buffer.buffer_length > 0:
                     self.errors += 1
                 transaction = self.execute_batch_commands()
                 if transaction is None:
                     self.errors += 1
-                self.is_buffer_empty = True
                 logging.info(f"Batch command placed on the new market")
 
     def on_finish(self, finish_info):

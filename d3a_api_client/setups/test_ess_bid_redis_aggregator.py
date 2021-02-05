@@ -9,7 +9,6 @@ class AutoAggregator(RedisAggregator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_finished = False
-        self.is_buffer_empty = True
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
@@ -23,11 +22,9 @@ class AutoAggregator(RedisAggregator):
                 self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"],
                                                       price=31 * buy_energy, energy=buy_energy).\
                     list_bids(area_uuid=device_event["area_uuid"])
-                self.is_buffer_empty = False
 
-        if not self.is_buffer_empty:
+        if self.len_commands_buffer:
             response = self.execute_batch_commands(batch_commands)
-            self.is_buffer_empty = True
             logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):

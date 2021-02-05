@@ -150,10 +150,17 @@ class RedisAggregator:
         """
         return self._client_command_buffer
 
+    @property
+    def len_commands_buffer(self):
+        """
+        Returns the length of the batch commands buffer
+        """
+        return self._client_command_buffer.buffer_length
+
     def execute_batch_commands(self, is_blocking=True):
-        batch_command_dict = self._client_command_buffer.execute_batch()
-        if not batch_command_dict:
+        if self.len_commands_buffer == 0:
             return
+        batch_command_dict = self._client_command_buffer.execute_batch()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id = str(uuid.uuid4())
         batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
