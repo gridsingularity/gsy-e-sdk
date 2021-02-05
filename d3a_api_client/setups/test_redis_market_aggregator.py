@@ -24,8 +24,6 @@ class AutoAggregator(RedisAggregator):
                 continue
             self.add_to_batch_commands.last_market_dso_stats(area_uuid=area_uuid).\
                 grid_fees(area_uuid=area_uuid, fee_cents_kwh=self.fee_cents_per_kwh)
-
-        if self.len_commands_buffer:
             response = self.execute_batch_commands(is_blocking=True)
             logging.warning(f"Batch command placed on the new market: {response}")
         logging.info(f"---------------------------")

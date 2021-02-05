@@ -30,9 +30,8 @@ class TestAggregator(Aggregator):
                 continue
             self.add_to_batch_commands.last_market_stats(area_uuid=area_uuid).\
                 grid_fees(area_uuid=area_uuid, fee_cents_kwh=self.fee_cents_per_kwh)
-        if self.len_commands_buffer:
-            response = self.execute_batch_commands()
-            logging.info(f"Batch command placed on the new market: {response}")
+        response = self.execute_batch_commands()
+        logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
         logging.debug(f"Progress information on the device: {tick_info}")

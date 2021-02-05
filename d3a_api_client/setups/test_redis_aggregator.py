@@ -38,9 +38,8 @@ class AutoAggregator(RedisAggregator):
                                                       energy=device_event["device_info"]["energy_requirement_kWh"] / 2) \
                     .list_bids(area_uuid=device_event["area_uuid"]) \
                     .last_market_stats(area_uuid=device_event["area_uuid"])
-        if self.len_commands_buffer:
-            response = self.execute_batch_commands()
-            logging.info(f"Batch command placed on the new market: {response}")
+        response = self.execute_batch_commands()
+        logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
         logging.info(f"AGGREGATOR_TICK_INFO: {tick_info}")

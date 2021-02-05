@@ -48,13 +48,11 @@ class BatchAggregator(RedisAggregator):
                         .list_bids(area_uuid=device_event["area_uuid"]) \
                         .last_market_stats(area_uuid=device_event["area_uuid"])
 
-            if self.len_commands_buffer:
-                if not self._client_command_buffer.buffer_length > 0:
-                    self.errors += 1
-                transaction = self.execute_batch_commands()
-                if transaction is None:
-                    self.errors += 1
-                logging.info(f"Batch command placed on the new market")
+        if self.commands_buffer_length:
+            transaction = self.execute_batch_commands()
+            if transaction is None:
+                self.errors += 1
+            logging.info(f"Batch command placed on the new market")
 
     def on_finish(self, finish_info):
         self.status = "finished"
