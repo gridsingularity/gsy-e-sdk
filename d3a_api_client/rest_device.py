@@ -5,7 +5,7 @@ from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util, log_market_progression, \
-    domain_name_from_env, websocket_domain_name_from_env
+    domain_name_from_env, websocket_domain_name_from_env, log_bid_offer_confirmation
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
@@ -66,7 +66,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
                                           "device_uuid": self.device_id}, self.jwt_token)
-        self.active_aggregator = response["aggregator_uuid"]
+        self.active_aggregator = response["aggregator_uuid"] if response else None
 
     @logging_decorator('unselect-aggregator')
     def unselect_aggregator(self, aggregator_uuid):
@@ -86,27 +86,35 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def offer_energy(self, energy, price):
         transaction_id, posted = self._post_request('offer', {"energy": energy, "price": price})
         if posted:
-            return self.dispatcher.wait_for_command_response('offer', transaction_id)
+            response = self.dispatcher.wait_for_command_response('offer', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('offer')
     def offer_energy_rate(self, energy, rate):
         transaction_id, posted = self._post_request(
             'offer', {"energy": energy, "price": rate * energy})
         if posted:
-            return self.dispatcher.wait_for_command_response('offer', transaction_id)
+            response = self.dispatcher.wait_for_command_response('offer', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('bid')
     def bid_energy(self, energy, price):
         transaction_id, posted = self._post_request('bid', {"energy": energy, "price": price})
         if posted:
-            return self.dispatcher.wait_for_command_response('bid', transaction_id)
+            response = self.dispatcher.wait_for_command_response('bid', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('bid')
     def bid_energy_rate(self, energy, rate):
         transaction_id, posted = self._post_request(
             'bid', {"energy": energy, "price": rate * energy})
         if posted:
-            return self.dispatcher.wait_for_command_response('bid', transaction_id)
+            response = self.dispatcher.wait_for_command_response('bid', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
 
     @logging_decorator('delete offer')
     def delete_offer(self, offer_id=None):
@@ -149,25 +157,23 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
                                     function_name="on_event_or_response")
 
     def _on_market_cycle(self, message):
-        logging.debug(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_market_cycle")
 
     def _on_tick(self, message):
-        logging.debug(f"Time has elapsed on the device. Progress info: {message}")
         function = lambda: self.on_tick(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_tick")
 
     def _on_trade(self, message):
-        logging.debug(f"A trade took place on the device. Trade information: {message}")
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'),4)} kWh "
+                     f"at {round(message.get('price'), 2)}/kWh -->")
         function = lambda: self.on_trade(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_trade")
 
     def _on_finish(self, message):
-        logging.debug(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_finish")
