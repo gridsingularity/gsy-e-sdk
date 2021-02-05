@@ -35,13 +35,32 @@ pip install git+https://github.com/gridsingularity/d3a-api-client.git
 ```
 ---
 
-## Authentication for REST API
-Authentication is done implicitly: The d3a-client is reading the following two variable from the environment
+## How to use the Client
+
+### Interacting with the CLI
+You can run one of the setup scripts residing in the `d3a_api_client/setups` folder, or you can 
+set the path for your scripts directory as list in the `d3a_api_client.constants` .
+In order to run a module you can use the following command
+```
+d3a-api-client run --setup {module_name}
+```
+
+### Authentication for REST API
+Authentication is done implicitly. The d3a-client is reading the following two variable from the environment
 and requests a auth token from the D3A API which will be reused internally for all communication.
 ```
 API_CLIENT_USERNAME
 API_CLIENT_PASSWORD
 ```
+The user credentials can be provided in two ways:
+#### Via CLI
+Users can use the following parameters in the `d3a_api_client` cli for setting username and password
+```
+  -u, --username TEXT     D3A username
+  -p, --password TEXT     D3A password
+```
+
+#### Via environmental variables:
 On linux bash shell one can set the environmental variables by:
 ```
 export API_CLIENT_USERNAME=<username>
@@ -49,9 +68,6 @@ export API_CLIENT_PASSWORD=<password>
 ```
 ---
 
-## How to use the Client
-In the following an overview of the functionality of the client and the connection to the D3A is given.
-Code examples can be found under the `tests/` folder.
 
 ### Events
 In order to facilitate offer and bid management and scheduling, 
@@ -187,6 +203,21 @@ aggregator.execute_batch_command()
 ```
 ---
 
+### How to calculate grid fees
+The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
+markets in the grid:
+```
+Aggregator.calculate_grid_fee(start_market_or_device_name, target_market_or_device_name, fee_type):
+```
+The algorithm retrieves the path between `start_market_or_device_name` and `target_market_or_device_name` 
+and accumulates all corresponding grid fees along the way. Market and device names are supported.
+`target_market_or_device_name` is optional, if left blank, only the grid fee of the 
+`start_market_or_device_name` is returned. 
+The user can chose between `next_market_fee` and `last_market_fee`, which is toggled by providing 
+the corresponding string in the `fee_type` input parameter. 
+
+---
+
 ### Hardware API
 
 #### Sending Energy Forecast 
@@ -197,9 +228,3 @@ the following command
 device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
 ```
 
----
-## Interacting with the CLI
-You can run one of the setup scripts residing in the `d3a_api_client/setups` folder, or you can 
-set the path for your scripts directory as list in the `d3a_api_client.constants` .
-In order to run a module you can use the following command
-`d3a-api-client run --setup {module_name}`

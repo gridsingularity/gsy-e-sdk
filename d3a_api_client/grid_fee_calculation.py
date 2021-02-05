@@ -54,8 +54,11 @@ class GridFeeCalculation:
             last_li = li
         return last_li
 
-    def calculate_grid_fee(self, start_market_or_device_name, target_market_or_device_name=None,
-                           fee_type="next_market_fee"):
+    def calculate_grid_fee(self, start_market_or_device_name: str,
+                           target_market_or_device_name: str = None, fee_type: str="next_market_fee"):
+        """
+        Calculates the grid fees along path between two assets or markets in the grid
+        """
         if not self.latest_grid_stats_tree:
             logging.info("Grid fees can not be calculated because there were no grid_stats sent yet.")
             return None
