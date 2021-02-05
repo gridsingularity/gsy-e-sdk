@@ -14,6 +14,7 @@ class AutoAggregator(RedisAggregator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_buffer_empty = True
+        self.is_finished = False
 
     def on_market_cycle(self, market_info):
         logging.info(f"AGGREGATOR_MARKET_INFO: {market_info}")
@@ -72,6 +73,7 @@ load = RedisDeviceClient('load', autoregister=True)
 # Connects a second client to the pv device
 pv = RedisDeviceClient('pv', autoregister=True)
 
+selected = load.select_aggregator(aggregator.aggregator_uuid)
 selected = load.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
 

@@ -7,7 +7,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import RedisAPIException, execute_function_util
+from d3a_api_client.utils import RedisAPIException, execute_function_util, log_market_progression
 
 
 class RedisMarketClient:
@@ -90,10 +90,11 @@ class RedisMarketClient:
             f'{self._channel_prefix}/response/register_participant': self._on_register,
             f'{self._channel_prefix}/response/unregister_participant': self._on_unregister,
             f'{self._channel_prefix}/market-events/market': self._on_market_cycle,
-            f'{self._channel_prefix}/events/finish': self._on_finish
+            f'{self._channel_prefix}/events/finish': self._on_finish,
+            f'{self._channel_prefix}/*': self._on_event_or_response
         })
 
-        self.pubsub.subscribe(**channel_subs)
+        self.pubsub.psubscribe(**channel_subs)
         self.pubsub.run_in_thread(daemon=True)
 
     def _check_transaction_id_cached_out(self, transaction_id):
@@ -139,7 +140,7 @@ class RedisMarketClient:
                 wait_until_timeout_blocking(
                     lambda: self._check_transaction_id_cached_out(transaction_id)
                 )
-                logging.warning(f"MARKET: {self.area_slug} has selected "
+                logging.info(f"MARKET: {self.area_slug} has selected "
                                 f"AGGREGATOR: {aggregator_uuid}")
                 return transaction_id
             except AssertionError:
@@ -183,9 +184,16 @@ class RedisMarketClient:
         self.redis_db.publish(f"{self._channel_prefix}/dso_market_stats", json.dumps({}))
         return self._wait_and_consume_command_response("dso_market_stats")
 
+    def _on_event_or_response(self, msg):
+        message = json.loads(msg["data"])
+        logging.info(f"A new message was received. Message information: {message}")
+        log_market_progression(message)
+        function = lambda: self.on_event_or_response(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_event_or_response")
+
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
@@ -195,7 +203,6 @@ class RedisMarketClient:
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
 
         self.executor.submit(execute_function_util, function=function,
