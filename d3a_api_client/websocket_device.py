@@ -31,7 +31,7 @@ class WebsocketMessageReceiver:
             self.command_response_buffer.append(message)
 
         if "event" in message or "command" in message:
-            self.client.on_event_or_response(message)
+            self.client._on_event_or_response(message)
 
     def wait_for_command_response(self, command_name, transaction_id, timeout=120):
         def check_if_command_response_received():
