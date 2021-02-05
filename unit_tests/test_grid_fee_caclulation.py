@@ -83,9 +83,10 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       'PV 1.2': 12.2,
                                       'PV 3': 13.}
         for leaf_name, expected_fee in leaf_name_expected_fee.items():
-            assert expected_fee == self.grid_fee_calc.calculate_grid_fee(connected_market_name=leaf_name,
-                                                                         target_market_name=target_market,
-                                                                         fee_type=fee_type)
+            assert expected_fee == self.grid_fee_calc.calculate_grid_fee(
+                start_market_or_device_name=leaf_name,
+                target_market_or_device_name=target_market,
+                fee_type=fee_type)
 
     @parameterized.expand([['last_market_fee'], ['next_market_fee']])
     def test_grid_fee_is_calculated_correctly_for_leaf_to_leaf(self, fee_type):
@@ -98,9 +99,10 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       17.1: ['PV 2.1', 'Load 3'],
                                       13.0: ['Market Maker', 'Load 3']}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
-            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(connected_market_name=leaf_names[0],
-                                                                               target_market_name=leaf_names[1],
-                                                                               fee_type=fee_type))
+            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
+                start_market_or_device_name=leaf_names[0],
+                target_market_or_device_name=leaf_names[1],
+                fee_type=fee_type))
 
     @parameterized.expand([['last_market_fee'], ['next_market_fee']])
     def test_grid_fee_is_calculated_correctly_for_market_to_leaf(self, fee_type):
@@ -113,9 +115,10 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       17.1: ['House 2.1', 'Load 3'],
                                       14.0: ['Street 1', 'Load 3']}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
-            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(connected_market_name=leaf_names[0],
-                                                                               target_market_name=leaf_names[1],
-                                                                               fee_type=fee_type))
+            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
+                start_market_or_device_name=leaf_names[0],
+                target_market_or_device_name=leaf_names[1],
+                fee_type=fee_type))
 
     @parameterized.expand([['last_market_fee'], ['next_market_fee']])
     def test_grid_fee_is_calculated_correctly_for_market_to_market(self, fee_type):
@@ -128,6 +131,21 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       14.1: ['House 2.1', 'Grid 10'],
                                       15.1: ['Street 1', 'House 2.1']}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
-            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(connected_market_name=leaf_names[0],
-                                                                               target_market_name=leaf_names[1],
-                                                                               fee_type=fee_type))
+            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
+                start_market_or_device_name=leaf_names[0],
+                target_market_or_device_name=leaf_names[1],
+                fee_type=fee_type))
+
+    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    def test_grid_fee_is_calculated_correctly_for_device_to_parent(self, fee_type):
+        if fee_type == 'next_market_fee':
+            leaf_name_expected_fee = {3.1: ['House 2.1', 'Load 2.1'],
+                                      2.2: ['Load 1.2', 'House 1.2', ]}
+        else:
+            leaf_name_expected_fee = {2.1: ['House 2.1', 'Load 2.1'],
+                                      1.2: ['Load 1.2', 'House 1.2', ]}
+        for expected_fee, leaf_names in leaf_name_expected_fee.items():
+            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
+                start_market_or_device_name=leaf_names[0],
+                target_market_or_device_name=leaf_names[1],
+                fee_type=fee_type))

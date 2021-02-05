@@ -17,6 +17,8 @@ class BatchAggregator(RedisAggregator):
         self.status = "running"
         self._setup()
         self.is_active = True
+        self.grid_fees_market_cycle = {}
+        self.grid_fees_tick = {}
 
     def _setup(self):
         load = RedisDeviceClient('load', autoregister=True)
@@ -60,5 +62,14 @@ class BatchAggregator(RedisAggregator):
                 self.is_buffer_empty = True
                 logging.info(f"Batch command placed on the new market")
 
+        for target_market in ["Grid", "House 1", "House 2"]:
+            self.grid_fees_market_cycle[target_market] = self.calculate_grid_fee("load", target_market)
+
+    def on_tick(self, tick_info):
+        for target_market in ["Grid", "House 1", "House 2"]:
+            self.grid_fees_tick[target_market] = self.calculate_grid_fee("load", target_market, "last_market_fee")
+
     def on_finish(self, finish_info):
         self.status = "finished"
+
+

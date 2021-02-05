@@ -1,12 +1,14 @@
+import logging
 from copy import copy
 
 from d3a_interface.utils import key_in_dict_and_not_none
+
 
 class GridFeeCalculation:
 
     def __init__(self):
         self.latest_grid_stats_tree = {}
-        self.paths_mapping = {}
+        self.paths_to_root_mapping = {}
         self.market_name_grid_fee_mapping = {"last_market_fee": {},
                                              "next_market_fee": {}}
 
@@ -14,7 +16,6 @@ class GridFeeCalculation:
         for device_event in message["content"]:
             if device_event["event"] == "grid stats":
                 self.latest_grid_stats_tree = device_event["grid_stats_tree"]
-                print(self.latest_grid_stats_tree)
                 message["content"].remove(device_event)
         self._populate_grid_fee_mappings()
 
@@ -33,7 +34,7 @@ class GridFeeCalculation:
     def _get_all_paths_in_grid_stats_dict(self, indict, parent_path):
         for child_name, child_stats in indict.items():
             sub_path = parent_path + [child_name]
-            self.paths_mapping[child_name] = parent_path
+            self.paths_to_root_mapping[child_name] = parent_path
             if "children" in child_stats:
                 self._get_all_paths_in_grid_stats_dict(child_stats["children"], sub_path)
 
@@ -53,31 +54,42 @@ class GridFeeCalculation:
             last_li = li
         return last_li
 
-    def calculate_grid_fee(self, connected_market_name, target_market_name=None,
+    def calculate_grid_fee(self, start_market_or_device_name, target_market_or_device_name=None,
                            fee_type="next_market_fee"):
-        if target_market_name is None:
-            if connected_market_name not in self.market_name_grid_fee_mapping[fee_type]:
+        if not self.latest_grid_stats_tree:
+            logging.info("Grid fees can not be calculated because there were no grid_stats sent yet.")
+            return None
+
+        if target_market_or_device_name is None:
+            if start_market_or_device_name not in self.market_name_grid_fee_mapping[fee_type]:
                 return self.market_name_grid_fee_mapping[fee_type][
-                    self.paths_mapping[connected_market_name][-1]]
+                    self.paths_to_root_mapping[start_market_or_device_name][-1]]
             else:
-                return self.market_name_grid_fee_mapping[fee_type][connected_market_name]
+                return self.market_name_grid_fee_mapping[fee_type][start_market_or_device_name]
 
-        path_connected_market = self.paths_mapping[connected_market_name]
-        path_target_market = self.paths_mapping[target_market_name]
+        path_start_market = self.paths_to_root_mapping[start_market_or_device_name]
+        path_target_market = self.paths_to_root_mapping[target_market_or_device_name]
 
-        intersection_markets = list(set(path_connected_market).intersection(path_target_market))
+        intersection_markets = list(set(path_start_market).intersection(path_target_market))
 
-        path_connected_market_stripped = \
-            self._strip_away_intersection_from_list(path_connected_market, intersection_markets)
+        path_start_market_stripped = \
+            self._strip_away_intersection_from_list(path_start_market, intersection_markets)
         path_target_market_stripped = \
             self._strip_away_intersection_from_list(path_target_market, intersection_markets)
 
-        lowest_intersection_market = \
-            self._find_lowest_intersection_market(path_connected_market, intersection_markets)
+        if path_start_market_stripped == [target_market_or_device_name]:
+            # case when start_market child of target_market
+            all_markets_along_path = path_start_market_stripped
+        elif path_target_market_stripped == [start_market_or_device_name]:
+            # case when target_market child of start_market
+            all_markets_along_path = path_target_market_stripped
+        else:
+            lowest_intersection_market = \
+                self._find_lowest_intersection_market(path_start_market, intersection_markets)
 
-        all_markets_along_path = set(
-            path_connected_market_stripped + path_target_market_stripped
-            + [lowest_intersection_market] + [connected_market_name] + [target_market_name])
+            all_markets_along_path = set([lowest_intersection_market] +
+                                         path_start_market_stripped + path_target_market_stripped +
+                                         [start_market_or_device_name] + [target_market_or_device_name])
 
         total_grid_fees = 0
         for ma in all_markets_along_path:
