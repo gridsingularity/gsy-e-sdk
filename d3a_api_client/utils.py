@@ -166,6 +166,27 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
         return area_name_uuid_map
 
 
+def get_aggregators_list(domain_name):
+    """
+    Returns a list of aggregators for the logged in user
+    """
+    jwt_key = retrieve_jwt_key_from_server(domain_name)
+    from sgqlc.endpoint.http import HTTPEndpoint
+
+    url = f"{domain_name}/graphql/"
+    headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'}
+
+    query = 'query { aggregatorsList { configUuid name  devicesList { deviceUuid } } }'
+
+    endpoint = HTTPEndpoint(url, headers)
+    data = endpoint(query=query)
+    if key_in_dict_and_not_none(data, "errors"):
+        return data["errors"]
+        return ast.literal_eval(data["errors"][0]["message"])
+    else:
+        return data["data"]["aggregatorsList"]
+
+
 def logging_decorator(command_name):
     def decorator(f):
         @wraps(f)
