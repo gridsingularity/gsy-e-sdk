@@ -16,11 +16,17 @@ class ClientCommandBuffer:
     def offer_energy_rate(self, area_uuid, energy, rate):
         return self._add_to_buffer(area_uuid, Commands.OFFER, {"energy": energy, "price": rate})
 
-    def bid_energy(self, area_uuid, energy, price):
-        return self._add_to_buffer(area_uuid, Commands.BID, {"energy": energy, "price": price})
+    def bid_energy(self, area_uuid, energy, price, replace_existing=True):
+        return self._add_to_buffer(
+            area_uuid,
+            Commands.BID,
+            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
 
-    def bid_energy_rate(self, area_uuid, energy, rate):
-        return self._add_to_buffer(area_uuid, Commands.BID, {"energy": energy, "price": rate})
+    def bid_energy_rate(self, area_uuid, energy, rate, replace_existing=True):
+        return self._add_to_buffer(
+            area_uuid,
+            Commands.BID,
+            {'energy': energy, 'price': rate, 'replace_existing': replace_existing})
 
     def delete_offer(self, area_uuid, offer_id):
         return self._add_to_buffer(area_uuid, Commands.DELETE_OFFER, {"offer_id": offer_id})
