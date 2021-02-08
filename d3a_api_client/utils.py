@@ -181,7 +181,6 @@ def get_aggregators_list(domain_name):
     endpoint = HTTPEndpoint(url, headers)
     data = endpoint(query=query)
     if key_in_dict_and_not_none(data, "errors"):
-        return data["errors"]
         return ast.literal_eval(data["errors"][0]["message"])
     else:
         return data["data"]["aggregatorsList"]
