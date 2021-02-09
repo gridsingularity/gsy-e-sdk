@@ -27,6 +27,7 @@ class AutoBidOnLoadDevice(device_client_type):
                 bid_info = json.loads(bid["bid"])
                 assert bid_info["price"] == 0.0001 * energy_requirement
                 assert bid_info["energy"] == energy_requirement
+                assert bid_info['replace_existing'] is True
                 # Validate that the bid was placed to the market
                 bid_listing = self.list_bids()
                 listed_bid = next(bid for bid in bid_listing["bid_list"] if bid["id"] == bid_info["id"])
@@ -38,11 +39,13 @@ class AutoBidOnLoadDevice(device_client_type):
                 # Validate that the bid was deleted from the market
                 empty_listing = self.list_bids()
                 assert not any(b for b in empty_listing["bid_list"] if b["id"] == bid_info["id"])
+
                 # Place the bid with a rate that will be acceptable for trading
-                bid = self.bid_energy_rate(energy_requirement, 33)
+                bid = self.bid_energy_rate(energy_requirement, 33, replace_existing=False)
                 bid_info = json.loads(bid["bid"])
                 assert bid_info["price"] == 33 * energy_requirement
                 assert bid_info["energy"] == energy_requirement
+                assert bid_info['replace_existing'] is False
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
