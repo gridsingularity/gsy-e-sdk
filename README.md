@@ -153,7 +153,7 @@ commands in order to react to an event simultaneously for each owned device.
     aggregator = AutoAggregator(<aggregator_name>)
     ```
 ### How to list your aggregators
-To list your aggregators, its simulation id and the registered devices, you should :
+To list your aggregators, its configuration id and the registered devices, you should :
 ```python
 from d3a_api_client.utils import get_aggregators_list
 my_aggregators = get_aggregators_list(domain_name="Domain Name")
