@@ -1,5 +1,7 @@
 import unittest
 import asyncio
+from time import time
+from sys import platform
 from parameterized import parameterized
 import d3a_api_client.websocket_device
 
@@ -51,7 +53,6 @@ class TestWebsocket(unittest.TestCase):
 
         d3a_api_client.websocket_device.websocket_coroutine = exception_raising_coro
 
-        from time import time
         start_time = time()
         try:
             asyncio.get_event_loop().run_until_complete(
@@ -65,7 +66,13 @@ class TestWebsocket(unittest.TestCase):
         num_of_retries = d3a_api_client.websocket_device.WEBSOCKET_MAX_CONNECTION_RETRIES
         expected_duration = 0.1 * (num_of_retries + 1)
 
-        assert expected_duration <= end_time - start_time <= expected_duration + 0.01
+        # On MacOS, the precision of asyncio.sleep is far worse than in Linux, which has the result to
+        # not sleep the exact time it is dictated, but a bit more. This test calls sleep multiple times
+        # which has the effect that deviations from the sleep accumulate and can surpass the original
+        # tolerance of 0.01. This is the reason for the explicit increased tolerance here.
+        tolerance = 0.05 if platform == "darwin" else 0.01
+
+        assert expected_duration <= end_time - start_time <= expected_duration + tolerance
 
     def test_websocket_restarts_the_retry_count_if_ws_coro_does_not_crash_for_some_time(self):
         d3a_api_client.websocket_device.WEBSOCKET_ERROR_THRESHOLD_SECONDS = 0.1

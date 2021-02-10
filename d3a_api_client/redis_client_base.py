@@ -9,6 +9,7 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.utils import execute_function_util, log_market_progression, log_bid_offer_confirmation
 from d3a_api_client.enums import Commands
 from d3a_api_client.utils import execute_function_util
 
@@ -164,23 +165,31 @@ class RedisClient(APIClientInterface):
 
     @registered_connection
     def offer_energy(self, energy, price):
-        logging.debug(f"Client tries to place an offer for {energy} kWh at {price} cents.")
-        return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": price})
+        logging.error(f"Client tries to place an offer for {energy} kWh at {price} cents.")
+        response = self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": price})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def offer_energy_rate(self, energy, rate):
         logging.debug(f"Client tries to place an offer for {energy} kWh at {rate} cents/kWh.")
-        return self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
+        response = self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def bid_energy(self, energy, price):
-        logging.info(f"Client tries to place a bid for {energy} kWh at {price} cents.")
-        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
+        logging.debug(f"{self.area_id}Client tries to place a bid for {energy} kWh at {price} cents.")
+        response = self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def bid_energy_rate(self, energy, rate):
-        logging.info(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
-        return self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
+        logging.debug(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
+        response = self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
+        log_bid_offer_confirmation(response)
+        return response
 
     @registered_connection
     def delete_offer(self, offer_id=None):
@@ -238,7 +247,6 @@ class RedisClient(APIClientInterface):
 
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"A new market was created. Market information: {message}")
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
@@ -246,27 +254,27 @@ class RedisClient(APIClientInterface):
     def _on_event_or_response(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"A new message was received. Message information: {message}")
+        log_market_progression(message)
         function = lambda: self.on_event_or_response(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_event_or_response")
 
     def _on_tick(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"Time has elapsed on the device. Progress info: {message}")
         function = lambda: self.on_tick(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_tick")
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"A trade took place on the device. Trade information: {message}")
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
+                     f"at {round(message.get('price'), 2)}/kWh -->")
         function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_finish")

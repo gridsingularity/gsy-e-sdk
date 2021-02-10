@@ -6,12 +6,10 @@ import json
 import logging
 import uuid
 from functools import wraps
+from tabulate import tabulate
 from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
-
-
-logger = logging.getLogger(__name__)
 
 
 class AreaNotFoundException(Exception):
@@ -56,7 +54,7 @@ def retrieve_jwt_key_from_server(domain_name):
                          "password": os.environ["API_CLIENT_PASSWORD"]}),
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
-        logger.error(f"Request for token authentication failed with status code {resp.status_code}. "
+        logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
                      f"Response body: {resp.text}")
         return
     return json.loads(resp.text)["token"]
@@ -94,8 +92,8 @@ def request_response_returns_http_2xx(endpoint, resp):
     if 200 <= resp.status_code <= 299:
         return True
     else:
-        logger.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
-                     f"Response body: {resp.text}")
+        logging.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
+                     f"Response body: {json.loads(resp.text).get('error')}")
         return False
 
 
@@ -172,9 +170,9 @@ def logging_decorator(command_name):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            logger.debug(f'Sending command {command_name} to device.')
+            logging.debug(f'Sending command {command_name} to device.')
             return_value = f(self, *args, **kwargs)
-            logger.debug(f'Command {command_name} responded with: {return_value}.')
+            logging.debug(f'Command {command_name} responded with: {return_value}.')
             return return_value
         return wrapped
     return decorator
@@ -219,11 +217,45 @@ def execute_function_util(function: callable, function_name):
     try:
         function()
     except Exception as e:
-        logger.error(
+        logging.error(
             f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
+
+
+def log_market_progression(message):
+    try:
+        event = message.get("event", None)
+        if event not in ["tick", "market"]:
+            return
+        headers = ["event", ]
+        table_data = [event, ]
+        data_dict = message.get("content")[0] if "content" in message.keys() else message
+        if "slot_completion" in data_dict:
+            headers.append("slot_completion")
+            table_data.append(data_dict.get("slot_completion"))
+        if "start_time" in data_dict:
+            headers.extend(["start_time", "duration_min", ])
+            table_data.extend([data_dict.get("start_time"), data_dict.get("duration_min")])
+
+        logging.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
+    except Exception as e:
+        logging.warning(f"Error while logging market progression {e}")
 
 
 domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
 
 
 websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
+
+
+def log_bid_offer_confirmation(message):
+    try:
+        if message.get("status") == "ready":
+            event = message.get("command")
+            data_dict = json.loads(message.get(event))
+            energy = data_dict.get("energy")
+            price = data_dict.get("price")
+            trader = data_dict.get("seller" if event=="offer" else "buyer")
+            logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
+                         f"{round(energy, 2)} kWh at {price} cts/kWh")
+    except Exception as e:
+        logging.error(f"Logging bid/offer info failed.{e}")

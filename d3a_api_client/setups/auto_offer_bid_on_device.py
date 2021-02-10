@@ -21,9 +21,9 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
                 market_info['device_info']["available_energy_kWh"] > 0.0:
             offer = self.offer_energy(market_info['device_info']["available_energy_kWh"], 0.1)
             logging.debug(f"Offer placed on the new market: {offer}")
-        logging.debug(market_info['device_info']['energy_requirement_kWh'])
         if "energy_requirement_kWh" in market_info['device_info'] and \
                 market_info['device_info']["energy_requirement_kWh"] > 0.0:
+            logging.debug(market_info['device_info']['energy_requirement_kWh'])
             bid = self.bid_energy(market_info['device_info']["energy_requirement_kWh"], 100)
             logging.debug(f"Bid placed on the new market: {bid}")
 
