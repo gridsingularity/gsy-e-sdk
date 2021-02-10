@@ -113,6 +113,14 @@ class Aggregator(RestDeviceClient):
         """
         return self._client_command_buffer
 
+    def batch_command(self, batch_command_dict):
+        self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
+        transaction_id, posted = self._post_request(
+            'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
+        if posted:
+            return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
+
+
     def execute_batch_commands(self):
         batch_command_dict = self._client_command_buffer.execute_batch()
         if not batch_command_dict:
