@@ -5,7 +5,7 @@ from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util, log_market_progression, \
-    domain_name_from_env, websocket_domain_name_from_env, log_bid_offer_confirmation, validate_offers_bids_trades_decorator
+    domain_name_from_env, websocket_domain_name_from_env, log_bid_offer_confirmation, validate_offers_bids_trades
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
@@ -166,8 +166,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_tick")
 
-    @validate_offers_bids_trades_decorator
     def _on_trade(self, message):
+        validate_offers_bids_trades(message)
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'),4)} kWh "
                      f"at {round(message.get('price'), 2)}/kWh -->")
         function = lambda: self.on_trade(message)

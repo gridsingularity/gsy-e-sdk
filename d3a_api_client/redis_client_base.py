@@ -10,7 +10,7 @@ from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util, log_market_progression, log_bid_offer_confirmation, \
-    validate_offers_bids_trades_decorator
+    validate_offers_bids_trades
 from d3a_api_client.enums import Commands
 
 
@@ -265,9 +265,9 @@ class RedisClient(APIClientInterface):
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_tick")
 
-    @validate_offers_bids_trades_decorator
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
+        validate_offers_bids_trades(message)
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
                      f"at {round(message.get('price'), 2)}/kWh -->")
         function = lambda: self.on_trade(message)
