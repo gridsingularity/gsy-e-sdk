@@ -9,9 +9,9 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util, log_market_progression, log_bid_offer_confirmation
+from d3a_api_client.utils import execute_function_util, log_market_progression, log_bid_offer_confirmation, \
+    validate_offers_bids_trades_decorator
 from d3a_api_client.enums import Commands
-from d3a_api_client.utils import execute_function_util
 
 
 class RedisAPIException(Exception):
@@ -265,11 +265,9 @@ class RedisClient(APIClientInterface):
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_tick")
 
+    @validate_offers_bids_trades_decorator()
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
-        if message.get('energy') is None:
-            logging.error(f"Received null energy value {message}")
-            return
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
                      f"at {round(message.get('price'), 2)}/kWh -->")
         function = lambda: self.on_trade(message)
