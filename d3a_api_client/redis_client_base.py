@@ -267,6 +267,9 @@ class RedisClient(APIClientInterface):
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
+        if message.get('energy') is None:
+            logging.error(f"Received null energy value {message}")
+            return
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
                      f"at {round(message.get('price'), 2)}/kWh -->")
         function = lambda: self.on_trade(message)

@@ -32,6 +32,9 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
         elif "command" in message:
             self.command_response_buffer.append(message)
 
+        if "event" in message or "command" in message:
+            self.client._on_event_or_response(message)
+
 
 class Aggregator(RestDeviceClient):
 

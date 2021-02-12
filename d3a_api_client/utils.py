@@ -255,6 +255,9 @@ def log_bid_offer_confirmation(message):
             energy = data_dict.get("energy")
             price = data_dict.get("price")
             trader = data_dict.get("seller" if event=="offer" else "buyer")
+            if energy is None:
+                logging.error(f"Received null energy value {message}")
+                return
             logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
                          f"{round(energy, 2)} kWh at {price} cts/kWh")
     except Exception as e:
