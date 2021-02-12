@@ -30,6 +30,7 @@ class AutoOfferOnPVDevice(device_client_type):
                 offer_info = json.loads(offer["offer"])
                 assert offer_info["price"] == 50 * available_energy
                 assert offer_info["energy"] == available_energy
+                assert offer_info['replace_existing'] is True
                 # Validate that the offer was placed to the market
                 offer_listing = self.list_offers()
                 listed_offer = next(offer for offer in offer_listing["offer_list"] if offer["id"] == offer_info["id"])
@@ -42,10 +43,11 @@ class AutoOfferOnPVDevice(device_client_type):
                 empty_listing = self.list_offers()
                 assert not any(o for o in empty_listing["offer_list"] if o["id"] == offer_info["id"])
                 # Place the offer with a rate that will be acceptable for trading
-                offer = self.offer_energy_rate(available_energy, 10)
+                offer = self.offer_energy_rate(available_energy, 10, replace_existing=False)
                 offer_info = json.loads(offer["offer"])
                 assert offer_info["price"] == 10 * available_energy
                 assert offer_info["energy"] == available_energy
+                assert offer_info['replace_existing'] is False
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]

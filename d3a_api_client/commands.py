@@ -10,19 +10,33 @@ class ClientCommandBuffer:
     def buffer_length(self):
         return len(self._commands_buffer)
 
-    def offer_energy(self, area_uuid, energy, price):
-        return self._add_to_buffer(area_uuid, Commands.OFFER, {"energy": energy, "price": price})
+    def offer_energy(
+            self, area_uuid: str, energy: float, price: float, replace_existing: bool = True):
 
-    def offer_energy_rate(self, area_uuid, energy, rate):
-        return self._add_to_buffer(area_uuid, Commands.OFFER, {"energy": energy, "price": rate})
+        return self._add_to_buffer(
+            area_uuid,
+            Commands.OFFER,
+            {"energy": energy, "price": price, 'replace_existing': replace_existing})
 
-    def bid_energy(self, area_uuid, energy, price, replace_existing=True):
+    def offer_energy_rate(
+            self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True):
+
+        return self._add_to_buffer(
+            area_uuid,
+            Commands.OFFER,
+            {"energy": energy, "price": rate, 'replace_existing': replace_existing})
+
+    def bid_energy(
+            self, area_uuid: str, energy: float, price: float, replace_existing: bool = True):
+
         return self._add_to_buffer(
             area_uuid,
             Commands.BID,
             {'energy': energy, 'price': price, 'replace_existing': replace_existing})
 
-    def bid_energy_rate(self, area_uuid, energy, rate, replace_existing=True):
+    def bid_energy_rate(
+            self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True):
+
         return self._add_to_buffer(
             area_uuid,
             Commands.BID,
