@@ -58,7 +58,16 @@ class ClientCommandBuffer:
         return self._add_to_buffer(area_uuid, Commands.DEVICE_INFO, {})
 
     def last_market_stats(self, area_uuid):
-        return self._add_to_buffer(area_uuid, "last_market_stats", {})
+        return self._add_to_buffer(area_uuid, "market_stats", {})
+
+    def last_market_dso_stats(self, area_uuid):
+        return self._add_to_buffer(area_uuid, "dso_market_stats", {})
+
+    def change_grid_fees_percent(self, area_uuid, fee_percent):
+        return self._add_to_buffer(area_uuid, "grid_fees", {"fee_percent": fee_percent})
+
+    def grid_fees(self, area_uuid, fee_cents_kwh):
+        return self._add_to_buffer(area_uuid, "grid_fees", {"fee_const": fee_cents_kwh})
 
     def _add_to_buffer(self, area_uuid, action, args):
         if area_uuid and action:

@@ -19,17 +19,12 @@ class AutoAggregator(RedisAggregator):
             if "energy_to_buy" in device_event["device_info"] and \
                     device_event["device_info"]["energy_to_buy"] > 0.0:
                 buy_energy = device_event["device_info"]["energy_to_buy"] / 2
-                batch_commands[device_event["area_uuid"]] = [
-                    {"type": "bid",
-                     "price": 31 * buy_energy,
-                     "energy": buy_energy},
-                    {"type": "list_bids"}]
+                self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"],
+                                                      price=31 * buy_energy, energy=buy_energy).\
+                    list_bids(area_uuid=device_event["area_uuid"])
 
-        logging.info(f"batch_commands: {batch_commands}")
-
-        if batch_commands:
-            self.batch_command(batch_commands)
-            logging.info(f"Batch command placed on the new market")
+        response = self.execute_batch_commands(batch_commands)
+        logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
         logging.info(f"AGGREGATOR_TICK_INFO: {tick_info}")
