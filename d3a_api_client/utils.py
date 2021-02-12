@@ -247,22 +247,22 @@ domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_N
 websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
 
 
-def validate_offers_bids_trades_decorator():
-    def decorator(f):
-        @wraps(f)
-        def wrapped(self, *args, **kwargs):
-            message = json.loads(kwargs['message']['data']) if 'data' in kwargs['message'] else kwargs['message']
-            if 'energy' not in message or message['energy'] is None or \
-                    'price' not in message or message['price'] is None:
-                logging.error(f"Received null energy value {message}")
-                return
-            return_value = f(self, *args, **kwargs)
-            return return_value
-        return wrapped
-    return decorator
+def validate_offers_bids_trades_decorator(function):
+    def wrapped(*args, **kwargs):
+        message = args[0]
+        data = json.loads(message['data']) if 'data' in message else message
+        event = data.get('command') if 'command' in data else data.get('event')
+        event_dict = json.loads(data.get(event)) if isinstance(data.get(event), str) else data.get(event)
+        if ('energy' in event_dict and event_dict['energy'] is None) or \
+                ('price' in event_dict and event_dict['price'] is None):
+            logging.error(f"Received null energy/price value {message}")
+            return
+        return_value = function(*args, **kwargs)
+        return return_value
+    return wrapped
 
 
-@validate_offers_bids_trades_decorator()
+@validate_offers_bids_trades_decorator
 def log_bid_offer_confirmation(message):
     try:
         if message.get("status") == "ready":

@@ -166,7 +166,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_tick")
 
-    @validate_offers_bids_trades_decorator()
+    @validate_offers_bids_trades_decorator
     def _on_trade(self, message):
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'),4)} kWh "
                      f"at {round(message.get('price'), 2)}/kWh -->")
