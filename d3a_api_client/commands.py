@@ -1,3 +1,6 @@
+import logging
+
+from tabulate import tabulate
 from d3a_api_client.enums import Commands, command_enum_to_command_name
 
 
@@ -60,10 +63,23 @@ class ClientCommandBuffer:
             self._commands_buffer.append(
                 {area_uuid: {"type": command_enum_to_command_name(action)
                 if type(action) == Commands else action, **args}})
+            logging.info("Added Command to buffer, updated buffer: ")
+            self.log_all_commands()
         return self
 
     def clear(self):
         self._commands_buffer.clear()
+
+    def log_all_commands(self):
+        table_headers = ["Area UUID", "Command Type", "Arguments"]
+        table_data = []
+        for command_dict in self._commands_buffer:
+            area_uuid = list(command_dict.keys())[0]
+            command_type = command_dict[area_uuid]["type"]
+            del command_dict[area_uuid]["type"]
+            command_args = str(command_dict[area_uuid])
+            table_data.append([area_uuid, command_type, command_args])
+            logging.info(f"\n\n{tabulate([table_data, ], headers=table_headers, tablefmt='fancy_grid')}\n\n")
 
     def execute_batch(self):
         batch_command_dict = {}
