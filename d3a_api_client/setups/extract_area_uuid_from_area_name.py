@@ -1,8 +1,7 @@
 import os
 import json
 import sys
-from d3a_api_client.utils import retrieve_jwt_key_from_server, \
-    get_area_uuid_and_name_mapping_from_simulation_id
+from d3a_api_client.utils import get_area_uuid_and_name_mapping_from_simulation_id
 
 # set login information for d3a web
 os.environ["API_CLIENT_USERNAME"] = str(sys.argv[1])

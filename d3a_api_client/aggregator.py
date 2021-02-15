@@ -1,5 +1,5 @@
 import logging
-
+import traceback
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.utils import logging_decorator, blocking_get_request, \
     blocking_post_request
@@ -13,24 +13,21 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
     def __init__(self, rest_client):
         super().__init__(rest_client)
 
-    def received_message(self, message):
-        if "event" in message:
-            if message["event"] == "market":
-                self.client._on_market_cycle(message)
-            elif message["event"] == "tick":
-                self.client._on_tick(message)
-            elif message["event"] == "trade":
-                self.client._on_trade(message)
-            elif message["event"] == "finish":
-                self.client._on_finish(message)
-            elif message["event"] == "selected_by_device":
-                self.client._selected_by_device(message)
-            elif message["event"] == "unselected_by_device":
-                self.client._unselected_by_device(message)
-            else:
-                logging.error(f"Received message with unknown event type: {message}")
-        elif "command" in message:
-            self.command_response_buffer.append(message)
+    def _handle_event_message(self, message):
+        if message["event"] == "market":
+            self.client._on_market_cycle(message)
+        elif message["event"] == "tick":
+            self.client._on_tick(message)
+        elif message["event"] == "trade":
+            self.client._on_trade(message)
+        elif message["event"] == "finish":
+            self.client._on_finish(message)
+        elif message["event"] == "selected_by_device":
+            self.client._selected_by_device(message)
+        elif message["event"] == "unselected_by_device":
+            self.client._unselected_by_device(message)
+        else:
+            logging.error(f"Received message with unknown event type: {message}")
 
 
 class Aggregator(RestDeviceClient):
@@ -113,10 +110,24 @@ class Aggregator(RestDeviceClient):
         """
         return self._client_command_buffer
 
+    def batch_command(self, batch_command_dict):
+        self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
+        transaction_id, posted = self._post_request(
+            'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
+        if posted:
+            return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
+
+    @property
+    def commands_buffer_length(self):
+        """
+        Returns the length of the batch commands buffer
+        """
+        return self._client_command_buffer.buffer_length
+
     def execute_batch_commands(self):
-        batch_command_dict = self._client_command_buffer.execute_batch()
-        if not batch_command_dict:
+        if not self.commands_buffer_length:
             return
+        batch_command_dict = self._client_command_buffer.execute_batch()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id, posted = self._post_request(
             'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})

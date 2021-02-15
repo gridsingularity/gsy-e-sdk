@@ -51,7 +51,7 @@ export API_CLIENT_PASSWORD=<password>
 
 ## How to use the Client
 In the following an overview of the functionality of the client and the connection to the D3A is given.
-Code examples can be found under the `tests/` folder.
+Code examples can be found under the `setups/` folder.
 
 ### Events
 In order to facilitate offer and bid management and scheduling, 
