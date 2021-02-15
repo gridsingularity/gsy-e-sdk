@@ -13,28 +13,21 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
     def __init__(self, rest_client):
         super().__init__(rest_client)
 
-    def received_message(self, message):
-        try:
-            if "event" in message:
-                if message["event"] == "market":
-                    self.client._on_market_cycle(message)
-                elif message["event"] == "tick":
-                    self.client._on_tick(message)
-                elif message["event"] == "trade":
-                    self.client._on_trade(message)
-                elif message["event"] == "finish":
-                    self.client._on_finish(message)
-                elif message["event"] == "selected_by_device":
-                    self.client._selected_by_device(message)
-                elif message["event"] == "unselected_by_device":
-                    self.client._unselected_by_device(message)
-                else:
-                    logging.error(f"Received message with unknown event type: {message}")
-            elif "command" in message:
-                self.command_response_buffer.append(message)
-        except Exception as e:
-            logging.error(f"Error while processing incoming message {message}. Exception {e}.\n"
-                          f"{traceback.format_exc()}")
+    def _handle_event_message(self, message):
+        if message["event"] == "market":
+            self.client._on_market_cycle(message)
+        elif message["event"] == "tick":
+            self.client._on_tick(message)
+        elif message["event"] == "trade":
+            self.client._on_trade(message)
+        elif message["event"] == "finish":
+            self.client._on_finish(message)
+        elif message["event"] == "selected_by_device":
+            self.client._selected_by_device(message)
+        elif message["event"] == "unselected_by_device":
+            self.client._unselected_by_device(message)
+        else:
+            logging.error(f"Received message with unknown event type: {message}")
 
 
 class Aggregator(RestDeviceClient):

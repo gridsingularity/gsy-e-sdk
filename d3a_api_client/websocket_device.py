@@ -15,19 +15,22 @@ class WebsocketMessageReceiver:
         self.client = rest_client
         self.command_response_buffer = []
 
+    def _handle_event_message(self, message):
+        if message["event"] == "market":
+            self.client._on_market_cycle(message)
+        elif message["event"] == "tick":
+            self.client._on_tick(message)
+        elif message["event"] == "trade":
+            self.client._on_trade(message)
+        elif message["event"] == "finish":
+            self.client._on_finish(message)
+        else:
+            logging.error(f"Received message with unknown event type: {message}")
+
     def received_message(self, message):
         try:
             if "event" in message:
-                if message["event"] == "market":
-                    self.client._on_market_cycle(message)
-                elif message["event"] == "tick":
-                    self.client._on_tick(message)
-                elif message["event"] == "trade":
-                    self.client._on_trade(message)
-                elif message["event"] == "finish":
-                    self.client._on_finish(message)
-                else:
-                    logging.error(f"Received message with unknown event type: {message}")
+                self._handle_event_message(message)
             elif "command" in message:
                 self.command_response_buffer.append(message)
 
