@@ -167,7 +167,7 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
         return area_name_uuid_map
 
 
-def get_aggregators_list(domain_name):
+def get_aggregators_list(domain_name=os.environ.get("API_CLIENT_DOMAIN_NAME")):
     """
     Returns a list of aggregators for the logged in user
     """
