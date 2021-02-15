@@ -172,7 +172,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
                      f"at {round(message.get('price'), 2)}/kWh -->")
 
     def _on_trade(self, message):
-        if "context" not in message:
+        if "content" not in message:
             # Device message
             self._log_trade_info(message)
         else:
