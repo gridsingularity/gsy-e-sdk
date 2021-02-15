@@ -16,7 +16,7 @@ class ClientCommandBuffer:
         return self._add_to_buffer(
             area_uuid,
             Commands.OFFER,
-            {"energy": energy, "price": price, 'replace_existing': replace_existing})
+            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
 
     def offer_energy_rate(
             self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True):
@@ -24,7 +24,7 @@ class ClientCommandBuffer:
         return self._add_to_buffer(
             area_uuid,
             Commands.OFFER,
-            {"energy": energy, "price": rate, 'replace_existing': replace_existing})
+            {'energy': energy, 'price': rate, 'replace_existing': replace_existing})
 
     def bid_energy(
             self, area_uuid: str, energy: float, price: float, replace_existing: bool = True):

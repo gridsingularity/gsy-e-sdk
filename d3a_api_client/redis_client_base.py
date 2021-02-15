@@ -170,7 +170,7 @@ class RedisClient(APIClientInterface):
 
         response = self._publish_and_wait(
             Commands.OFFER,
-            {"energy": energy, "price": price, 'replace_existing': replace_existing})
+            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
 
         return response
@@ -181,7 +181,7 @@ class RedisClient(APIClientInterface):
 
         response = self._publish_and_wait(
             Commands.OFFER,
-            {"energy": energy, "price": rate * energy, 'replace_existing': replace_existing})
+            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
 
         return response
@@ -191,7 +191,7 @@ class RedisClient(APIClientInterface):
 
         response = self._publish_and_wait(
             Commands.BID,
-            {"energy": energy, "price": price, 'replace_existing': replace_existing})
+            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
 
         return response
@@ -202,7 +202,7 @@ class RedisClient(APIClientInterface):
 
         response = self._publish_and_wait(
             Commands.BID,
-            {"energy": energy, "price": rate * energy, 'replace_existing': replace_existing})
+            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
 
         return response

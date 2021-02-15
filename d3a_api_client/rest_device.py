@@ -86,7 +86,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     @logging_decorator('offer')
     def offer_energy(self, energy: float, price: float, replace_existing: bool = True):
         transaction_id, posted = self._post_request(
-            'offer', {"energy": energy, "price": price, 'replace_existing': replace_existing})
+            'offer', {'energy': energy, 'price': price, 'replace_existing': replace_existing})
 
         if posted:
             response = self.dispatcher.wait_for_command_response('offer', transaction_id)
@@ -97,7 +97,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def offer_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
         transaction_id, posted = self._post_request(
             'offer', {
-                "energy": energy, "price": rate * energy, 'replace_existing': replace_existing})
+                'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
 
         if posted:
             response = self.dispatcher.wait_for_command_response('offer', transaction_id)
@@ -118,7 +118,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def bid_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
         transaction_id, posted = self._post_request(
             'bid', {
-                "energy": energy, "price": rate * energy, 'replace_existing': replace_existing})
+                'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
 
         if posted:
             response = self.dispatcher.wait_for_command_response('bid', transaction_id)
