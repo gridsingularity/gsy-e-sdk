@@ -19,7 +19,8 @@ class RestMarketClient(RestCommunicationMixin):
         self._create_jwt_refresh_timer(domain_name)
         self.dispatcher = WebsocketMessageReceiver(self)
         self.websocket_thread = WebsocketThread(simulation_id, area_id,
-                                                websockets_domain_name, self.dispatcher)
+                                                websockets_domain_name, self.domain_name,
+                                                self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)

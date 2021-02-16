@@ -39,7 +39,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def start_websocket_connection(self):
         self.dispatcher = WebsocketMessageReceiver(self)
         self.websocket_thread = WebsocketThread(self.simulation_id, self.device_id,
-                                                self.websockets_domain_name, self.dispatcher)
+                                                self.websockets_domain_name, self.domain_name,
+                                                self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 

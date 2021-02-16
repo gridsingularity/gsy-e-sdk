@@ -91,9 +91,10 @@ async def retry_coroutine(websocket_uri, http_domain_name, message_dispatcher, r
 
 class WebsocketThread(threading.Thread):
 
-    def __init__(self, sim_id, area_uuid, domain_name, dispatcher, *args, **kwargs):
+    def __init__(self, sim_id, area_uuid, websocket_domain_name, http_domain_name, dispatcher, *args, **kwargs):
         self.message_dispatcher = dispatcher
-        self.domain_name = domain_name
+        self.domain_name = websocket_domain_name
+        self.http_domain_name = http_domain_name
         self.sim_id = sim_id
         self.area_uuid = area_uuid
         super().__init__(*args, **kwargs, daemon=True)
@@ -103,6 +104,6 @@ class WebsocketThread(threading.Thread):
         asyncio.set_event_loop(event_loop)
         websockets_uri = f"{self.domain_name}/{self.sim_id}/{self.area_uuid}/"
         event_loop.run_until_complete(
-            retry_coroutine(websockets_uri, self.domain_name, self.message_dispatcher)
+            retry_coroutine(websockets_uri, self.http_domain_name, self.message_dispatcher)
         )
         event_loop.close()
