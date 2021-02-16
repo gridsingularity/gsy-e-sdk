@@ -45,7 +45,7 @@ toml==0.10.2              # via pytest, tox
 tabulate==0.8.7           # via -e requirements/base.in
 tox==3.20.1               # via -r requirements/base.in
 unidecode==0.4.21         # via awesome-slugify
-urllib3==1.26.2           # via requests
+urllib3==1.26.3           # via requests
 virtualenv==20.2.2        # via tox
 websockets==8.1           # via -r requirements/base.in
 
