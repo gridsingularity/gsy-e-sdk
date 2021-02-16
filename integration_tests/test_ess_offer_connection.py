@@ -42,3 +42,5 @@ class AutoOfferOnESSDevice(device_client_type):
             self.error_list.append(e)
             raise e
 
+    def on_finish(self, finish_info):
+        self.status = "finished"

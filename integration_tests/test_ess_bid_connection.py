@@ -40,3 +40,6 @@ class AutoBidOnESSDevice(device_client_type):
             self.error_list.append(e)
             self.errors += 1
             raise e
+
+    def on_finish(self, finish_info):
+        self.status = "finished"

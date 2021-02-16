@@ -17,3 +17,4 @@ class AutoLastMarketStats(market_client_type):
 
     def on_finish(self, message):
         self.wait_script = False
+        self.status = "finished"

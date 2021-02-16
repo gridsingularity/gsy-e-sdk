@@ -78,3 +78,6 @@ class AutoOfferOnPVDevice(device_client_type):
         if "event" in message.keys():
             self.events.add("event")
             self.events.add(message["event"])
+
+    def on_finish(self, finish_info):
+        self.status = "finished"
