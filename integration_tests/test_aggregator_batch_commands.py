@@ -40,7 +40,7 @@ class BatchAggregator(RedisAggregator):
                                                         energy=device_event["device_info"]["available_energy_kWh"] / 2) \
                     .list_offers(area_uuid=device_event["area_uuid"])
 
-                if "energy_requirement_kWh" in device_event["device_info"] and \
+            if "energy_requirement_kWh" in device_event["device_info"] and \
                         device_event["device_info"]["energy_requirement_kWh"] > 0.0:
                     self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"], price=30,
                                                           energy=device_event["device_info"][
