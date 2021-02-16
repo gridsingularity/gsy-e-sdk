@@ -52,6 +52,9 @@ class ClientCommandBuffer:
     def last_market_dso_stats(self, area_uuid):
         return self._add_to_buffer(area_uuid, "dso_market_stats", {})
 
+    def list_dso_market_stats(self, area_uuid, market_slots):
+        return self._add_to_buffer(area_uuid, "dso_market_stats", {"market_slots": market_slots})
+
     def change_grid_fees_percent(self, area_uuid, fee_percent):
         return self._add_to_buffer(area_uuid, "grid_fees", {"fee_percent": fee_percent})
 
