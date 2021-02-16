@@ -57,15 +57,16 @@ class WebsocketMessageReceiver:
 
 
 async def websocket_coroutine(websocket_uri, websocket_headers, message_dispatcher):
-    async with websockets.connect(websocket_uri, extra_headers=websocket_headers) as websocket:
-        while True:
-            try:
-                message = await websocket.recv()
-                logging.debug(f"Websocket received message {message}")
-                message_dispatcher.received_message(json.loads(message.decode('utf-8')))
-            except Exception as e:
-                raise Exception(f"Error while receiving message: {str(e)}, "
-                                f"traceback:{traceback.format_exc()}")
+    websocket = await websockets.connect(websocket_uri, extra_headers=websocket_headers)
+    while True:
+        try:
+            message = await websocket.recv()
+            logging.debug(f"Websocket received message {message}")
+            message_dispatcher.received_message(json.loads(message.decode('utf-8')))
+        except Exception as e:
+            await websocket.close()
+            raise Exception(f"Error while receiving message: {str(e)}, "
+                            f"traceback:{traceback.format_exc()}")
 
 
 async def retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=0):
