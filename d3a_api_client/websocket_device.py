@@ -86,7 +86,7 @@ async def retry_coroutine(websocket_uri, http_domain_name, message_dispatcher, r
         await asyncio.sleep(WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS)
         if retry_count >= WEBSOCKET_MAX_CONNECTION_RETRIES:
             raise e
-        await retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=retry_count+1)
+        await retry_coroutine(websocket_uri, http_domain_name, message_dispatcher, retry_count=retry_count+1)
 
 
 class WebsocketThread(threading.Thread):
