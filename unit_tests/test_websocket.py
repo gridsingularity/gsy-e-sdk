@@ -10,6 +10,7 @@ class TestWebsocket(unittest.TestCase):
 
     def setUp(self):
         self.coro_backup = d3a_api_client.websocket_device.websocket_coroutine
+        d3a_api_client.websocket_device.retrieve_jwt_key_from_server = lambda x: ""
         d3a_api_client.websocket_device.WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 0
         d3a_api_client.websocket_device.WEBSOCKET_MAX_CONNECTION_RETRIES = 5
         d3a_api_client.websocket_device.WEBSOCKET_ERROR_THRESHOLD_SECONDS = 30
