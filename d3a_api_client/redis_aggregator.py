@@ -161,6 +161,7 @@ class RedisAggregator:
         if not self.commands_buffer_length:
             return
         batch_command_dict = self._client_command_buffer.execute_batch()
+        self._client_command_buffer.clear()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id = str(uuid.uuid4())
         batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
@@ -174,11 +175,10 @@ class RedisAggregator:
                 wait_until_timeout_blocking(
                     lambda: not self._check_transaction_id_cached_out(transaction_id)
                 )
-                self._client_command_buffer.clear()
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
-        self._client_command_buffer.clear()
+
 
     def _on_event_or_response(self, message):
         logging.info(f"A new message was received. Message information: {message}")
@@ -197,9 +197,19 @@ class RedisAggregator:
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_tick")
 
-    def _on_trade(self, message):
+    @staticmethod
+    def _log_trade_info(message):
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)} cents/kWh -->")
+                     f"at {round(message.get('price'), 2)} cents -->")
+
+    def _on_trade(self, message):
+        if "content" not in message:
+            # Device message
+            self._log_trade_info(message)
+        else:
+            # Aggregator message
+            for individual_trade in message["content"]:
+                self._log_trade_info(individual_trade)
         function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")

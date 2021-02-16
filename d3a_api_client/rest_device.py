@@ -168,10 +168,10 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     @staticmethod
     def _log_trade_info(message):
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)}/kWh -->")
+                     f"at {round(message.get('price'), 2)} cents -->")
 
     def _on_trade(self, message):
-        if "context" not in message:
+        if "content" not in message:
             # Device message
             self._log_trade_info(message)
         else:
