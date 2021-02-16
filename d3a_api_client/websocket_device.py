@@ -6,6 +6,7 @@ import websockets
 import json
 from time import time
 from d3a_interface.utils import wait_until_timeout_blocking
+from d3a_api_client.utils import retrieve_jwt_key_from_server
 from d3a_api_client.constants import WEBSOCKET_ERROR_THRESHOLD_SECONDS, WEBSOCKET_MAX_CONNECTION_RETRIES, \
     WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS
 
@@ -65,11 +66,15 @@ async def websocket_coroutine(websocket_uri, websocket_headers, message_dispatch
             message_dispatcher.received_message(json.loads(message.decode('utf-8')))
         except Exception as e:
             await websocket.close()
+            await websocket.wait_closed()
             raise Exception(f"Error while receiving message: {str(e)}, "
                             f"traceback:{traceback.format_exc()}")
 
 
-async def retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=0):
+async def retry_coroutine(websocket_uri, http_domain_name, message_dispatcher, retry_count=0):
+    websocket_headers = {
+        "Authorization": f"JWT {retrieve_jwt_key_from_server(http_domain_name)}"
+    }
     ws_connect_time = time()
     try:
         await websocket_coroutine(websocket_uri, websocket_headers, message_dispatcher)
@@ -86,11 +91,8 @@ async def retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, 
 
 class WebsocketThread(threading.Thread):
 
-    def __init__(self, sim_id, area_uuid, jwt_token, domain_name, dispatcher, *args, **kwargs):
+    def __init__(self, sim_id, area_uuid, domain_name, dispatcher, *args, **kwargs):
         self.message_dispatcher = dispatcher
-        self.websocket_headers = {
-            "Authorization": f"JWT {jwt_token}"
-        }
         self.domain_name = domain_name
         self.sim_id = sim_id
         self.area_uuid = area_uuid
@@ -101,6 +103,6 @@ class WebsocketThread(threading.Thread):
         asyncio.set_event_loop(event_loop)
         websockets_uri = f"{self.domain_name}/{self.sim_id}/{self.area_uuid}/"
         event_loop.run_until_complete(
-            retry_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
+            retry_coroutine(websockets_uri, self.domain_name, self.message_dispatcher)
         )
         event_loop.close()

@@ -18,7 +18,7 @@ class RestMarketClient(RestCommunicationMixin):
         self.jwt_token = retrieve_jwt_key_from_server(domain_name)
         self._create_jwt_refresh_timer(domain_name)
         self.dispatcher = WebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(simulation_id, area_id, self.jwt_token,
+        self.websocket_thread = WebsocketThread(simulation_id, area_id,
                                                 websockets_domain_name, self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
