@@ -10,7 +10,6 @@ from d3a_api_client.types import device_client_type
 class AutoBidOnLoadDevice(device_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
-        self.error_list = []
         self.status = "running"
         self.latest_stats = {}
         self.market_info = {}
@@ -61,7 +60,6 @@ class AutoBidOnLoadDevice(device_client_type):
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
-            self.error_list.append(e)
             raise e
 
     def on_finish(self, finish_info):

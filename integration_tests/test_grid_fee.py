@@ -13,7 +13,6 @@ class AutoGridFeeUpdateOnMarket(market_client_type):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.errors = 0
-        self.error_list = []
         self.dso_info = {}
         self.status = "running"
         self.fee_profile = {today().add(minutes=i * 60).format(DATE_TIME_FORMAT): round(i / 10, 3)
@@ -38,11 +37,9 @@ class AutoGridFeeUpdateOnMarket(market_client_type):
             assert set(self.list_dso_stats.keys()) == \
                    {'name', 'command', 'area_uuid', 'status', 'transaction_id', 'market_stats'}
 
-
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
-            self.error_list.append(e)
             raise e
 
     def on_finish(self, finish_info):
