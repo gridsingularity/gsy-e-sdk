@@ -56,10 +56,6 @@ class AutoBidOnLoadDevice(device_client_type):
                    {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'median_trade_rate',
                     'total_traded_energy_kWh'}
 
-            if market_info["start_time"][-5:] == "23:00":
-                self.status = "finished"
-                self.unregister()
-
             self.market_info = market_info
 
         except AssertionError as e:

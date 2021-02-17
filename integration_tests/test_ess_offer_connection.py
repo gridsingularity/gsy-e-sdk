@@ -31,11 +31,8 @@ class AutoOfferOnESSDevice(device_client_type):
                 assert device_info["energy_to_sell"] == 0.0
                 assert device_info["offered_sell_kWh"] == energy_to_sell
 
+            self.last_market_info = market_info
 
-            if market_info["start_time"][-5:] == "23:00":
-                self.status = "finished"
-                self.last_market_info = market_info
-                self.unregister()
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
