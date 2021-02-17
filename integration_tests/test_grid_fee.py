@@ -44,15 +44,3 @@ class AutoGridFeeUpdateOnMarket(market_client_type):
 
     def on_finish(self, finish_info):
         self.status = "finished"
-
-# Connects one client to the house-2 market
-# market = AutoGridFeeUpdateOnMarket('house-2')
-
-
-# Infinite loop in order to leave the client running on the background
-# placing bids and offers on every market cycle.
-# while True:
-#     from time import sleep
-#     sleep(0.5)
-#     if market.status == "finished":
-#         break
