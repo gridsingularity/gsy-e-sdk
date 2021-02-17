@@ -41,22 +41,22 @@ class BatchAggregator(RedisAggregator):
                 if self._can_place_offer(device_event):
                     self.add_to_batch_commands.offer_energy(
                         area_uuid=device_event['area_uuid'],
-                        price=1,
+                        price=1.1,
                         energy=device_event['device_info']['available_energy_kWh'] / 4,
                         replace_existing=False
                     ).offer_energy(
                         area_uuid=device_event['area_uuid'],
-                        price=1,
+                        price=2.2,
                         energy=device_event['device_info']['available_energy_kWh'] / 4,
                         replace_existing=False
                     ).offer_energy(
                         area_uuid=device_event['area_uuid'],
-                        price=1,
+                        price=3.3,
                         energy=device_event['device_info']['available_energy_kWh'] / 4,
                         replace_existing=True
                     ).offer_energy(
                         area_uuid=device_event['area_uuid'],
-                        price=1,
+                        price=4.4,
                         energy=device_event['device_info']['available_energy_kWh'] / 4,
                         replace_existing=False
                     ).list_offers(area_uuid=device_event['area_uuid'])
@@ -64,17 +64,17 @@ class BatchAggregator(RedisAggregator):
                 if self._can_place_bid(device_event):
                     self.add_to_batch_commands.bid_energy(
                         area_uuid=device_event['area_uuid'],
-                        price=30,
+                        price=27,
                         energy=device_event['device_info']['energy_requirement_kWh'] / 4,
                         replace_existing=False
                     ).bid_energy(
                         area_uuid=device_event['area_uuid'],
-                        price=30,
+                        price=28,
                         energy=device_event['device_info']['energy_requirement_kWh'] / 4,
                         replace_existing=False
                     ).bid_energy(
                         area_uuid=device_event['area_uuid'],
-                        price=30,
+                        price=29,
                         energy=device_event['device_info']['energy_requirement_kWh'] / 4,
                         replace_existing=True
                     ).bid_energy(
@@ -111,8 +111,14 @@ class BatchAggregator(RedisAggregator):
                     current_bids = list_bids_requests[0]['bid_list']
                     assert len(current_bids) == 2
 
-                    # The only two bids left are the last ones that have been issued
                     issued_bids = [json.loads(bid_request['bid']) for bid_request in bid_requests]
+
+                    # The bids have been issued in the correct order
+                    assert [
+                        bid['original_bid_price'] for bid in issued_bids
+                    ] == [27, 28, 29, 30]
+
+                    # The only two bids left are the last ones that have been issued
                     assert [bid['id'] for bid in current_bids] == \
                         [bid['id'] for bid in issued_bids[-2:]]
 
@@ -137,9 +143,15 @@ class BatchAggregator(RedisAggregator):
                     current_offers = list_offers_requests[0]['offer_list']
                     assert len(current_offers) == 2
 
-                    # The only two offers left are the last ones that have been issued
                     issued_offers = [
                         json.loads(offer_request['offer']) for offer_request in offer_requests]
+
+                    # The offers have been issued in the correct order
+                    assert [
+                       offer['original_offer_price'] for offer in issued_offers
+                    ] == [1.1, 2.2, 3.3, 4.4]
+
+                    # The only two offers left are the last ones that have been issued
                     assert [offer['id'] for offer in current_offers] == \
                            [offer['id'] for offer in issued_offers[-2:]]
 
