@@ -53,7 +53,12 @@ class RestMarketClient(RestCommunicationMixin):
 
     @logging_decorator('dso_market_stats')
     def list_dso_market_stats(self, selected_markets):
-        transaction_id, posted = self._get_request('dso-market-stats', {"market_slots": selected_markets})
+        # TODO: this is kept for the backward compatibility, should be removed
+        return self.last_market_dso_stats()
+
+    @logging_decorator('dso_market_stats')
+    def last_market_dso_stats(self):
+        transaction_id, posted = self._get_request('dso-market-stats', {})
         if posted:
             return self.dispatcher.wait_for_command_response('dso_market_stats', transaction_id)
 

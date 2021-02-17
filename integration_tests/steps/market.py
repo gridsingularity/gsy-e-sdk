@@ -31,17 +31,6 @@ def step_impl(context):
                 raise e
 
 
-@then('the market stats are reported correctly')
-def step_impl(context):
-    assert "market_stats" in context.list_market_stats_results
-    assert set(context.list_market_stats_results["market_stats"].keys()) == \
-           {context.market_slot_string_1, context.market_slot_string_2}
-
-    assert "market_stats" in context.list_dso_market_stats_results
-    assert set(context.list_dso_market_stats_results["market_stats"].keys()) == \
-           {context.market_slot_string_1, context.market_slot_string_2}
-
-
 @when('DSO started the external client that connects to {area_id} market')
 def step_impl(context, area_id):
     sleep(5)

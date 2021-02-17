@@ -24,7 +24,8 @@ class BatchAggregator(RedisAggregator):
         load.select_aggregator(self.aggregator_uuid)
         pv.select_aggregator(self.aggregator_uuid)
 
-        redis_market = RedisMarketClient('house-2')
+        self.redis_market = RedisMarketClient('house-2')
+        self.redis_market.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
@@ -45,13 +46,19 @@ class BatchAggregator(RedisAggregator):
                     self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"], price=30,
                                                           energy=device_event["device_info"][
                                                                      "energy_requirement_kWh"] / 2) \
-                        .list_bids(area_uuid=device_event["area_uuid"]) \
-                        .last_market_stats(area_uuid=device_event["area_uuid"])
+                        .list_bids(area_uuid=device_event["area_uuid"])
+            self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid, fee_cents_kwh=5)
+            self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
+            self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
 
         if self.commands_buffer_length:
             transaction = self.execute_batch_commands()
             if transaction is None:
                 self.errors += 1
+            else:
+                for response in transaction["responses"]:
+                    if response[response["command"]]["status"] == "error":
+                        self.errors += 1
             logging.info(f"Batch command placed on the new market")
 
     def on_finish(self, finish_info):
