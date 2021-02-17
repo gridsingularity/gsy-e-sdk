@@ -75,3 +75,5 @@ class AutoOfferOnPVDevice(device_client_type):
 
     def on_finish(self, finish_info):
         self.status = "finished"
+        self.unregister()
+

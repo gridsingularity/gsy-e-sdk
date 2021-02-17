@@ -67,7 +67,7 @@ def step_impl(context):
                                      'tick', 'register',
                                      'offer_delete', 'trade',
                                      'offer', 'unregister',
-                                     'list_offers', 'market'}
+                                     'list_offers', 'market', 'finish'}
     assert context.device.is_on_market_cycle_called
 
 
