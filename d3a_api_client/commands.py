@@ -62,7 +62,7 @@ class ClientCommandBuffer:
         if area_uuid and action:
             self._commands_buffer.append(
                 {area_uuid: {"type": command_enum_to_command_name(action)
-                if type(action) == Commands else action,  **args}})
+                if type(action) == Commands else action, **args}})
             logging.debug("Added Command to buffer, updated buffer: ")
             self.log_all_commands()
         return self

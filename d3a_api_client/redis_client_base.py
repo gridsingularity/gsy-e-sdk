@@ -11,7 +11,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util, log_market_progression, log_bid_offer_confirmation
 from d3a_api_client.enums import Commands
-from d3a_api_client.utils import execute_function_util
 
 
 class RedisAPIException(Exception):
@@ -48,7 +47,7 @@ class RedisClient(APIClientInterface):
     def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
             self._response_topics[c]: self._generate_command_response_callback(c)
-            for c in Commands
+            for c in Commands if c in self._response_topics
         }
 
         channel_subs[f'{self.area_id}/response/register_participant'] = self._on_register
