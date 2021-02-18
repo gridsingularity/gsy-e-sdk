@@ -51,7 +51,8 @@ class TestGridFeeCalculation(unittest.TestCase):
     def setUp(self):
         self.grid_fee_calc = GridFeeCalculation()
         self.grid_fee_calc.latest_grid_stats_tree = grid_stats_example
-        self.grid_fee_calc._populate_grid_fee_mappings()
+        self.grid_fee_calc._get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(
+            self.grid_fee_calc.latest_grid_stats_tree, [])
 
     @parameterized.expand([['last_market_fee'], ['next_market_fee']])
     def test_grid_fee_is_calculated_correctly_for_leaf_devices(self, fee_type):

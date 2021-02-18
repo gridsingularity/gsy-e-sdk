@@ -17,12 +17,12 @@ class RedisAPIException(Exception):
     pass
 
 
-class RedisAggregator(GridFeeCalculation):
+class RedisAggregator:
 
     def __init__(self, aggregator_name, accept_all_devices=True,
                  redis_url='redis://localhost:6379'):
 
-        super().__init__()
+        self.grid_fee_calculation = GridFeeCalculation()
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
@@ -183,8 +183,14 @@ class RedisAggregator(GridFeeCalculation):
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_event_or_response")
 
+    def calculate_grid_fee(self, start_market_or_device_name: str,
+                           target_market_or_device_name: str = None,
+                           fee_type: str = "next_market_fee"):
+        return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
+                                                            target_market_or_device_name, fee_type)
+
     def _on_market_cycle(self, message):
-        self._handle_grid_stats(message)
+        self.grid_fee_calculation.handle_grid_stats(message)
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")

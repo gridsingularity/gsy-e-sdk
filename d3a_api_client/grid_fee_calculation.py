@@ -12,38 +12,26 @@ class GridFeeCalculation:
         self.market_name_grid_fee_mapping = {"last_market_fee": {},
                                              "next_market_fee": {}}
 
-    def _handle_grid_stats(self, message):
+    def handle_grid_stats(self, message):
         for device_event in message["content"]:
-            if device_event["event"] == "grid stats":
+            if device_event["event"] == "grid_stats":
                 self.latest_grid_stats_tree = device_event["grid_stats_tree"]
                 message["content"].remove(device_event)
-        self._populate_grid_fee_mappings()
+        self._get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self.latest_grid_stats_tree, [])
 
-    def _populate_grid_fee_mappings(self):
-        for fee_type in ["last_market_fee", "next_market_fee"]:
-            self._get_grid_fee_area_mapping_from_dict(self.latest_grid_stats_tree, fee_type)
-
-        self._get_all_paths_in_grid_stats_dict(self.latest_grid_stats_tree, [])
-
-    def _get_grid_fee_area_mapping_from_dict(self, indict, fee_type):
-        for child_name, child_stats in indict.items():
-            if "children" in child_stats and fee_type in child_stats:
-                self.market_name_grid_fee_mapping[fee_type][child_name] = child_stats[fee_type]
-                self._get_grid_fee_area_mapping_from_dict(child_stats["children"], fee_type)
-
-    def _get_all_paths_in_grid_stats_dict(self, indict, parent_path):
+    def _get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self, indict, parent_path):
         for child_name, child_stats in indict.items():
             sub_path = parent_path + [child_name]
             self.paths_to_root_mapping[child_name] = parent_path
+            for fee_type in ["last_market_fee", "next_market_fee"]:
+                if fee_type in child_stats:
+                    self.market_name_grid_fee_mapping[fee_type][child_name] = child_stats[fee_type]
             if "children" in child_stats:
-                self._get_all_paths_in_grid_stats_dict(child_stats["children"], sub_path)
+                self._get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(child_stats["children"], sub_path)
 
     @staticmethod
     def _strip_away_intersection_from_list(in_list, intersection):
-        out_list = copy(in_list)
-        for inter in intersection:
-            out_list.remove(inter)
-        return out_list
+        return list(set(in_list) ^ set(intersection))
 
     @staticmethod
     def _find_lowest_intersection_market(in_list, intersection):
@@ -55,19 +43,23 @@ class GridFeeCalculation:
         return last_li
 
     def calculate_grid_fee(self, start_market_or_device_name: str,
-                           target_market_or_device_name: str = None, fee_type: str="next_market_fee"):
+                           target_market_or_device_name: str = None,
+                           fee_type: str = "next_market_fee"):
         """
-        Calculates the grid fees along path between two assets or markets in the grid
+        Calculates grid fees along path between two assets or markets in the grid
         """
         if not self.latest_grid_stats_tree:
             logging.info("Grid fees can not be calculated because there were no grid_stats sent yet.")
             return None
 
         if target_market_or_device_name is None:
+            # only return the grid_fee of the connected market
             if start_market_or_device_name not in self.market_name_grid_fee_mapping[fee_type]:
+                # if the target_market_or_device is a device, return the grid_fee of the connected market
                 return self.market_name_grid_fee_mapping[fee_type][
                     self.paths_to_root_mapping[start_market_or_device_name][-1]]
             else:
+                # if the target_market_or_device is a market, return the grid_fee directly
                 return self.market_name_grid_fee_mapping[fee_type][start_market_or_device_name]
 
         path_start_market = self.paths_to_root_mapping[start_market_or_device_name]

@@ -34,7 +34,7 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
             self.command_response_buffer.append(message)
 
 
-class Aggregator(RestDeviceClient, GridFeeCalculation):
+class Aggregator(RestDeviceClient):
 
     def __init__(self, simulation_id, domain_name, aggregator_name,
                  websockets_domain_name, accept_all_devices=True):
@@ -42,8 +42,8 @@ class Aggregator(RestDeviceClient, GridFeeCalculation):
                                   domain_name=domain_name,
                                   websockets_domain_name=websockets_domain_name,
                                   autoregister=False, start_websocket=False)
-        GridFeeCalculation.__init__(self)
 
+        self.grid_fee_calculation = GridFeeCalculation()
         self.aggregator_name = aggregator_name
         self.accept_all_devices = accept_all_devices
         self.device_uuid_list = []
@@ -127,5 +127,11 @@ class Aggregator(RestDeviceClient, GridFeeCalculation):
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
 
     def _on_market_cycle(self, message):
-        self._handle_grid_stats(message)
+        self.grid_fee_calculation.handle_grid_stats(message)
         super()._on_market_cycle(message)
+
+    def calculate_grid_fee(self, start_market_or_device_name: str,
+                           target_market_or_device_name: str = None,
+                           fee_type: str = "next_market_fee"):
+        return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
+                                                            target_market_or_device_name, fee_type)
