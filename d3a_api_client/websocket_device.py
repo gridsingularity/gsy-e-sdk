@@ -6,6 +6,7 @@ import websockets
 import json
 from time import time
 from d3a_interface.utils import wait_until_timeout_blocking
+from d3a_api_client.utils import retrieve_jwt_key_from_server
 from d3a_api_client.constants import WEBSOCKET_ERROR_THRESHOLD_SECONDS, WEBSOCKET_MAX_CONNECTION_RETRIES, \
     WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS
 
@@ -15,23 +16,30 @@ class WebsocketMessageReceiver:
         self.client = rest_client
         self.command_response_buffer = []
 
-    def received_message(self, message):
-        if "event" in message:
-            if message["event"] == "market":
-                self.client._on_market_cycle(message)
-            elif message["event"] == "tick":
-                self.client._on_tick(message)
-            elif message["event"] == "trade":
-                self.client._on_trade(message)
-            elif message["event"] == "finish":
-                self.client._on_finish(message)
-            else:
-                logging.error(f"Received message with unknown event type: {message}")
-        elif "command" in message:
-            self.command_response_buffer.append(message)
+    def _handle_event_message(self, message):
+        if message["event"] == "market":
+            self.client._on_market_cycle(message)
+        elif message["event"] == "tick":
+            self.client._on_tick(message)
+        elif message["event"] == "trade":
+            self.client._on_trade(message)
+        elif message["event"] == "finish":
+            self.client._on_finish(message)
+        else:
+            logging.error(f"Received message with unknown event type: {message}")
 
-        if "event" in message or "command" in message:
-            self.client._on_event_or_response(message)
+    def received_message(self, message):
+        try:
+            if "event" in message:
+                self._handle_event_message(message)
+            elif "command" in message:
+                self.command_response_buffer.append(message)
+
+            if "event" in message or "command" in message:
+                self.client._on_event_or_response(message)
+        except Exception as e:
+            logging.error(f"Error while processing incoming message {message}. Exception {e}.\n"
+                          f"{traceback.format_exc()}")
 
     def wait_for_command_response(self, command_name, transaction_id, timeout=120):
         def check_if_command_response_received():
@@ -50,18 +58,23 @@ class WebsocketMessageReceiver:
 
 
 async def websocket_coroutine(websocket_uri, websocket_headers, message_dispatcher):
-    async with websockets.connect(websocket_uri, extra_headers=websocket_headers) as websocket:
-        while True:
-            try:
-                message = await websocket.recv()
-                logging.debug(f"Websocket received message {message}")
-                message_dispatcher.received_message(json.loads(message.decode('utf-8')))
-            except Exception as e:
-                raise Exception(f"Error while receiving message: {str(e)}, "
-                                f"traceback:{traceback.format_exc()}")
+    websocket = await websockets.connect(websocket_uri, extra_headers=websocket_headers)
+    while True:
+        try:
+            message = await websocket.recv()
+            logging.debug(f"Websocket received message {message}")
+            message_dispatcher.received_message(json.loads(message.decode('utf-8')))
+        except Exception as e:
+            await websocket.close()
+            await websocket.wait_closed()
+            raise Exception(f"Error while receiving message: {str(e)}, "
+                            f"traceback:{traceback.format_exc()}")
 
 
-async def retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=0):
+async def retry_coroutine(websocket_uri, http_domain_name, message_dispatcher, retry_count=0):
+    websocket_headers = {
+        "Authorization": f"JWT {retrieve_jwt_key_from_server(http_domain_name)}"
+    }
     ws_connect_time = time()
     try:
         await websocket_coroutine(websocket_uri, websocket_headers, message_dispatcher)
@@ -73,17 +86,15 @@ async def retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, 
         await asyncio.sleep(WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS)
         if retry_count >= WEBSOCKET_MAX_CONNECTION_RETRIES:
             raise e
-        await retry_coroutine(websocket_uri, websocket_headers, message_dispatcher, retry_count=retry_count+1)
+        await retry_coroutine(websocket_uri, http_domain_name, message_dispatcher, retry_count=retry_count+1)
 
 
 class WebsocketThread(threading.Thread):
 
-    def __init__(self, sim_id, area_uuid, jwt_token, domain_name, dispatcher, *args, **kwargs):
+    def __init__(self, sim_id, area_uuid, websocket_domain_name, http_domain_name, dispatcher, *args, **kwargs):
         self.message_dispatcher = dispatcher
-        self.websocket_headers = {
-            "Authorization": f"JWT {jwt_token}"
-        }
-        self.domain_name = domain_name
+        self.domain_name = websocket_domain_name
+        self.http_domain_name = http_domain_name
         self.sim_id = sim_id
         self.area_uuid = area_uuid
         super().__init__(*args, **kwargs, daemon=True)
@@ -93,6 +104,6 @@ class WebsocketThread(threading.Thread):
         asyncio.set_event_loop(event_loop)
         websockets_uri = f"{self.domain_name}/{self.sim_id}/{self.area_uuid}/"
         event_loop.run_until_complete(
-            retry_coroutine(websockets_uri, self.websocket_headers, self.message_dispatcher)
+            retry_coroutine(websockets_uri, self.http_domain_name, self.message_dispatcher)
         )
         event_loop.close()
