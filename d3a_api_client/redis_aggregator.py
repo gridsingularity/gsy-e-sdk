@@ -36,7 +36,6 @@ class RedisAggregator:
         self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.lock = Lock()
-        self.latest_grid_stats_tree = {}
 
     def _connect_to_simulation(self, is_blocking=True):
         if self.aggregator_uuid is None:

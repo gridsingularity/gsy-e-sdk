@@ -35,10 +35,10 @@ class Aggregator(RestDeviceClient):
 
     def __init__(self, simulation_id, domain_name, aggregator_name,
                  websockets_domain_name, accept_all_devices=True):
-        RestDeviceClient.__init__(self, simulation_id=simulation_id, device_id="",
-                                  domain_name=domain_name,
-                                  websockets_domain_name=websockets_domain_name,
-                                  autoregister=False, start_websocket=False)
+        super().__init__(
+            simulation_id=simulation_id, device_id="", domain_name=domain_name,
+            websockets_domain_name=websockets_domain_name, autoregister=False,
+            start_websocket=False)
 
         self.grid_fee_calculation = GridFeeCalculation()
         self.aggregator_name = aggregator_name
