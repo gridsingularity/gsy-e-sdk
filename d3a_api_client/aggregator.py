@@ -7,6 +7,7 @@ from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketT
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 
 
 class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -39,6 +40,7 @@ class Aggregator(RestDeviceClient):
             websockets_domain_name=websockets_domain_name, autoregister=False,
             start_websocket=False)
 
+        self.grid_fee_calculation = GridFeeCalculation()
         self.aggregator_name = aggregator_name
         self.accept_all_devices = accept_all_devices
         self.device_uuid_list = []
@@ -135,3 +137,13 @@ class Aggregator(RestDeviceClient):
         if posted:
             self._client_command_buffer.clear()
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
+
+    def _on_market_cycle(self, message):
+        self.grid_fee_calculation.handle_grid_stats(message)
+        super()._on_market_cycle(message)
+
+    def calculate_grid_fee(self, start_market_or_device_name: str,
+                           target_market_or_device_name: str = None,
+                           fee_type: str = "next_market_fee"):
+        return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
+                                                            target_market_or_device_name, fee_type)

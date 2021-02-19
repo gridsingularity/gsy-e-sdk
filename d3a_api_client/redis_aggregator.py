@@ -10,6 +10,7 @@ from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util, log_market_progression
+from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 
 
 class RedisAPIException(Exception):
@@ -21,6 +22,7 @@ class RedisAggregator:
     def __init__(self, aggregator_name, accept_all_devices=True,
                  redis_url='redis://localhost:6379'):
 
+        self.grid_fee_calculation = GridFeeCalculation()
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
@@ -179,7 +181,6 @@ class RedisAggregator:
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
 
-
     def _on_event_or_response(self, message):
         logging.info(f"A new message was received. Message information: {message}")
         log_market_progression(message)
@@ -187,7 +188,14 @@ class RedisAggregator:
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_event_or_response")
 
+    def calculate_grid_fee(self, start_market_or_device_name: str,
+                           target_market_or_device_name: str = None,
+                           fee_type: str = "next_market_fee"):
+        return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
+                                                            target_market_or_device_name, fee_type)
+
     def _on_market_cycle(self, message):
+        self.grid_fee_calculation.handle_grid_stats(message)
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
