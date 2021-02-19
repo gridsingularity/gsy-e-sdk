@@ -181,7 +181,6 @@ class RedisAggregator:
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
 
-
     def _on_event_or_response(self, message):
         logging.info(f"A new message was received. Message information: {message}")
         log_market_progression(message)
