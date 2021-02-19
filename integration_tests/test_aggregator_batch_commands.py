@@ -26,16 +26,18 @@ class BatchAggregator(RedisAggregator):
         load.select_aggregator(self.aggregator_uuid)
         pv.select_aggregator(self.aggregator_uuid)
 
-        redis_market = RedisMarketClient('house-2')
+        self.redis_market = RedisMarketClient('house-2')
+        self.redis_market.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
+
         try:
-            for device_event in market_info["content"]:
-                if "device_info" not in device_event or device_event["device_info"] is None:
+            for device_event in market_info['content']:
+                if 'device_info' not in device_event or device_event['device_info'] is None:
                     continue
-                if key_in_dict_and_not_none(device_event, "grid_stats_tree"):
-                    json_grid_tree = json.dumps(device_event["grid_stats_tree"], indent=2)
+                if key_in_dict_and_not_none(device_event, 'grid_stats_tree'):
+                    json_grid_tree = json.dumps(device_event['grid_stats_tree'], indent=2)
                     logging.warning(json_grid_tree)
 
                 if self._can_place_offer(device_event):
@@ -83,13 +85,21 @@ class BatchAggregator(RedisAggregator):
                         energy=device_event['device_info']['energy_requirement_kWh'] / 4,
                         replace_existing=False
                     ).list_bids(
-                        area_uuid=device_event['area_uuid']
-                    ).last_market_stats(area_uuid=device_event['area_uuid'])
+                        area_uuid=device_event['area_uuid'])
+
+                self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid, fee_cents_kwh=5)
+                self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
+                self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
 
             if self.commands_buffer_length:
                 transaction = self.execute_batch_commands()
                 if transaction is None:
                     self.errors += 1
+                else:
+                    for response in transaction['responses']:
+                        if response[response['command']]['status'] == 'error':
+                            self.errors += 1
+
                 logging.info(f'Batch command placed on the new market')
 
                 # Make assertions about the bids, if they happened during this slot
@@ -184,4 +194,4 @@ class BatchAggregator(RedisAggregator):
                 'Not all test cases have been covered. This will be reported as failure.')
             self.errors += 1
 
-        self.status = "finished"
+        self.status = 'finished'
