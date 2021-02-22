@@ -48,7 +48,7 @@ class RestCommunicationMixin:
         return data["transaction_id"], get_request(endpoint, data, self.jwt_token)
 
 
-def post_graphql_request(domain_name, query, headers=None, url=None, authenticate=True):
+def execute_graphql_request(domain_name, query, headers=None, url=None, authenticate=True):
     """
     Fires a graphql request to the desired url and returns the response
     """
@@ -143,7 +143,7 @@ def get_area_uuid_from_area_name(serialized_scenario, area_name):
 def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, domain_name):
     query = 'query { readConfiguration(uuid: "{' + collab_id + \
             '}") { scenarioData { latest { serialized } } } }'
-    data = post_graphql_request(domain_name=domain_name, query=query)
+    data = execute_graphql_request(domain_name=domain_name, query=query)
     area_uuid = get_area_uuid_from_area_name(
         json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]), area_name
     )
@@ -157,7 +157,7 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
     query = 'query { readConfiguration(uuid: "{' + collab_id + \
             '}") { scenarioData { latest { serialized } } } }'
 
-    data = post_graphql_request(domain_name=domain_name, query=query)
+    data = execute_graphql_request(domain_name=domain_name, query=query)
     if key_in_dict_and_not_none(data, 'errors'):
         return ast.literal_eval(data['errors'][0]['message'])
     else:
@@ -175,11 +175,9 @@ def get_aggregators_list(domain_name=None):
         domain_name = os.environ.get("API_CLIENT_DOMAIN_NAME")
     query = 'query { aggregatorsList { configUuid name  devicesList { deviceUuid } } }'
 
-    data = post_graphql_request(domain_name=domain_name, query=query)
-    if key_in_dict_and_not_none(data, "errors"):
-        return ast.literal_eval(data["errors"][0]["message"])
-    else:
-        return data["data"]["aggregatorsList"]
+    data = execute_graphql_request(domain_name=domain_name, query=query)
+    return ast.literal_eval(data["errors"][0]["message"]) if \
+        key_in_dict_and_not_none(data, "errors") else data["data"]["aggregatorsList"]
 
 
 def logging_decorator(command_name):
@@ -209,7 +207,7 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     }
     '''
 
-    data = post_graphql_request(domain_name=domain_name, query=query)
+    data = execute_graphql_request(domain_name=domain_name, query=query)
 
     logging.debug(f"Received Canary Network data: {data}")
 
