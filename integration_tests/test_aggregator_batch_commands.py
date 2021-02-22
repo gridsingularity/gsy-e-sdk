@@ -64,9 +64,9 @@ class BatchAggregator(RedisAggregator):
             if transaction is None:
                 self.errors += 1
             else:
-                for response in transaction["responses"]:
-                    for area_response in response:
-                        if area_response["status"] == "error":
+                for area_uuid, response in transaction["responses"].items():
+                    for command_dict in response:
+                        if command_dict["status"] == "error":
                             self.errors += 1
             logging.info(f"Batch command placed on the new market")
 
