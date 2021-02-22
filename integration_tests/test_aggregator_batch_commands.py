@@ -11,11 +11,16 @@ from d3a_api_client.redis_market import RedisMarketClient
 
 class BatchAggregator(RedisAggregator):
     def __init__(self, *args, **kwargs):
+        self.grid_fees_market_cycle_next_market = {}
+        self.grid_fees_tick_last_market = {}
+        self.initial_grid_fees_market_cycle = {}
         super().__init__(*args, **kwargs)
         self.errors = 0
         self.status = "running"
         self._setup()
         self.is_active = True
+        self.updated_house2_grid_fee_cents_kwh = 5
+
         self._has_tested_bids = False
         self._has_tested_offers = False
 
@@ -33,6 +38,11 @@ class BatchAggregator(RedisAggregator):
         logging.info(f"market_info: {market_info}")
 
         try:
+            if self.initial_grid_fees_market_cycle == {}:
+                for target_market in ['Grid', 'House 1', 'House 2']:
+                    self.initial_grid_fees_market_cycle[target_market] = self.calculate_grid_fee(
+                        'load', target_market, 'last_market_fee')
+
             for device_event in market_info['content']:
                 if 'device_info' not in device_event or device_event['device_info'] is None:
                     continue
@@ -87,7 +97,8 @@ class BatchAggregator(RedisAggregator):
                     ).list_bids(
                         area_uuid=device_event['area_uuid'])
 
-                self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid, fee_cents_kwh=5)
+                self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
+                                                     fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
                 self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
                 self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
 
@@ -96,9 +107,9 @@ class BatchAggregator(RedisAggregator):
                 if transaction is None:
                     self.errors += 1
                 else:
-                    for area_responses in transaction['responses']:
-                        for response in area_responses:
-                            if response['status'] == 'error':
+                    for response in transaction["responses"]:
+                        for area_response in response:
+                            if area_response['status'] == 'error':
                                 self.errors += 1
 
                 logging.info(f'Batch command placed on the new market')
@@ -168,6 +179,10 @@ class BatchAggregator(RedisAggregator):
 
                     self._has_tested_offers = True
 
+            for target_market in ["Grid", "House 1", "House 2"]:
+                self.grid_fees_market_cycle_next_market[
+                    target_market] = self.calculate_grid_fee("load", target_market)
+
         except Exception as ex:
             logging.error(f'Raised exception: {ex}. Traceback: {traceback.format_exc()}')
             self.errors += 1
@@ -187,6 +202,10 @@ class BatchAggregator(RedisAggregator):
         return (
             'available_energy_kWh' in event['device_info'] and
             event['device_info']['available_energy_kWh'] > 0.0)
+
+    def on_tick(self, tick_info):
+        for target_market in ["Grid", "House 1", "House 2"]:
+            self.grid_fees_tick_last_market[target_market] = self.calculate_grid_fee("load", target_market, "last_market_fee")
 
     def on_finish(self, finish_info):
         # Make sure that all test cases have been run

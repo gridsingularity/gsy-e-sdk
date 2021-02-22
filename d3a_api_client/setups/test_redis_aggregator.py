@@ -1,10 +1,8 @@
 import logging
 import json
 from time import sleep
-from pendulum import today
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
-from d3a_interface.constants_limits import DATE_TIME_FORMAT
 from d3a_interface.utils import key_in_dict_and_not_none
 from d3a_api_client.redis_market import RedisMarketClient
 
@@ -31,9 +29,6 @@ class AutoAggregator(RedisAggregator):
                     .list_offers(area_uuid=device_event["area_uuid"])
             if "energy_requirement_kWh" in device_event["device_info"] and \
                     device_event["device_info"]["energy_requirement_kWh"] > 0.0:
-                market_slot_string_1 = today().format(DATE_TIME_FORMAT)
-                market_slot_string_2 = today().add(minutes=60).format(DATE_TIME_FORMAT)
-                marker_list = [market_slot_string_1, market_slot_string_2]
                 self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"], price=30,
                                                       energy=device_event["device_info"]["energy_requirement_kWh"] / 2) \
                     .list_bids(area_uuid=device_event["area_uuid"]) \
@@ -74,10 +69,7 @@ logging.info(f"SELECTED: {selected}")
 selected = pv.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
 
-
 redis_market = RedisMarketClient('house-2')
-market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
-
 last_market_stats_results = redis_market.last_market_stats()
 
 while not aggregator.is_finished:

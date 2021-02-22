@@ -38,10 +38,3 @@ Scenario: on_event_or_response is triggered by all messages
    When the external client is started with test_pv_connection
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
-
-Scenario: Batch Commands sent successfully
-   Given redis container is started
-   And d3a is started using setup strategy_tests.external_devices (-t 1s -s 60m)
-   When the external client is started with test_aggregator_batch_commands
-   Then the external client is connecting to the simulation until finished
-   And the external client does not report errors

@@ -30,6 +30,14 @@ def step_impl(context, setup_file: str, d3a_options: str):
            f'--no-export --seed 0 --enable-external-connection {d3a_options}')
 
 
+@given('d3a container started {setup_file} with duration set to {hours} hours')
+def step_impl(context, setup_file, hours):
+    sleep(3)
+    system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ '
+           f'--net integtestnet d3a-tests -l INFO run -t 1s -s 60m -d {hours}h --setup {setup_file} '
+           f'--no-export --seed 0 --enable-external-connection')
+
+
 @when('the external client is started with test_load_connection')
 def step_impl(context):
     # Wait for d3a to activate all areas
