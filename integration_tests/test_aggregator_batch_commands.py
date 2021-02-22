@@ -66,7 +66,8 @@ class BatchAggregator(RedisAggregator):
             else:
                 for area_responses in transaction["responses"]:
                     for response in area_responses:
-                        if response[response["command"]]["status"] == "error":
+                        if response["status"] == "error":
+                            self.errors += 1
             logging.info(f"Batch command placed on the new market")
 
         for target_market in ["Grid", "House 1", "House 2"]:
