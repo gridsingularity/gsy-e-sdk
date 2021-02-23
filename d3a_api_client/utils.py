@@ -93,7 +93,7 @@ def request_response_returns_http_2xx(endpoint, resp):
         return True
     else:
         logging.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
-                     f"Response body: {json.loads(resp.text).get('error')}")
+                      f"Response body: {resp.text}")
         return False
 
 

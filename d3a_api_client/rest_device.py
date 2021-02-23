@@ -29,7 +29,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.websockets_domain_name = websockets_domain_name
         self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
         self.active_aggregator = None
-        if start_websocket:
+        if start_websocket or autoregister:
             self.start_websocket_connection()
 
         self.registered = False
