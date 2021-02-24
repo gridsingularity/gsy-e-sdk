@@ -180,6 +180,17 @@ commands in order to react to an event simultaneously for each owned device.
     ``` 
     aggregator = AutoAggregator(<aggregator_name>)
     ```
+### How to list your aggregators
+To list your aggregators, its configuration id and the registered devices, you should :
+```python
+from d3a_api_client.utils import get_aggregators_list
+my_aggregators = get_aggregators_list(domain_name="Domain Name")
+```
+The returned value is a list of aggregators and its connected devices
+```python
+[{'configUuid': 'f7330248-9a72-4979-8477-dfbcff0c46a0', 'name': 'My aggregator',
+ 'devicesList': [{"deviceUuid":"My_device_uuid"},{"deviceUuid":"My_device_uuid 2"}]}]
+```
 #### How to select and unselect an Aggregator
 The device or market can select the Aggregator 
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):

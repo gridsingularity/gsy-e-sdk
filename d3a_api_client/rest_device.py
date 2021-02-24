@@ -166,7 +166,6 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         function = lambda: self.on_tick(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_tick")
-
     @staticmethod
     def _log_trade_info(message):
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
@@ -180,7 +179,6 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             # Aggregator message
             for individual_trade in message["content"]:
                 self._log_trade_info(individual_trade)
-
         function = lambda: self.on_trade(message)
         self.callback_thread.submit(execute_function_util, function=function,
                                     function_name="on_trade")
