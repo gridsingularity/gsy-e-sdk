@@ -100,6 +100,14 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             log_bid_offer_confirmation(response)
             return response
 
+    @logging_decorator('update_offer')
+    def offer_energy(self, energy, price):
+        transaction_id, posted = self._post_request('update_offer', {"energy": energy, "price": price})
+        if posted:
+            response = self.dispatcher.wait_for_command_response('update_offer', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
+
     @logging_decorator('bid')
     def bid_energy(self, energy, price):
         transaction_id, posted = self._post_request('bid', {"energy": energy, "price": price})
@@ -114,7 +122,13 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             'bid', {"energy": energy, "price": rate * energy})
         if posted:
             response = self.dispatcher.wait_for_command_response('bid', transaction_id)
-            log_bid_offer_confirmation(response)
+            return response
+
+    @logging_decorator('update_bid')
+    def update_bid(self, energy, price):
+        transaction_id, posted = self._post_request('update_bid', {"energy": energy, "price": price})
+        if posted:
+            response = self.dispatcher.wait_for_command_response('update_bid', transaction_id)
             return response
 
     @logging_decorator('delete offer')
