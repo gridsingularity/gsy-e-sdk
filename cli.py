@@ -84,11 +84,12 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
-    if os.path.isabs(simulation_info):
-        os.environ["JSON_FILE_PATH"] = simulation_info
-    else:
-        os.environ["JSON_FILE_PATH"] = os.path.join(os.getcwd(), simulation_info)
+    set_json_file_env(base_setup_path, simulation_info)
 
+    load_client_script(base_setup_path, setup_module_name)
+
+
+def load_client_script(base_setup_path, setup_module_name):
     try:
         if base_setup_path is None:
             importlib.import_module(f"d3a_api_client.setups.{setup_module_name}")
@@ -97,7 +98,6 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
             importlib.import_module(setup_module_name)
         else:
             setup_file_path = os.path.join(os.getcwd(), base_setup_path)
-            # print(f"pathhh: {pathhh}")
             sys.path.append(setup_file_path)
             importlib.import_module(setup_module_name)
 
@@ -105,3 +105,17 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
         raise click.BadOptionUsage(ex.args[0])
     except ModuleNotFoundError as ex:
         log.error("Could not find the specified module")
+
+
+def set_json_file_env(base_setup_path, simulation_info):
+    if simulation_info is None:
+        if base_setup_path is None:
+            json_file = [l for l in os.listdir(setups.__path__[0]) if l.endswith('.json')]
+            os.environ["JSON_FILE_PATH"] = os.path.join(setups.__path__[0], json_file[0])
+        else:
+            json_file = [l for l in os.listdir(base_setup_path) if l.endswith('.json')]
+            os.environ["JSON_FILE_PATH"] = os.path.join(base_setup_path, json_file[0])
+    elif os.path.isabs(simulation_info):
+        os.environ["JSON_FILE_PATH"] = simulation_info
+    else:
+        os.environ["JSON_FILE_PATH"] = os.path.join(os.getcwd(), simulation_info)

@@ -6,5 +6,5 @@ WEBSOCKET_ERROR_THRESHOLD_SECONDS = 30
 
 SETUP_FILE_PATH = None
 
-DEFAULT_DOMAIN_NAME = 'https://d3aweb.gridsingularity.com'
-DEFAULT_WEBSOCKET_DOMAIN = 'wss://d3aweb.gridsingularity.com/external-ws'
+DEFAULT_DOMAIN_NAME = 'http://localhost:8000'
+DEFAULT_WEBSOCKET_DOMAIN = 'ws://localhost:8000/external-ws'

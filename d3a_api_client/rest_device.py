@@ -1,4 +1,7 @@
 import logging
+import os
+import json
+
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_api_client import APIClientInterface
@@ -14,20 +17,28 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
-    def __init__(self, simulation_id, device_id,
+    def __init__(self, device_id=None, simulation_id=None,
                  domain_name=domain_name_from_env,
                  websockets_domain_name=websocket_domain_name_from_env,
                  autoregister=False, start_websocket=True,
                  sim_api_domain_name=None):
-        self.simulation_id = simulation_id
+        if os.environ['JSON_FILE_PATH'] is not None:
+            with open(os.environ['JSON_FILE_PATH']) as json_file:
+                simulation_info = json.load(json_file)
+                self.simulation_id = simulation_info['uuid']
+                self.domain_name = simulation_info['domain_name']
+                self.websockets_domain_name = simulation_info['web_socket_domain_name']
+        else:
+            self.simulation_id = simulation_id
+            self.domain_name = domain_name
+            self.websockets_domain_name = websockets_domain_name
+
         self.device_id = device_id
-        self.domain_name = domain_name
         if sim_api_domain_name is None:
             sim_api_domain_name = self.domain_name
         self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
         self._create_jwt_refresh_timer(sim_api_domain_name)
-        self.websockets_domain_name = websockets_domain_name
-        self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
+        self.aggregator_prefix = get_aggregator_prefix(self.domain_name, self.simulation_id)
         self.active_aggregator = None
         if start_websocket:
             self.start_websocket_connection()
