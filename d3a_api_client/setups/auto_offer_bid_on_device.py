@@ -16,15 +16,16 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
         :param market_info: Incoming message containing the newly-created market info
         :return: None
         """
+        print(market_info)
         logging.debug(f"New market information {market_info}")
-        if "available_energy_kWh" in market_info['device_info'] and \
-                market_info['device_info']["available_energy_kWh"] > 0.0:
-            offer = self.offer_energy(market_info['device_info']["available_energy_kWh"], 0.1)
+        if "available_energy_kWh" in market_info['asset_info'] and \
+                market_info['asset_info']["available_energy_kWh"] > 0.0:
+            offer = self.offer_energy(market_info['asset_info']["available_energy_kWh"], 0.1)
             logging.debug(f"Offer placed on the new market: {offer}")
-        if "energy_requirement_kWh" in market_info['device_info'] and \
-                market_info['device_info']["energy_requirement_kWh"] > 0.0:
-            logging.debug(market_info['device_info']['energy_requirement_kWh'])
-            bid = self.bid_energy(market_info['device_info']["energy_requirement_kWh"], 100)
+        if "energy_requirement_kWh" in market_info['asset_info'] and \
+                market_info['asset_info']["energy_requirement_kWh"] > 0.0:
+            logging.debug(market_info['asset_info']['energy_requirement_kWh'])
+            bid = self.bid_energy(market_info['asset_info']["energy_requirement_kWh"], 90)
             logging.debug(f"Bid placed on the new market: {bid}")
 
     def on_tick(self, tick_info):
@@ -42,5 +43,6 @@ pv = AutoOfferBidOnMarket('pv', autoregister=True)
 
 # Infinite loop in order to leave the client running on the background
 # placing bids and offers on every market cycle.
+print("ready")
 while True:
     sleep(0.5)

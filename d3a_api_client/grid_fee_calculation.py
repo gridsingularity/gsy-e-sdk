@@ -13,11 +13,8 @@ class GridFeeCalculation:
                                              "next_market_fee": {}}
 
     def handle_grid_stats(self, message):
-        for device_event in message["content"]:
-            if device_event["event"] == "grid_stats":
-                self.latest_grid_stats_tree = device_event["grid_stats_tree"]
-                message["content"].remove(device_event)
-                self._get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self.latest_grid_stats_tree, [])
+        self.latest_grid_stats_tree = message["content"]["market_info"]
+        self._get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self.latest_grid_stats_tree, [])
 
     def _get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self, indict, parent_path):
         for child_name, child_stats in indict.items():

@@ -16,9 +16,9 @@ class AutoAggregator(RedisAggregator):
 
         for device_event in market_info["content"]:
             logging.info(f"device_event: {device_event}")
-            if "energy_to_buy" in device_event["device_info"] and \
-                    device_event["device_info"]["energy_to_buy"] > 0.0:
-                buy_energy = device_event["device_info"]["energy_to_buy"] / 2
+            if "energy_to_buy" in device_event["asset_info"] and \
+                    device_event["asset_info"]["energy_to_buy"] > 0.0:
+                buy_energy = device_event["asset_info"]["energy_to_buy"] / 2
                 self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"],
                                                       price=31 * buy_energy, energy=buy_energy).\
                     list_bids(area_uuid=device_event["area_uuid"])

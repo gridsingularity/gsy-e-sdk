@@ -19,13 +19,13 @@ class AutoOfferBidHardwareApi(RestDeviceClient):
         :return: None
         """
         logging.debug(f"New market information {market_info}")
-        if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
-            energy_forecast = market_info["device_info"]["energy_requirement_kWh"]
+        if "energy_requirement_kWh" in market_info["asset_info"] and market_info["asset_info"]["energy_requirement_kWh"] > 0.0:
+            energy_forecast = market_info["asset_info"]["energy_requirement_kWh"]
             bid = self.bid_energy_rate(energy_forecast / 2, 3)
             logging.info(f"Bid placed on the new market: {bid}")
 
-        if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
-            energy_forecast = market_info["device_info"]["available_energy_kWh"]
+        if "available_energy_kWh" in market_info["asset_info"] and market_info["asset_info"]["available_energy_kWh"] > 0.0:
+            energy_forecast = market_info["asset_info"]["available_energy_kWh"]
             offer = self.offer_energy_rate(energy_forecast/2, 1)
             logging.info(f"Offer placed on the new market: {offer}")
 

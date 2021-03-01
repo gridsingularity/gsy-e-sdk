@@ -27,18 +27,18 @@ class TestAggregator(Aggregator):
         if "content" not in market_info:
             return
 
-        for device_event in market_info["content"]:
-            if "available_energy_kWh" in device_event["device_info"] and \
-                    device_event["device_info"]["available_energy_kWh"] > 0.0:
-                self.add_to_batch_commands.offer_energy(device_event["area_uuid"], price=1,
-                                                        energy=device_event["device_info"]["available_energy_kWh"] / 2)
-                self.add_to_batch_commands.list_offers(device_event["area_uuid"])
+        device_event = market_info["content"]['market_info']
+        if "available_energy_kWh" in device_event["asset_info"] and \
+                device_event["asset_info"]["available_energy_kWh"] > 0.0:
+            self.add_to_batch_commands.offer_energy(device_event["area_uuid"], price=1,
+                                                    energy=device_event["asset_info"]["available_energy_kWh"] / 2)
+            self.add_to_batch_commands.list_offers(device_event["area_uuid"])
 
-            if "energy_requirement_kWh" in device_event["device_info"] and \
-                    device_event["device_info"]["energy_requirement_kWh"] > 0.0:
-                self.add_to_batch_commands.bid_energy(device_event["area_uuid"], price=30,
-                                                      energy=device_event["device_info"]["energy_requirement_kWh"] / 2)
-                self.add_to_batch_commands.list_bids(device_event["area_uuid"])
+        if "energy_requirement_kWh" in device_event["asset_info"] and \
+                device_event["asset_info"]["energy_requirement_kWh"] > 0.0:
+            self.add_to_batch_commands.bid_energy(device_event["area_uuid"], price=30,
+                                                  energy=device_event["asset_info"]["energy_requirement_kWh"] / 2)
+            self.add_to_batch_commands.list_bids(device_event["area_uuid"])
 
             response = self.execute_batch_commands()
             logging.debug(f"Batch command placed on the new market: {response}")
@@ -54,9 +54,9 @@ class TestAggregator(Aggregator):
 
 
 import os
-simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
-domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
-websocket_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
+simulation_id = "2a8518e1-8119-4986-b72d-207c995d45d3"
+domain_name = "http://localhost:8000"
+websocket_domain_name = 'ws://localhost:8000/external-ws'
 
 
 aggr = TestAggregator(
@@ -83,14 +83,14 @@ load1 = RestDeviceClient(
     **device_args
 )
 
-
-load2_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    device_args["simulation_id"], "Load 2", device_args["domain_name"])
-device_args["device_id"] = load2_uuid
-
-load2 = RestDeviceClient(
-    **device_args
-)
+#
+# load2_uuid = get_area_uuid_from_area_name_and_collaboration_id(
+#     device_args["simulation_id"], "Load 2", device_args["domain_name"])
+# device_args["device_id"] = load2_uuid
+#
+# load2 = RestDeviceClient(
+#     **device_args
+# )
 
 pv1_uuid = get_area_uuid_from_area_name_and_collaboration_id(
     device_args["simulation_id"], "PV", device_args["domain_name"])
@@ -100,15 +100,15 @@ pv1 = RestDeviceClient(
 )
 
 load1.select_aggregator(aggr.aggregator_uuid)
-load2.select_aggregator(aggr.aggregator_uuid)
+# load2.select_aggregator(aggr.aggregator_uuid)
 pv1.select_aggregator(aggr.aggregator_uuid)
 
-area_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    simulation_id, "House", domain_name)
-
-rest_market = RestMarketClient(simulation_id, area_uuid, domain_name, websocket_domain_name)
-market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
-last_market_stats = rest_market.last_market_stats()
-
+# area_uuid = get_area_uuid_from_area_name_and_collaboration_id(
+#     simulation_id, "House", domain_name)
+#
+# rest_market = RestMarketClient(simulation_id, area_uuid, domain_name, websocket_domain_name)
+# market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
+# last_market_stats = rest_market.last_market_stats()
+print("ready")
 while not aggr.is_finished:
     sleep(0.5)

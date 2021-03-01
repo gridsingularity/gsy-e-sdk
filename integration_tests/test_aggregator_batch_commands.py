@@ -36,21 +36,21 @@ class BatchAggregator(RedisAggregator):
             for target_market in ["Grid", "House 1", "House 2"]:
                 self.initial_grid_fees_market_cycle[target_market] = self.calculate_grid_fee("load", target_market, "last_market_fee")
         for device_event in market_info["content"]:
-            if "device_info" not in device_event or device_event["device_info"] is None:
+            if "asset_info" not in device_event or device_event["asset_info"] is None:
                 continue
             if key_in_dict_and_not_none(device_event, "grid_stats_tree"):
                 json_grid_tree = json.dumps(device_event["grid_stats_tree"], indent=2)
                 logging.warning(json_grid_tree)
-            if "available_energy_kWh" in device_event["device_info"] and \
-                    device_event["device_info"]["available_energy_kWh"] > 0.0:
+            if "available_energy_kWh" in device_event["asset_info"] and \
+                    device_event["asset_info"]["available_energy_kWh"] > 0.0:
                 self.add_to_batch_commands.offer_energy(area_uuid=device_event["area_uuid"], price=1,
-                                                        energy=device_event["device_info"]["available_energy_kWh"] / 2) \
+                                                        energy=device_event["asset_info"]["available_energy_kWh"] / 2) \
                     .list_offers(area_uuid=device_event["area_uuid"])
 
-            if "energy_requirement_kWh" in device_event["device_info"] and \
-                        device_event["device_info"]["energy_requirement_kWh"] > 0.0:
+            if "energy_requirement_kWh" in device_event["asset_info"] and \
+                        device_event["asset_info"]["energy_requirement_kWh"] > 0.0:
                     self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"], price=30,
-                                                          energy=device_event["device_info"][
+                                                          energy=device_event["asset_info"][
                                                                      "energy_requirement_kWh"] / 2) \
                         .list_bids(area_uuid=device_event["area_uuid"])
 

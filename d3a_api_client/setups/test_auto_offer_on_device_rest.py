@@ -35,12 +35,12 @@ class AutoOfferBidOnMarket(RestDeviceClient):
         if self.registered is False or self.is_finished is True:
             return
         logging.debug(f"New market information {market_info}")
-        if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
-            offer = self.offer_energy_rate(market_info["device_info"]["available_energy_kWh"] / 2, 16)
+        if "available_energy_kWh" in market_info["asset_info"] and market_info["asset_info"]["available_energy_kWh"] > 0.0:
+            offer = self.offer_energy_rate(market_info["asset_info"]["available_energy_kWh"] / 2, 16)
             logging.debug(f"Offer placed on the new market: {offer}")
             assert len(self.list_offers()) == 1
-        if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
-            bid = self.bid_energy(market_info["device_info"]["energy_requirement_kWh"] / 2, 30)
+        if "energy_requirement_kWh" in market_info["asset_info"] and market_info["asset_info"]["energy_requirement_kWh"] > 0.0:
+            bid = self.bid_energy(market_info["asset_info"]["energy_requirement_kWh"] / 2, 30)
             logging.info(f"Bid placed on the new market: {bid}")
             assert len(self.list_bids()) == 1
 

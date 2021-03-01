@@ -18,18 +18,18 @@ class AutoOfferOnESSDevice(device_client_type):
 
     def on_market_cycle(self, market_info):
         try:
-            assert set(market_info["device_info"].keys()) == \
+            assert set(market_info["asset_info"].keys()) == \
                    {'energy_to_sell','offered_sell_kWh', 'energy_to_buy', 'offered_buy_kWh',
                     'free_storage', 'used_storage'}
-            energy_to_sell = market_info["device_info"]["energy_to_sell"]
+            energy_to_sell = market_info["asset_info"]["energy_to_sell"]
             if energy_to_sell > 0:
                 offer = self.offer_energy(energy_to_sell, (10 * energy_to_sell))
                 offer_info = json.loads(offer["offer"])
                 assert offer_info["price"] == 10 * energy_to_sell
                 assert offer_info["energy"] == energy_to_sell
-                device_info = self.device_info()
-                assert device_info["energy_to_sell"] == 0.0
-                assert device_info["offered_sell_kWh"] == energy_to_sell
+                asset_info = self.asset_info()
+                assert asset_info["energy_to_sell"] == 0.0
+                assert asset_info["offered_sell_kWh"] == energy_to_sell
 
 
             if market_info["start_time"][-5:] == "23:00":

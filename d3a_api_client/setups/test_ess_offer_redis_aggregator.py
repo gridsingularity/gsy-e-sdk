@@ -14,10 +14,10 @@ class AutoAggregator(RedisAggregator):
         logging.info(f"market_info: {market_info}")
 
         for device_event in market_info["content"]:
-            if device_event["device_info"] and "energy_to_sell" in device_event["device_info"] and \
-                     device_event["device_info"] and \
-                    device_event["device_info"]["energy_to_sell"] > 0.0:
-                sell_energy = device_event["device_info"]["energy_to_sell"] / 2
+            if device_event["asset_info"] and "energy_to_sell" in device_event["asset_info"] and \
+                     device_event["asset_info"] and \
+                    device_event["asset_info"]["energy_to_sell"] > 0.0:
+                sell_energy = device_event["asset_info"]["energy_to_sell"] / 2
                 self.add_to_batch_commands.offer_energy(device_event["area_uuid"],
                                                         price=15 * sell_energy,
                                                         energy=sell_energy)
