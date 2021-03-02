@@ -236,7 +236,7 @@ The algorithm retrieves the path between `start_market_or_device_name` and `targ
 and accumulates all corresponding grid fees along the way. Market and device names are supported.
 `target_market_or_device_name` is optional, if left blank, only the grid fee of the 
 `start_market_or_device_name` is returned. 
-The user can chose between `next_market_fee` and `last_market_fee`, which is toggled by providing 
+The user can chose between `current_market_fee` and `last_market_fee`, which is toggled by providing 
 the corresponding string in the `fee_type` input parameter. 
 
 ---

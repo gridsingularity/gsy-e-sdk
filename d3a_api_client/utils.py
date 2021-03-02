@@ -233,7 +233,7 @@ def log_market_progression(message):
             return
         headers = ["event", ]
         table_data = [event, ]
-        data_dict = message.get("content")[0] if "content" in message.keys() else message
+        data_dict = message.get("content") if "content" in message.keys() else message
         if "slot_completion" in data_dict:
             headers.append("slot_completion")
             table_data.append(data_dict.get("slot_completion"))
@@ -264,3 +264,25 @@ def log_bid_offer_confirmation(message):
                          f"{round(energy, 2)} kWh at {price} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
+
+
+def flatten_info_dict(indict: dict) -> dict:
+    """
+    wrapper for _flatten_info_dict
+    """
+    if indict == {}:
+        return {}
+    outdict = {}
+    _flatten_info_dict(indict, outdict)
+    return outdict
+
+
+def _flatten_info_dict(indict: dict, outdict: dict):
+    """
+    Flattens market_info/tick_info information trees
+    outdict will hold references to all area subdicts of indict
+    """
+    for area_name, area_dict in indict.items():
+        outdict[area_name] = area_dict
+        if 'children' in area_dict:
+            _flatten_info_dict(indict[area_name]['children'], outdict)

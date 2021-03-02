@@ -10,17 +10,17 @@ class GridFeeCalculation:
         self.latest_grid_stats_tree = {}
         self.paths_to_root_mapping = {}
         self.market_name_grid_fee_mapping = {"last_market_fee": {},
-                                             "next_market_fee": {}}
+                                             "current_market_fee": {}}
 
     def handle_grid_stats(self, message):
-        self.latest_grid_stats_tree = message["content"]["market_info"]
+        self.latest_grid_stats_tree = message["grid_tree"]
         self._get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self.latest_grid_stats_tree, [])
 
     def _get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self, indict, parent_path):
         for child_name, child_stats in indict.items():
             sub_path = parent_path + [child_name]
             self.paths_to_root_mapping[child_name] = parent_path
-            for fee_type in ["last_market_fee", "next_market_fee"]:
+            for fee_type in ["last_market_fee", "current_market_fee"]:
                 if fee_type in child_stats:
                     self.market_name_grid_fee_mapping[fee_type][child_name] = child_stats[fee_type]
             if "children" in child_stats:
@@ -41,7 +41,7 @@ class GridFeeCalculation:
 
     def calculate_grid_fee(self, start_market_or_device_name: str,
                            target_market_or_device_name: str = None,
-                           fee_type: str = "next_market_fee"):
+                           fee_type: str = "current_market_fee"):
         """
         Calculates grid fees along path between two assets or markets in the grid
         """

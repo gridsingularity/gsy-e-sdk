@@ -3,6 +3,7 @@ import uuid
 import json
 from threading import Lock
 from redis import StrictRedis
+from copy import copy
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking
@@ -182,7 +183,10 @@ class RedisAggregator:
                 raise RedisAPIException(f'API registration process timed out.')
 
     def _on_event_or_response(self, message):
-        logging.info(f"A new message was received. Message information: {message}")
+        log_msg = copy(message)
+        if 'grid_tree' in log_msg:
+            log_msg['grid_tree'] = '{...}'
+        logging.debug(f"A new message was received. Message information: {log_msg}")
         log_market_progression(message)
         function = lambda: self.on_event_or_response(message)
         self.executor.submit(execute_function_util, function=function,
@@ -190,7 +194,7 @@ class RedisAggregator:
 
     def calculate_grid_fee(self, start_market_or_device_name: str,
                            target_market_or_device_name: str = None,
-                           fee_type: str = "next_market_fee"):
+                           fee_type: str = "current_market_fee"):
         return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
                                                             target_market_or_device_name, fee_type)
 

@@ -144,6 +144,6 @@ class Aggregator(RestDeviceClient):
 
     def calculate_grid_fee(self, start_market_or_device_name: str,
                            target_market_or_device_name: str = None,
-                           fee_type: str = "next_market_fee"):
+                           fee_type: str = "current_market_fee"):
         return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
                                                             target_market_or_device_name, fee_type)
