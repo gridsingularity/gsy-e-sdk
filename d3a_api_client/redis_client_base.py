@@ -166,7 +166,7 @@ class RedisClient(APIClientInterface):
 
     @registered_connection
     def offer_energy(self, energy: float, price: float, replace_existing: bool = True):
-        logging.error(f"Client tries to place an offer for {energy} kWh at {price} cents.")
+        logging.debug(f"Client tries to place an offer for {energy} kWh at {price} cents.")
 
         response = self._publish_and_wait(
             Commands.OFFER,
@@ -284,7 +284,7 @@ class RedisClient(APIClientInterface):
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)}/kWh -->")
+                     f"at {round(message.get('price'), 2)} cents -->")
         function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")

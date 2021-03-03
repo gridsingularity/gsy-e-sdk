@@ -46,7 +46,7 @@ class ClientCommandBuffer:
         return self._add_to_buffer(
             area_uuid,
             Commands.BID,
-            {'energy': energy, 'rate': rate * energy, 'replace_existing': replace_existing})
+            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
 
     def update_bid(self, area_uuid, energy, price):
         return self._add_to_buffer(area_uuid, "update_bid", {"energy": energy, "price": price})
