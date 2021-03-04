@@ -122,6 +122,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             'bid', {"energy": energy, "price": rate * energy})
         if posted:
             response = self.dispatcher.wait_for_command_response('bid', transaction_id)
+            log_bid_offer_confirmation(response)
             return response
 
     @logging_decorator('update_bid')
