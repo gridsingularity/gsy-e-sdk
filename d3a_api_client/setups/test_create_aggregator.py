@@ -5,7 +5,6 @@ from d3a_api_client.aggregator import Aggregator
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 from d3a_api_client.rest_market import RestMarketClient
-from d3a_api_client.utils import flatten_info_dict
 
 
 class TestAggregator(Aggregator):
@@ -24,26 +23,26 @@ class TestAggregator(Aggregator):
         """
         if self.is_finished is True:
             return
-
-        logging.info(f"current_market_fee: {self.grid_fee_calculation.calculate_grid_fee('Load', 'Market')}")
-        for device_name, device_dict in flatten_info_dict(market_info['grid_tree']).items():
-            if "asset_info" not in device_dict or device_dict["asset_info"] is None:
+        market_uuid = self.get_uuid_from_area_name("Market")
+        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
 
-            if "available_energy_kWh" in device_dict["asset_info"] and \
-                    device_dict["asset_info"]["available_energy_kWh"] > 0.0:
-                self.add_to_batch_commands.offer_energy(area_uuid=device_dict["area_uuid"],
+            logging.info(
+                f"current_market_fee: {self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid)}")
+            if "available_energy_kWh" in area_dict["asset_info"] and \
+                    area_dict["asset_info"]["available_energy_kWh"] > 0.0:
+                self.add_to_batch_commands.offer_energy(area_uuid=area_dict["area_uuid"],
                                                         price=1,
-                                                        energy=device_dict["asset_info"][
+                                                        energy=area_dict["asset_info"][
                                                                    "available_energy_kWh"] / 2) \
-                    .list_offers(area_uuid=device_dict["area_uuid"])
-            if "energy_requirement_kWh" in device_dict["asset_info"] and \
-                    device_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
-                self.add_to_batch_commands.bid_energy(area_uuid=device_dict["area_uuid"], price=30,
-                                                      energy=device_dict["asset_info"][
+                    .list_offers(area_uuid=area_uuid)
+            if "energy_requirement_kWh" in area_dict["asset_info"] and \
+                    area_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
+                self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
+                                                      energy=area_dict["asset_info"][
                                                                  "energy_requirement_kWh"] / 2) \
-                    .list_bids(area_uuid=device_dict["area_uuid"]) \
-                    .last_market_stats(area_uuid=device_dict["area_uuid"])
+                    .list_bids(area_uuid=area_uuid)
         response = self.execute_batch_commands()
         logging.info(f"Batch command placed on the new market: {response}")
 
@@ -95,9 +94,9 @@ pv1 = RestDeviceClient(
 load1.select_aggregator(aggr.aggregator_uuid)
 pv1.select_aggregator(aggr.aggregator_uuid)
 
-area_uuid = get_area_uuid_from_area_name_and_collaboration_id(
+house_uuid = get_area_uuid_from_area_name_and_collaboration_id(
     simulation_id, "House", domain_name)
-rest_market = RestMarketClient(simulation_id, area_uuid, domain_name, websocket_domain_name)
+rest_market = RestMarketClient(simulation_id, house_uuid, domain_name, websocket_domain_name)
 rest_market.select_aggregator(aggr.aggregator_uuid)
 
 while not aggr.is_finished:

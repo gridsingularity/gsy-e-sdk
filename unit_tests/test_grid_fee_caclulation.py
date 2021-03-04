@@ -4,7 +4,7 @@ from parameterized import parameterized
 
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 
-
+# for the unittest the area_uuids are exchanged by unique area_names for better debugging
 grid_stats_example = \
     {'Grid 10': {'last_market_slot': '2021-02-02T00:45', 'last_market_bill': {}, 'last_market_stats': {},
                'last_market_fee': 10.0, 'current_market_fee': 11.0,
@@ -85,8 +85,8 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       'PV 3': 13.}
         for leaf_name, expected_fee in leaf_name_expected_fee.items():
             assert expected_fee == self.grid_fee_calc.calculate_grid_fee(
-                start_market_or_device_name=leaf_name,
-                target_market_or_device_name=target_market,
+                start_market_or_device_uuid=leaf_name,
+                target_market_or_device_uuid=target_market,
                 fee_type=fee_type)
 
     @parameterized.expand([['last_market_fee'], ['current_market_fee']])
@@ -101,8 +101,8 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       13.0: ['Market Maker', 'Load 3']}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
             assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
-                start_market_or_device_name=leaf_names[0],
-                target_market_or_device_name=leaf_names[1],
+                start_market_or_device_uuid=leaf_names[0],
+                target_market_or_device_uuid=leaf_names[1],
                 fee_type=fee_type))
 
     @parameterized.expand([['last_market_fee'], ['current_market_fee']])
@@ -117,8 +117,8 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       14.0: ['Street 1', 'Load 3']}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
             assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
-                start_market_or_device_name=leaf_names[0],
-                target_market_or_device_name=leaf_names[1],
+                start_market_or_device_uuid=leaf_names[0],
+                target_market_or_device_uuid=leaf_names[1],
                 fee_type=fee_type))
 
     @parameterized.expand([['last_market_fee'], ['current_market_fee']])
@@ -133,8 +133,8 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       15.1: ['Street 1', 'House 2.1']}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
             assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
-                start_market_or_device_name=leaf_names[0],
-                target_market_or_device_name=leaf_names[1],
+                start_market_or_device_uuid=leaf_names[0],
+                target_market_or_device_uuid=leaf_names[1],
                 fee_type=fee_type))
 
     @parameterized.expand([['last_market_fee'], ['current_market_fee']])
@@ -147,6 +147,6 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       1.2: ['Load 1.2', 'House 1.2', ]}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
             assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
-                start_market_or_device_name=leaf_names[0],
-                target_market_or_device_name=leaf_names[1],
+                start_market_or_device_uuid=leaf_names[0],
+                target_market_or_device_uuid=leaf_names[1],
                 fee_type=fee_type))

@@ -12,6 +12,7 @@ from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util, log_market_progression
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
+from d3a_api_client.utils import flatten_info_dict, get_uuid_from_area_name_in_tree_dict
 
 
 class RedisAPIException(Exception):
@@ -37,6 +38,8 @@ class RedisAggregator:
         self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.lock = Lock()
+        self.latest_grid_tree = {}
+        self.latest_grid_tree_flat = {}
 
     def _connect_to_simulation(self, is_blocking=True):
         if self.aggregator_uuid is None:
@@ -188,8 +191,8 @@ class RedisAggregator:
             log_msg['grid_tree'] = '{...}'
         logging.debug(f"A new message was received. Message information: {log_msg}")
         log_market_progression(message)
-        function = lambda: self.on_event_or_response(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util,
+                             function=lambda: self.on_event_or_response(message),
                              function_name="on_event_or_response")
 
     def calculate_grid_fee(self, start_market_or_device_name: str,
@@ -198,15 +201,22 @@ class RedisAggregator:
         return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
                                                             target_market_or_device_name, fee_type)
 
+    def get_uuid_from_area_name(self, name):
+        return get_uuid_from_area_name_in_tree_dict(self.latest_grid_tree_flat, name)
+
+    def _buffer_grid_tree(self, message):
+        self.latest_grid_tree = message["grid_tree"]
+        self.latest_grid_tree_flat = flatten_info_dict(self.latest_grid_tree)
+
     def _on_market_cycle(self, message):
-        self.grid_fee_calculation.handle_grid_stats(message)
-        function = lambda: self.on_market_cycle(message)
-        self.executor.submit(execute_function_util, function=function,
+        self._buffer_grid_tree(message)
+        self.grid_fee_calculation.handle_grid_stats(self.latest_grid_tree)
+        self.executor.submit(execute_function_util, function=lambda: self.on_market_cycle(message),
                              function_name="on_market_cycle")
 
     def _on_tick(self, message):
-        function = lambda: self.on_tick(message)
-        self.executor.submit(execute_function_util, function=function,
+        self._buffer_grid_tree(message)
+        self.executor.submit(execute_function_util, function=lambda: self.on_tick(message),
                              function_name="on_tick")
 
     @staticmethod
@@ -222,13 +232,11 @@ class RedisAggregator:
             # Aggregator message
             for individual_trade in message["content"]:
                 self._log_trade_info(individual_trade)
-        function = lambda: self.on_trade(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util, function=lambda: self.on_trade(message),
                              function_name="on_trade")
 
     def _on_finish(self, message):
-        function = lambda: self.on_finish(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util, function=lambda: self.on_finish(message),
                              function_name="on_finish")
 
     def on_market_cycle(self, market_info):

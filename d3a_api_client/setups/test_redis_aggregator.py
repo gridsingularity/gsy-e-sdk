@@ -3,7 +3,6 @@ from time import sleep
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
-from d3a_api_client.utils import flatten_info_dict
 
 
 class AutoAggregator(RedisAggregator):
@@ -13,36 +12,42 @@ class AutoAggregator(RedisAggregator):
         self.is_finished = False
 
     def on_market_cycle(self, market_info):
-        for device_name, device_dict in flatten_info_dict(market_info['grid_tree']).items():
-
-            if "asset_info" not in device_dict or device_dict["asset_info"] is None:
+        market_uuid = self.get_uuid_from_area_name("Grid")
+        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
-            if "available_energy_kWh" in device_dict["asset_info"] and \
-                    device_dict["asset_info"]["available_energy_kWh"] > 0.0:
-                self.add_to_batch_commands.offer_energy(area_uuid=device_dict["area_uuid"], price=1,
-                                                        energy=device_dict["asset_info"]["available_energy_kWh"] / 2) \
-                    .list_offers(area_uuid=device_dict["area_uuid"])
-            if "energy_requirement_kWh" in device_dict["asset_info"] and \
-                    device_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
-                self.add_to_batch_commands.bid_energy(area_uuid=device_dict["area_uuid"], price=30,
-                                                      energy=device_dict["asset_info"]["energy_requirement_kWh"] / 2) \
-                    .list_bids(area_uuid=device_dict["area_uuid"]) \
-                    .last_market_stats(area_uuid=device_dict["area_uuid"])
+
+            logging.info(
+                f"current_market_fee: {self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid)}")
+            if "available_energy_kWh" in area_dict["asset_info"] and \
+                    area_dict["asset_info"]["available_energy_kWh"] > 0.0:
+                self.add_to_batch_commands.offer_energy(area_uuid=area_dict["area_uuid"],
+                                                        price=1,
+                                                        energy=area_dict["asset_info"][
+                                                                   "available_energy_kWh"] / 2) \
+                    .list_offers(area_uuid=area_uuid)
+            if "energy_requirement_kWh" in area_dict["asset_info"] and \
+                    area_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
+                self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
+                                                      energy=area_dict["asset_info"][
+                                                                 "energy_requirement_kWh"] / 2) \
+                    .list_bids(area_uuid=area_uuid)
+
         response = self.execute_batch_commands()
         logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
-        logging.error(f"AGGREGATOR_TICK_INFO: {tick_info}")
+        logging.debug(f"AGGREGATOR_TICK_INFO: {tick_info}")
 
     def on_trade(self, trade_info):
-        logging.info(f"AGGREGATOR_TRADE_INFO: {trade_info}")
+        logging.debug(f"AGGREGATOR_TRADE_INFO: {trade_info}")
 
     def on_finish(self, finish_info):
         self.is_finished = True
-        logging.info(f"AGGREGATOR_FINISH_INFO: {finish_info}")
+        logging.debug(f"AGGREGATOR_FINISH_INFO: {finish_info}")
 
     def on_batch_response(self, market_stats):
-        logging.info(f"AGGREGATORS_BATCH_RESPONSE: {market_stats}")
+        logging.debug(f"AGGREGATORS_BATCH_RESPONSE: {market_stats}")
 
 
 aggregator = AutoAggregator(

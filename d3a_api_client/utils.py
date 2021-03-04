@@ -286,3 +286,14 @@ def _flatten_info_dict(indict: dict, outdict: dict):
         outdict[area_name] = area_dict
         if 'children' in area_dict:
             _flatten_info_dict(indict[area_name]['children'], outdict)
+
+
+def get_uuid_from_area_name_in_tree_dict(tree_dict, name):
+    uuids = [area_uuid for area_uuid, area_dict in tree_dict.items()
+             if "area_name" in area_dict and area_dict["area_name"] == name]
+    if len(uuids) == 1:
+        return uuids[0]
+    elif len(uuids) == 0:
+        raise ValueError(f"Did not find area named '{name}' in the tree.")
+    else:
+        raise ValueError(f"There are multiple areas named '{name}' in the tree.")
