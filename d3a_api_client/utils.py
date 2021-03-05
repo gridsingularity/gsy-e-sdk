@@ -8,9 +8,11 @@ import uuid
 from functools import wraps
 from tabulate import tabulate
 from sgqlc.endpoint.http import HTTPEndpoint
-from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
+from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping, \
+    RepeatingTimer
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+    CONSUMER_WEBSOCKET_DOMAIN_NAME
 
 
 class AreaNotFoundException(Exception):
@@ -250,6 +252,8 @@ domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_N
 
 
 websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
+
+consumer_websocket_domain_name_from_env = os.environ.get("CONSUMER_WEBSOCKET_DOMAIN_NAME", CONSUMER_WEBSOCKET_DOMAIN_NAME)
 
 
 def log_bid_offer_confirmation(message):

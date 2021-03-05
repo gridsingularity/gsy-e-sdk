@@ -1,3 +1,4 @@
+import os
 import logging
 import traceback
 import threading
@@ -5,7 +6,8 @@ import asyncio
 
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_api_client.utils import logging_decorator
+from d3a_api_client.utils import logging_decorator, domain_name_from_env, \
+    consumer_websocket_domain_name_from_env
 from d3a_api_client.websocket_device import WebsocketMessageReceiver
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.websocket_device import retry_coroutine
@@ -51,10 +53,9 @@ class LiveDataWebsocketThread(threading.Thread):
 
 class LiveData(RestCommunicationMixin):
 
-    def __init__(self, domain_name, websockets_domain_name):
-
-        self.domain_name = domain_name
-        self.websockets_domain_name = websockets_domain_name
+    def __init__(self):
+        self.domain_name = domain_name_from_env
+        self.websockets_domain_name = consumer_websocket_domain_name_from_env
         self.jwt_token = retrieve_jwt_key_from_server(self.domain_name)
         self._create_jwt_refresh_timer(self.domain_name)
         self.start_websocket_connection()
