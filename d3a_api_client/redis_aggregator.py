@@ -4,6 +4,8 @@ import json
 from threading import Lock
 from redis import StrictRedis
 from copy import copy
+from functools import wraps
+
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking
@@ -225,13 +227,10 @@ class RedisAggregator:
                      f"at {round(message.get('price'), 2)} cents -->")
 
     def _on_trade(self, message):
-        if "content" not in message:
-            # Device message
-            self._log_trade_info(message)
-        else:
-            # Aggregator message
-            for individual_trade in message["content"]:
-                self._log_trade_info(individual_trade)
+        self._buffer_grid_tree(message)
+        # Aggregator message
+        for individual_trade in message["trade_list"]:
+            self._log_trade_info(individual_trade)
         self.executor.submit(execute_function_util, function=lambda: self.on_trade(message),
                              function_name="on_trade")
 

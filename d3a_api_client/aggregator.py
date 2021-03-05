@@ -162,6 +162,10 @@ class Aggregator(RestDeviceClient):
         self._buffer_grid_tree(message)
         super()._on_tick(message)
 
+    def _on_trade(self, message):
+        self._buffer_grid_tree(message)
+        super()._on_trade(message)
+
     def calculate_grid_fee(self, start_market_or_device_name: str,
                            target_market_or_device_name: str = None,
                            fee_type: str = "current_market_fee"):
