@@ -46,8 +46,9 @@ class AutoBidOnLoadDevice(device_client_type):
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
-            assert set(self.device_bills.keys()) == \
-                   {'earned', 'bought', 'total_energy', 'total_cost', 'market_fee', 'type', 'spent', 'sold'}
+            if market_info["device_bill"]:
+                assert set(self.device_bills.keys()) == \
+                       {'earned', 'bought', 'total_energy', 'total_cost', 'market_fee', 'type', 'spent', 'sold'}
             assert "last_market_stats" in market_info
             assert set(market_info["last_market_stats"]) == \
                    {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'median_trade_rate',

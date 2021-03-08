@@ -28,8 +28,8 @@ class AutoBidOnESSDevice(device_client_type):
                 assert bid_info["price"] == 31 * energy
                 assert bid_info["energy"] == energy
                 device_info = self.device_info()
-                assert device_info["energy_to_buy"] == 0.0
-                assert device_info["offered_buy_kWh"] == energy
+                assert device_info['device_info']["energy_to_buy"] == 0.0
+                assert device_info['device_info']["offered_buy_kWh"] == energy
 
             if market_info["start_time"][-5:] == "23:00":
                 self.last_market_info = market_info
