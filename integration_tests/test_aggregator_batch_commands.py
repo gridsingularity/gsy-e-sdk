@@ -1,7 +1,4 @@
-import json
 import logging
-
-from d3a_interface.utils import key_in_dict_and_not_none
 
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
@@ -30,29 +27,33 @@ class BatchAggregator(RedisAggregator):
         self.redis_market = RedisMarketClient('house-2')
         self.redis_market.select_aggregator(self.aggregator_uuid)
 
+    def require_grid_fees(self, grid_fee_buffer_dict, fee_type):
+        load_uuid = self.get_uuid_from_area_name("load")
+        for target_market in ["Grid", "House 1", "House 2"]:
+            market_uuid = self.get_uuid_from_area_name(target_market)
+            grid_fee_buffer_dict[target_market] = \
+                self.calculate_grid_fee(load_uuid, market_uuid, fee_type)
+
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
         if self.initial_grid_fees_market_cycle == {}:
-            for target_market in ["Grid", "House 1", "House 2"]:
-                self.initial_grid_fees_market_cycle[target_market] = self.calculate_grid_fee("load", target_market, "last_market_fee")
-        for device_event in market_info["content"]:
-            if "asset_info" not in device_event or device_event["asset_info"] is None:
+            self.require_grid_fees(self.initial_grid_fees_market_cycle, "last_market_fee")
+        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
-            if key_in_dict_and_not_none(device_event, "grid_stats_tree"):
-                json_grid_tree = json.dumps(device_event["grid_stats_tree"], indent=2)
-                logging.warning(json_grid_tree)
-            if "available_energy_kWh" in device_event["asset_info"] and \
-                    device_event["asset_info"]["available_energy_kWh"] > 0.0:
-                self.add_to_batch_commands.offer_energy(area_uuid=device_event["area_uuid"], price=1,
-                                                        energy=device_event["asset_info"]["available_energy_kWh"] / 2) \
-                    .list_offers(area_uuid=device_event["area_uuid"])
 
-            if "energy_requirement_kWh" in device_event["asset_info"] and \
-                        device_event["asset_info"]["energy_requirement_kWh"] > 0.0:
-                    self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"], price=30,
-                                                          energy=device_event["asset_info"][
+            if "available_energy_kWh" in area_dict["asset_info"]  and \
+                    area_dict["asset_info"]["available_energy_kWh"] > 0.0:
+                self.add_to_batch_commands.offer_energy(area_uuid=area_uuid, price=1,
+                                                        energy=area_dict["asset_info"]["available_energy_kWh"] / 2) \
+                    .list_offers(area_uuid=area_uuid)
+
+            if "energy_requirement_kWh" in area_dict["asset_info"] and \
+                        area_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
+                    self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
+                                                          energy=area_dict["asset_info"][
                                                                      "energy_requirement_kWh"] / 2) \
-                        .list_bids(area_uuid=device_event["area_uuid"])
+                        .list_bids(area_uuid=area_uuid)
 
             self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
                                                  fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
@@ -70,12 +71,10 @@ class BatchAggregator(RedisAggregator):
                             self.errors += 1
             logging.info(f"Batch command placed on the new market")
 
-        for target_market in ["Grid", "House 1", "House 2"]:
-            self.grid_fees_market_cycle_next_market[target_market] = self.calculate_grid_fee("load", target_market)
+        self.require_grid_fees(self.grid_fees_market_cycle_next_market, "current_market_fee")
 
     def on_tick(self, tick_info):
-        for target_market in ["Grid", "House 1", "House 2"]:
-            self.grid_fees_tick_last_market[target_market] = self.calculate_grid_fee("load", target_market, "last_market_fee")
+        self.require_grid_fees(self.grid_fees_tick_last_market, "last_market_fee")
 
     def on_finish(self, finish_info):
         self.status = "finished"

@@ -17,11 +17,11 @@ class AutoSendForecast(RestDeviceClient):
         """
         logging.debug(f"New market information {market_info}")
         self.forecast += 50
-        if "available_energy_kWh" in market_info["asset_info"]:
+        if "available_energy_kWh" in market_info["device_info"]:
             logging.info(f"self.set_pv_energy_forecast({self.forecast})")
             response = self.set_energy_forecast(self.forecast)
 
-        if "energy_requirement_kWh" in market_info["asset_info"]:
+        if "energy_requirement_kWh" in market_info["device_info"]:
             logging.info(f"self.set_load_energy_forecast({self.forecast})")
             response = self.set_energy_forecast(self.forecast)
 

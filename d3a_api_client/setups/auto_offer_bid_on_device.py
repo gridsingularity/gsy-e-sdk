@@ -16,7 +16,6 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
         :param market_info: Incoming message containing the newly-created market info
         :return: None
         """
-        print(market_info)
         logging.debug(f"New market information {market_info}")
         if "available_energy_kWh" in market_info['asset_info'] and \
                 market_info['asset_info']["available_energy_kWh"] > 0.0:

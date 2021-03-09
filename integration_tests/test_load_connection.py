@@ -19,8 +19,8 @@ class AutoBidOnLoadDevice(device_client_type):
 
     def on_market_cycle(self, market_info):
         try:
-            assert "energy_requirement_kWh" in market_info["asset_info"]
-            energy_requirement = market_info["asset_info"]["energy_requirement_kWh"]
+            assert "energy_requirement_kWh" in market_info["device_info"]
+            energy_requirement = market_info["device_info"]["energy_requirement_kWh"]
             if energy_requirement > 0.001:
                 # Placing a cheap bid to the market that will not be accepted
                 bid = self.bid_energy(energy_requirement, 0.0001 * energy_requirement)

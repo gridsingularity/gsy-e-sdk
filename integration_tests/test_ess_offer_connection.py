@@ -18,19 +18,19 @@ class AutoOfferOnESSDevice(device_client_type):
 
     def on_market_cycle(self, market_info):
         try:
-            assert set(market_info["asset_info"].keys()) == \
-                   {'energy_to_sell','offered_sell_kWh', 'energy_to_buy', 'offered_buy_kWh',
-                    'free_storage', 'used_storage'}
-            energy_to_sell = market_info["asset_info"]["energy_to_sell"]
+            assert set(market_info["device_info"].keys()) == \
+                   {'energy_active_in_offers', 'total_cost', 'energy_active_in_bids',
+                    'energy_to_sell', 'used_storage', 'energy_traded', 'free_storage', 'energy_to_buy'}
+            energy_to_sell = market_info["device_info"]["energy_to_sell"]
             if energy_to_sell > 0:
-                offer = self.offer_energy(energy_to_sell, (10 * energy_to_sell))
+                offer = self.offer_energy(energy_to_sell, (20 * energy_to_sell))
                 offer_info = json.loads(offer["offer"])
-                assert offer_info["price"] == 10 * energy_to_sell
+                assert offer_info["price"] == 20 * energy_to_sell
                 assert offer_info["energy"] == energy_to_sell
-                asset_info = self.asset_info()
-                assert asset_info["energy_to_sell"] == 0.0
-                assert asset_info["offered_sell_kWh"] == energy_to_sell
-
+                # TODO: Re-enable after push of D3ASIM-3220
+                # asset_info = self.asset_info()
+                # assert asset_info["energy_to_sell"] == 0.0
+                # assert asset_info["offered_sell_kWh"] == energy_to_sell
 
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
@@ -41,4 +41,3 @@ class AutoOfferOnESSDevice(device_client_type):
             self.errors += 1
             self.error_list.append(e)
             raise e
-

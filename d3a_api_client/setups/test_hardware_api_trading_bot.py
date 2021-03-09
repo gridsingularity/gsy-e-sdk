@@ -18,14 +18,14 @@ class AutoOfferBidHardwareApi(RestDeviceClient):
         :param market_info: Incoming message containing the newly-created market info
         :return: None
         """
-        logging.debug(f"New market information {market_info}")
-        if "energy_requirement_kWh" in market_info["asset_info"] and market_info["asset_info"]["energy_requirement_kWh"] > 0.0:
-            energy_forecast = market_info["asset_info"]["energy_requirement_kWh"]
-            bid = self.bid_energy_rate(energy_forecast / 2, 3)
+        logging.warning(f"New market information {market_info}")
+        if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
+            energy_forecast = market_info["device_info"]["energy_requirement_kWh"]
+            bid = self.bid_energy_rate(energy_forecast / 2, 30)
             logging.info(f"Bid placed on the new market: {bid}")
 
-        if "available_energy_kWh" in market_info["asset_info"] and market_info["asset_info"]["available_energy_kWh"] > 0.0:
-            energy_forecast = market_info["asset_info"]["available_energy_kWh"]
+        if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
+            energy_forecast = market_info["device_info"]["available_energy_kWh"]
             offer = self.offer_energy_rate(energy_forecast/2, 1)
             logging.info(f"Offer placed on the new market: {offer}")
 
@@ -50,17 +50,22 @@ device_args = {
 }
 
 load_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    device_args["simulation_id"], "load", device_args["domain_name"])
+    device_args["simulation_id"], "Load", device_args["domain_name"])
+pv_uuid = get_area_uuid_from_area_name_and_collaboration_id(
+    device_args["simulation_id"], "PV", device_args["domain_name"])
+
 device_args["device_id"] = load_uuid
 load = AutoOfferBidHardwareApi(
     **device_args)
 
 pv_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    device_args["simulation_id"], "pv", device_args["domain_name"])
+    device_args["simulation_id"], "PV", device_args["domain_name"])
 device_args["device_id"] = pv_uuid
 pv = AutoOfferBidHardwareApi(
     **device_args)
 
+load.register()
+pv.register()
 
 while True:
     sleep(0.5)

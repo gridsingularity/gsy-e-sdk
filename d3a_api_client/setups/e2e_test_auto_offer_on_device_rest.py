@@ -21,6 +21,7 @@ parser.add_argument("--websockets_domain_name", type=str, help="websocket_name",
 args = parser.parse_args()
 connected_devices = []
 
+
 class AutoOfferBidOnMarket(RestDeviceClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -37,8 +38,8 @@ class AutoOfferBidOnMarket(RestDeviceClient):
         if self.registered is False or self.is_finished is True:
             return
         logging.debug(f"New market information {market_info}")
-        if "available_energy_kWh" in market_info["asset_info"] and market_info["asset_info"]["available_energy_kWh"] > 0.0:
-            offered_energy = market_info["asset_info"]["available_energy_kWh"]
+        if "available_energy_kWh" in market_info["device_info"] and market_info["device_info"]["available_energy_kWh"] > 0.0:
+            offered_energy = market_info["device_info"]["available_energy_kWh"]
             offered_rate = 28*offered_energy
             offer_response = self.offer_energy_rate(
                 offered_energy, offered_rate)
@@ -51,8 +52,8 @@ class AutoOfferBidOnMarket(RestDeviceClient):
             assert offer_dict["energy"] == offered_energy
             assert offer_dict["price"] == expected_price
 
-        if "energy_requirement_kWh" in market_info["asset_info"] and market_info["asset_info"]["energy_requirement_kWh"] > 0.0:
-            bid_energy = market_info["asset_info"]["energy_requirement_kWh"]
+        if "energy_requirement_kWh" in market_info["device_info"] and market_info["device_info"]["energy_requirement_kWh"] > 0.0:
+            bid_energy = market_info["device_info"]["energy_requirement_kWh"]
             bid_price = 28
             bid_response = self.bid_energy(bid_energy, bid_price)
             logging.info("*********Bid placed in the market by area_uuid: " + market_info["area_uuid"])
@@ -63,8 +64,8 @@ class AutoOfferBidOnMarket(RestDeviceClient):
             assert bid_dict["energy"] == bid_energy
             assert bid_dict["price"] == bid_price
         # for storage to offer
-        if "energy_to_sell" in market_info["asset_info"] and market_info["asset_info"]["energy_to_sell"] > 0.0:
-            offered_energy_storage = market_info["asset_info"]["energy_to_sell"]
+        if "energy_to_sell" in market_info["device_info"] and market_info["device_info"]["energy_to_sell"] > 0.0:
+            offered_energy_storage = market_info["device_info"]["energy_to_sell"]
             offered_rate_storage = 16
             offer_response_storage = self.offer_energy_rate(
                 offered_energy_storage, offered_rate_storage)
@@ -77,8 +78,8 @@ class AutoOfferBidOnMarket(RestDeviceClient):
             assert offer_storage_dict["energy"] == offered_energy_storage
             assert offer_storage_dict["price"] == expected_price_storage
         # for storage to buy
-        if "energy_to_buy" in market_info["asset_info"] and market_info["asset_info"]["energy_to_buy"] > 0.0:
-            bid_energy_storage = market_info["asset_info"]["energy_to_buy"]
+        if "energy_to_buy" in market_info["device_info"] and market_info["device_info"]["energy_to_buy"] > 0.0:
+            bid_energy_storage = market_info["device_info"]["energy_to_buy"]
             bid_price_storage = 30
             bid_response_storage = self.bid_energy(bid_energy_storage, bid_price_storage)
             logging.info("*********Bid placed in the market by area_uuid: " + market_info["area_uuid"])

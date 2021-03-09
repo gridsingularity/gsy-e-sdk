@@ -22,8 +22,8 @@ class AutoOfferOnPVDevice(device_client_type):
     def on_market_cycle(self, market_info):
         self.is_on_market_cycle_called = True
         try:
-            assert "available_energy_kWh" in market_info["asset_info"]
-            available_energy = market_info["asset_info"]["available_energy_kWh"]
+            assert "available_energy_kWh" in market_info["device_info"]
+            available_energy = market_info["device_info"]["available_energy_kWh"]
             if available_energy > 0.0:
                 # Placing an expensive offer to the market that will not be accepted
                 offer = self.offer_energy(available_energy, 50 * available_energy)
