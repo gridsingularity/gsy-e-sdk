@@ -271,8 +271,8 @@ class RedisClient(APIClientInterface):
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)} cents -->")
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
+                     f"at {round(message.get('trade_price'), 2)} cents -->")
         function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")
