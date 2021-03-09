@@ -288,12 +288,30 @@ def _flatten_info_dict(indict: dict, outdict: dict):
             _flatten_info_dict(indict[area_name]['children'], outdict)
 
 
-def get_uuid_from_area_name_in_tree_dict(tree_dict, name):
-    uuids = [area_uuid for area_uuid, area_dict in tree_dict.items()
-             if "area_name" in area_dict and area_dict["area_name"] == name]
-    if len(uuids) == 1:
-        return uuids[0]
-    elif len(uuids) == 0:
-        raise ValueError(f"Did not find area named '{name}' in the tree.")
+def get_uuid_from_area_name_in_tree_dict(area_name_uuid_mapping, name):
+    if name not in area_name_uuid_mapping:
+        raise ValueError(f"Could not find {name} in tree")
+    if len(area_name_uuid_mapping[name]) == 1:
+        return area_name_uuid_mapping[name][0]
     else:
-        raise ValueError(f"There are multiple areas named '{name}' in the tree.")
+        ValueError(f"There are multiple areas named {name} in the tree")
+
+
+def buffer_grid_tree_info(f):
+    @wraps(f)
+    def wrapper(self, message):
+        self.latest_grid_tree = message["grid_tree"]
+        self.latest_grid_tree_flat = flatten_info_dict(self.latest_grid_tree)
+        f(self, message)
+    return wrapper
+
+
+def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) -> dict:
+    area_name_uuid_mapping = {}
+    for area_uuid, area_dict in latest_grid_tree_flat.items():
+        if "area_name" in area_dict:
+            if area_uuid in area_name_uuid_mapping:
+                area_name_uuid_mapping[area_dict["area_name"]].append(area_uuid)
+            else:
+                area_name_uuid_mapping[area_dict["area_name"]] = [area_uuid]
+    return area_name_uuid_mapping
