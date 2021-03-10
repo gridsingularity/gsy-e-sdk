@@ -25,12 +25,10 @@ class AutoOfferOnESSDevice(device_client_type):
             if energy_to_sell > 0:
                 offer = self.offer_energy(energy_to_sell, (20 * energy_to_sell))
                 offer_info = json.loads(offer["offer"])
-                assert offer_info["price"] == 20 * energy_to_sell
+                assert offer_info['seller_origin'] == self.device_id
+                assert offer_info['seller_origin_id'] == offer_info['seller_id'] is not None
+                assert offer_info["price"] == 10 * energy_to_sell
                 assert offer_info["energy"] == energy_to_sell
-                # TODO: Re-enable after push of D3ASIM-3220
-                # asset_info = self.asset_info()
-                # assert asset_info["energy_to_sell"] == 0.0
-                # assert asset_info["offered_sell_kWh"] == energy_to_sell
 
             if market_info["start_time"][-5:] == "23:00":
                 self.status = "finished"
