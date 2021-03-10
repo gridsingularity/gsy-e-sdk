@@ -79,11 +79,3 @@ class BatchAggregator(RedisAggregator):
 
     def on_finish(self, finish_info):
         self.status = "finished"
-
-#
-# device = BatchAggregator(aggregator_name="My_aggregator")
-#
-# from time import sleep
-#
-# while True:
-#     sleep(0.1)
