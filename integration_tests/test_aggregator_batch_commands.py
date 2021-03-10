@@ -36,9 +36,9 @@ class BatchAggregator(RedisAggregator):
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
-
         try:
-            if self.initial_grid_fees_market_cycle == {}:
+            if self.initial_grid_fees_market_cycle == {} and \
+                    self.grid_fee_calculation.latest_grid_stats_tree:
                 for target_market in ['Grid', 'House 1', 'House 2']:
                     self.initial_grid_fees_market_cycle[target_market] = self.calculate_grid_fee(
                         'load', target_market, 'last_market_fee')
