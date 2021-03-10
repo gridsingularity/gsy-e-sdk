@@ -84,7 +84,7 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
-    set_json_file_env(base_setup_path, simulation_info)
+    set_json_file_env(base_setup_path, simulation_info, run_on_redis)
 
     load_client_script(base_setup_path, setup_module_name)
 
@@ -107,7 +107,11 @@ def load_client_script(base_setup_path, setup_module_name):
         log.error("Could not find the specified module")
 
 
-def set_json_file_env(base_setup_path, simulation_info):
+def set_json_file_env(base_setup_path, simulation_info, run_on_redis):
+    print(f"set_json_file_env: {run_on_redis}")
+    if run_on_redis is False:
+        os.environ["JSON_FILE_PATH"] = ""
+        return
     if simulation_info is None:
         if base_setup_path is None:
             json_file = [l for l in os.listdir(setups.__path__[0]) if l.endswith('.json')]
