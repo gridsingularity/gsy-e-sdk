@@ -25,6 +25,8 @@ class AutoBidOnLoadDevice(device_client_type):
                 # Placing a cheap bid to the market that will not be accepted
                 bid = self.bid_energy(energy_requirement, 0.0001 * energy_requirement)
                 bid_info = json.loads(bid["bid"])
+                assert bid_info['buyer_origin'] == self.device_id
+                assert bid_info['buyer_origin_id'] == bid_info['buyer_id'] is not None
                 assert bid_info["price"] == 0.0001 * energy_requirement
                 assert bid_info["energy"] == energy_requirement
                 # Validate that the bid was placed to the market
