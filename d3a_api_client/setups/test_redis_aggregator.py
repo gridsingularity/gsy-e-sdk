@@ -51,7 +51,7 @@ aggregator = AutoAggregator(
     aggregator_name="test_aggr"
 )
 
-aggregator.delete_aggregator(is_blocking=True)
+# aggregator.delete_aggregator(is_blocking=True)
 
 
 # Connects one client to the load device

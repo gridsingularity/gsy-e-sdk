@@ -204,16 +204,13 @@ class RedisAggregator:
         return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
                                                             target_market_or_device_name, fee_type)
 
-    def _create_area_name_uuid_mapping(self):
-        self.area_name_uuid_mapping = \
-            create_area_name_uuid_mapping_from_tree_info(self.latest_grid_tree_flat)
-
     def get_uuid_from_area_name(self, name):
         return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)
 
     @buffer_grid_tree_info
     def _on_market_cycle(self, message):
-        self._create_area_name_uuid_mapping()
+        self.area_name_uuid_mapping = \
+            create_area_name_uuid_mapping_from_tree_info(self.latest_grid_tree_flat)
         self.grid_fee_calculation.handle_grid_stats(self.latest_grid_tree)
         self.executor.submit(execute_function_util, function=lambda: self.on_market_cycle(message),
                              function_name="on_market_cycle")

@@ -143,16 +143,13 @@ class Aggregator(RestDeviceClient):
             self._client_command_buffer.clear()
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
 
-    def _create_area_name_uuid_mapping(self):
-        self.area_name_uuid_mapping = \
-            create_area_name_uuid_mapping_from_tree_info(self.latest_grid_tree_flat)
-
     def get_uuid_from_area_name(self, name):
         return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)
 
     @buffer_grid_tree_info
     def _on_market_cycle(self, message):
-        self._create_area_name_uuid_mapping()
+        self.area_name_uuid_mapping = \
+            create_area_name_uuid_mapping_from_tree_info(self.latest_grid_tree_flat)
         self.grid_fee_calculation.handle_grid_stats(self.latest_grid_tree)
         super()._on_market_cycle(message)
 

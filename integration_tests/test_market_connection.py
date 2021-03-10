@@ -16,5 +16,4 @@ class AutoLastMarketStats(market_client_type):
         self.wait_script = True
 
     def on_finish(self, message):
-        print("#### on finish")
         self.wait_script = False

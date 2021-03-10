@@ -5,6 +5,7 @@ from d3a_api_client.aggregator import Aggregator
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 from d3a_api_client.rest_market import RestMarketClient
+from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
 
 
 class TestAggregator(Aggregator):
@@ -30,13 +31,11 @@ class TestAggregator(Aggregator):
 
             logging.info(
                 f"current_market_fee: {self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid)}")
-            if "available_energy_kWh" in area_dict["asset_info"] and \
-                    area_dict["asset_info"]["available_energy_kWh"] > 0.0:
+            if key_in_dict_and_not_none_and_greater_than_zero(area_dict, "available_energy_kWh"):
                 self.add_to_batch_commands.offer_energy(area_uuid=area_uuid, price=1,
                                                         energy=area_dict["asset_info"]["available_energy_kWh"] / 2) \
                     .list_offers(area_uuid=area_uuid)
-            if "energy_requirement_kWh" in area_dict["asset_info"] and \
-                    area_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
+            if key_in_dict_and_not_none_and_greater_than_zero(area_dict, "energy_requirement_kWh"):
                 self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
                                                       energy=area_dict["asset_info"]["energy_requirement_kWh"] / 2) \
                     .list_bids(area_uuid=area_uuid)
