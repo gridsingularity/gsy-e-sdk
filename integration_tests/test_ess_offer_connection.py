@@ -24,6 +24,8 @@ class AutoOfferOnESSDevice(device_client_type):
             if energy_to_sell > 0:
                 offer = self.offer_energy(energy_to_sell, (10 * energy_to_sell))
                 offer_info = json.loads(offer["offer"])
+                assert offer_info['seller_origin'] == self.device_id
+                assert offer_info['seller_origin_id'] == offer_info['seller_id'] is not None
                 assert offer_info["price"] == 10 * energy_to_sell
                 assert offer_info["energy"] == energy_to_sell
                 device_info = self.device_info()

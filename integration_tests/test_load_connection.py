@@ -24,6 +24,8 @@ class AutoBidOnLoadDevice(device_client_type):
                 # Placing a cheap bid to the market that will not be accepted
                 bid = self.bid_energy(energy_requirement, 0.0001 * energy_requirement)
                 bid_info = json.loads(bid["bid"])
+                assert bid_info['buyer_origin'] == self.device_id
+                assert bid_info['buyer_origin_id'] == bid_info['buyer_id'] is not None
                 assert bid_info["price"] == 0.0001 * energy_requirement
                 assert bid_info["energy"] == energy_requirement
                 assert bid_info['replace_existing'] is True
@@ -48,8 +50,9 @@ class AutoBidOnLoadDevice(device_client_type):
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
-            assert set(self.device_bills.keys()) == \
-                   {'earned', 'bought', 'total_energy', 'total_cost', 'market_fee', 'type', 'spent', 'sold'}
+            if market_info["device_bill"]:
+                assert set(self.device_bills.keys()) == \
+                       {'earned', 'bought', 'total_energy', 'total_cost', 'market_fee', 'type', 'spent', 'sold'}
             assert "last_market_stats" in market_info
             assert set(market_info["last_market_stats"]) == \
                    {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'median_trade_rate',

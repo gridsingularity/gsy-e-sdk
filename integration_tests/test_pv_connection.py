@@ -27,6 +27,8 @@ class AutoOfferOnPVDevice(device_client_type):
                 # Placing an expensive offer to the market that will not be accepted
                 offer = self.offer_energy(available_energy, 50 * available_energy)
                 offer_info = json.loads(offer["offer"])
+                assert offer_info['seller_origin'] == self.device_id
+                assert offer_info['seller_origin_id'] == offer_info['seller_id'] is not None
                 assert offer_info["price"] == 50 * available_energy
                 assert offer_info["energy"] == available_energy
                 assert offer_info['replace_existing'] is True
