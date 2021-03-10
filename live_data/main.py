@@ -1,13 +1,14 @@
 import logging
 import traceback
-from mqtt_subscriber import generate_topic_api_client_args_mapping
-from mqtt_subscriber.oli_broker import MQTTConnection
+from live_data.mqtt_subscriber import generate_topic_api_client_args_mapping
+from live_data.mqtt_subscriber.oli_broker import MQTTConnection
 from multiprocessing import Process
-from websocket_subscriber import create_live_data_consumer
+from live_data.websocket_subscriber import create_live_data_consumer
 
 def main():
     logging.getLogger().setLevel(logging.INFO)
     topic_api_client_mapping = generate_topic_api_client_args_mapping()
+    print(f"topic_api_client_mapping: {topic_api_client_mapping}")
 
     # Connect to the MQTT broker
     try:
@@ -16,7 +17,6 @@ def main():
 
         p2 = Process(target=MQTTConnection(topic_api_client_mapping).run_forever())
         p2.start()
-
 
     except Exception as e:
         logging.error(f"MQTT Subscriber failed with error {e}")
