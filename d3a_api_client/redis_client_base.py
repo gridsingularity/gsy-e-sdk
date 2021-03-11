@@ -9,7 +9,8 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util, log_market_progression, log_bid_offer_confirmation
+from d3a_api_client.utils import execute_function_util, log_bid_offer_confirmation, \
+    log_market_progression
 from d3a_api_client.enums import Commands
 from d3a_api_client.utils import execute_function_util
 
@@ -164,31 +165,46 @@ class RedisClient(APIClientInterface):
         return self._wait_and_consume_command_response(command_type, data["transaction_id"])
 
     @registered_connection
-    def offer_energy(self, energy, price):
-        logging.error(f"Client tries to place an offer for {energy} kWh at {price} cents.")
-        response = self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": price})
+    def offer_energy(self, energy: float, price: float, replace_existing: bool = True):
+        logging.debug(f"Client tries to place an offer for {energy} kWh at {price} cents.")
+
+        response = self._publish_and_wait(
+            Commands.OFFER,
+            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
+
         return response
 
     @registered_connection
-    def offer_energy_rate(self, energy, rate):
+    def offer_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
         logging.debug(f"Client tries to place an offer for {energy} kWh at {rate} cents/kWh.")
-        response = self._publish_and_wait(Commands.OFFER, {"energy": energy, "price": rate * energy})
+
+        response = self._publish_and_wait(
+            Commands.OFFER,
+            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
+
         return response
 
-    @registered_connection
-    def bid_energy(self, energy, price):
+    def bid_energy(self, energy: float, price: float, replace_existing: bool = True):
         logging.debug(f"{self.area_id}Client tries to place a bid for {energy} kWh at {price} cents.")
-        response = self._publish_and_wait(Commands.BID, {"energy": energy, "price": price})
+
+        response = self._publish_and_wait(
+            Commands.BID,
+            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
+
         return response
 
     @registered_connection
-    def bid_energy_rate(self, energy, rate):
+    def bid_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
         logging.debug(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
-        response = self._publish_and_wait(Commands.BID, {"energy": energy, "price": rate * energy})
+
+        response = self._publish_and_wait(
+            Commands.BID,
+            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
         log_bid_offer_confirmation(response)
+
         return response
 
     @registered_connection
@@ -268,7 +284,7 @@ class RedisClient(APIClientInterface):
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
         logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)}/kWh -->")
+                     f"at {round(message.get('price'), 2)} cents -->")
         function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")

@@ -16,20 +16,18 @@ def step_impl(context):
            '--net integtestnet gsyd3a/d3a:redis-staging')
 
 
-@given('d3a container is started using setup file {setup_file}')
-def step_impl(context, setup_file):
+@given('d3a is started using setup {setup_file} ({d3a_options})')
+def step_impl(context, setup_file: str, d3a_options: str):
+    """Run the d3a container on a specific setup.
+
+    Args:
+        setup_file (str): the setup file for a d3a simulation.
+        d3a_options (str): options to be passed to the d3a run command. E.g.: "-t 1s -d 12h"
+    """
     sleep(3)
     system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ '
-           f'--net integtestnet d3a-tests -l INFO run -t 1s -s 60m --setup {setup_file} '
-           f'--no-export --seed 0 --enable-external-connection')
-
-
-@given('d3a container started {setup_file} with duration set to {hours} hours')
-def step_impl(context, setup_file, hours):
-    sleep(3)
-    system(f'docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ '
-           f'--net integtestnet d3a-tests -l INFO run -t 1s -s 60m -d {hours}h --setup {setup_file} '
-           f'--no-export --seed 0 --enable-external-connection')
+           f'--net integtestnet d3a-tests -l INFO run --setup {setup_file} '
+           f'--no-export --seed 0 --enable-external-connection {d3a_options}')
 
 
 @when('the external client is started with test_load_connection')
@@ -69,7 +67,7 @@ def step_impl(context):
                                      'tick', 'register',
                                      'offer_delete', 'trade',
                                      'offer', 'unregister',
-                                     'list_offers', 'market'}
+                                     'list_offers', 'market', 'finish'}
     assert context.device.is_on_market_cycle_called
 
 
