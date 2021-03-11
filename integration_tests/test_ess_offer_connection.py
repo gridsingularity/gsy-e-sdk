@@ -10,7 +10,6 @@ from d3a_api_client.types import device_client_type
 class AutoOfferOnESSDevice(device_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
-        self.error_list = []
         self.status = "running"
         self.last_market_info = None
         self.latest_stats = {}
@@ -30,13 +29,18 @@ class AutoOfferOnESSDevice(device_client_type):
                 assert offer_info['seller_origin_id'] == offer_info['seller_id'] is not None
                 assert offer_info["price"] == offer_price
                 assert offer_info["energy"] == energy_to_sell
+                device_info = self.device_info()
+                assert device_info["energy_to_sell"] == 0.0
+                assert device_info["offered_sell_kWh"] == energy_to_sell
 
-            if market_info["start_time"][-5:] == "23:00":
-                self.status = "finished"
-                self.last_market_info = market_info
-                self.unregister()
+            self.last_market_info = market_info
+
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
-            self.error_list.append(e)
             raise e
+
+    def on_finish(self, finish_info):
+        self.status = "finished"
+        self.unregister()
+

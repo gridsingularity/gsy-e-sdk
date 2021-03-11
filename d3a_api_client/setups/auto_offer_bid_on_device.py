@@ -35,7 +35,7 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
 
 
 # Connects one client to the load device
-load = AutoOfferBidOnMarket('load', autoregister=True)
+# load = AutoOfferBidOnMarket('load', autoregister=True)
 # Connects a second client to the pv device
 pv = AutoOfferBidOnMarket('pv', autoregister=True)
 

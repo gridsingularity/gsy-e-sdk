@@ -43,12 +43,13 @@ class APIClientInterface(ABC):
         pass
 
     @abstractmethod
-    def offer_energy(self, energy, price):
+    def offer_energy(self, energy, price, replace_existing=True):
         """
         Places an energy offer to a registered market. Will fail if the client is not registered
         to the market. It is a blocking operation and will wait for the response of the market.
         :param energy: Energy of the offer, in kWh
         :param price: Price of the offer, in Euro cents
+        :param replace_existing: Replace all previously existing offers for the device
         :return: If the offer was created successfully, returns detailed information about the
         created offer. If the offer failed to be created successfully, returns a reason for
         the error.
@@ -56,12 +57,13 @@ class APIClientInterface(ABC):
         pass
 
     @abstractmethod
-    def offer_energy_rate(self, energy, rate):
+    def offer_energy_rate(self, energy, rate, replace_existing=True):
         """
         Places an energy offer to a registered market. Will fail if the client is not registered
         to the market. It is a blocking operation and will wait for the response of the market.
         :param energy: Energy of the offer, in kWh
         :param rate: Rate of the offer, in Euro cents / kWh
+        :param replace_existing: Replace all previously existing offers for the device
         :return: If the offer was created successfully, returns detailed information about the
         created offer. If the offer failed to be created successfully, returns a reason for
         the error.
@@ -69,12 +71,13 @@ class APIClientInterface(ABC):
         pass
 
     @abstractmethod
-    def bid_energy(self, energy, price):
+    def bid_energy(self, energy, price, replace_existing=True):
         """
         Places an energy bid to a registered market. Will fail if the client is not registered
         to the market. It is a blocking operation and will wait for the response of the market.
         :param energy: Energy of the bid, in kWh
         :param price: Price of the bid, in Euro cents
+        :param replace_existing: Replace all previously existing bids for the device
         :return: If the bid was created successfully, returns detailed information about the
         created bid. If the bid failed to be created successfully, returns a reason for
         the error.
@@ -82,12 +85,13 @@ class APIClientInterface(ABC):
         pass
 
     @abstractmethod
-    def bid_energy_rate(self, energy, rate):
+    def bid_energy_rate(self, energy, rate, replace_existing=True):
         """
         Places an energy bid to a registered market. Will fail if the client is not registered
         to the market. It is a blocking operation and will wait for the response of the market.
         :param energy: Energy of the bid, in kWh
         :param rate: Rate of the bid, in Euro cents / kWh
+        :param replace_existing: Replace all previously existing bids for the device
         :return: If the bid was created successfully, returns detailed information about the
         created bid. If the bid failed to be created successfully, returns a reason for
         the error.
