@@ -47,8 +47,12 @@ class BatchAggregator(RedisAggregator):
                     self.grid_fee_calculation.latest_grid_stats_tree != {} :
                 self.require_grid_fees(self.initial_grid_fees_market_cycle, "last_market_fee")
 
-
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+                if area_uuid == self.redis_market.area_uuid:
+                    self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
+                                                         fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
+                    self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
+                    self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
                 if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                     continue
                 asset_info = area_dict["asset_info"]
@@ -98,11 +102,6 @@ class BatchAggregator(RedisAggregator):
                         replace_existing=False
                     ).list_bids(
                         area_uuid=area_uuid)
-
-                self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
-                                                     fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
-                self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
-                self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
 
             if self.commands_buffer_length:
                 transaction = self.execute_batch_commands()
