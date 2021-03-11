@@ -74,6 +74,8 @@ class RedisAggregator:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
         if data['status'] == "SELECTED":
             self._selected_by_device(data)
+        if data['status'] == "UNSELECTED":
+            self._unselected_by_device(data)
 
     def _events_callback_dict(self, message):
         payload = json.loads(message['data'])

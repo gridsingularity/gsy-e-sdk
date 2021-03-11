@@ -7,7 +7,6 @@ from d3a_api_client.types import market_client_type
 class AutoLastMarketStats(market_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
-        self.error_list = []
         self.status = "running"
         self.latest_stats = {}
         self.market_info = {}
@@ -17,3 +16,4 @@ class AutoLastMarketStats(market_client_type):
 
     def on_finish(self, message):
         self.wait_script = False
+        self.status = "finished"
