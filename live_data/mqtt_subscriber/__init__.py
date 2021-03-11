@@ -22,7 +22,7 @@ allowed_devices_name_mapping = {
 }
 
 
-def generate_topic_api_client_args_mapping():
+def generate_api_client_args_mapping():
     sim_api_domain_name = environ["API_CLIENT_SIM_API_DOMAIN_NAME"]
     external_api_domain_name = environ["API_CLIENT_DOMAIN_NAME"]
     websocket_api_domain_name = environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
@@ -30,6 +30,7 @@ def generate_topic_api_client_args_mapping():
     cn_mapping = list_running_canary_networks_and_devices_with_live_data(sim_api_domain_name)
 
     topic_api_client_mapping = {v: [] for _, v in allowed_devices_name_mapping.items()}
+    device_api_client_mapping = {k: [] for k, _ in allowed_devices_name_mapping.items()}
 
     logging.info(f"Canary Networks mapping {cn_mapping}")
 
@@ -65,10 +66,13 @@ def generate_topic_api_client_args_mapping():
             device_name = uuid_name_mapping[device_uuid]
             if device_name in allowed_devices_name_mapping:
                 topic_name = allowed_devices_name_mapping[device_name]
-                topic_api_client_mapping[topic_name].append({
-                    "device_id": device_uuid,
-                    **api_client_args
-                })
+                topic_api_client_mapping[topic_name].append(
+                    {"device_id": device_uuid, **api_client_args}
+                )
+                device_api_client_mapping[device_name].append(
+                    {"device_id": device_uuid, **api_client_args}
+                )
 
-    logging.info(f"Connecting to the following MQTT topics/devices {topic_api_client_mapping}")
-    return topic_api_client_mapping
+    logging.info(f"Connecting to the following MQTT topics {topic_api_client_mapping}")
+    logging.info(f"Connecting to the following WS devices {device_api_client_mapping}")
+    return topic_api_client_mapping, device_api_client_mapping

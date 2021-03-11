@@ -6,11 +6,12 @@ import asyncio
 
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_api_client.utils import consumer_websocket_domain_name_from_env
+from d3a_api_client.utils import consumer_websocket_domain_name_from_env, domain_name_from_env, \
+    retrieve_jwt_key_from_server, RestCommunicationMixin
 from d3a_api_client.websocket_device import WebsocketMessageReceiver
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.websocket_device import retry_coroutine
-from live_data import LiveDataRest
+from d3a_api_client.rest_device import RestDeviceClient
 
 
 class LiveDataWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -18,7 +19,10 @@ class LiveDataWebsocketMessageReceiver(WebsocketMessageReceiver):
     def received_message(self, message):
         try:
             if "event" in message and message["event"] == "live_data":
-                self.client.set_energy_forecast(**message['data'])
+                for api_args in self.client.device_api_client_mapping[message['data']['area_name']]:
+                    RestDeviceClient(**api_args).set_energy_forecast(
+                        message['data']['energy_wh'], do_not_wait=True
+                    )
         except Exception as e:
             logging.error(f"Error while processing incoming message {message}. Exception {e}.\n"
                           f"{traceback.format_exc()}")
@@ -41,10 +45,14 @@ class LiveDataWebsocketThread(threading.Thread):
         event_loop.close()
 
 
-class LiveDataConsumer(LiveDataRest):
+class LiveDataConsumer(RestCommunicationMixin):
 
-    def __init__(self):
+    def __init__(self, device_api_client_mapping):
         super().__init__()
+        self.domain_name = domain_name_from_env
+        self.jwt_token = retrieve_jwt_key_from_server(self.domain_name)
+        self._create_jwt_refresh_timer(self.domain_name)
+        self.device_api_client_mapping = device_api_client_mapping
         self.websockets_domain_name = consumer_websocket_domain_name_from_env
         self.start_websocket_connection()
 
