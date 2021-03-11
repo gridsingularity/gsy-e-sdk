@@ -102,86 +102,85 @@ class BatchAggregator(RedisAggregator):
                 self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
                 self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
 
-        if self.commands_buffer_length:
-            transaction = self.execute_batch_commands()
-            if transaction is None:
-                self.errors += 1
-            else:
-                for area_uuid, response in transaction["responses"].items():
-                    for command_dict in response:
-                        if command_dict["status"] == "error":
-                            self.errors += 1
-            logging.info(f"Batch command placed on the new market")
+            if self.commands_buffer_length:
+                transaction = self.execute_batch_commands()
+                if transaction is None:
+                    self.errors += 1
+                else:
+                    for area_uuid, response in transaction["responses"].items():
+                        for command_dict in response:
+                            if command_dict["status"] == "error":
+                                self.errors += 1
+                logging.info(f"Batch command placed on the new market")
 
-            # Make assertions about the bids, if they happened during this slot
-            bid_requests = self._filter_commands_from_responses(
-                transaction['responses'][0], 'bid')
-            if bid_requests:
-                # All bids in the batch have been issued
-                assert len(bid_requests) == 4
-                # All bids have been successfully received and processed
-                assert all(bid.get('status') == 'ready' for bid in bid_requests)
+                # Make assertions about the bids, if they happened during this slot
+                bid_requests = self._filter_commands_from_responses(
+                    transaction['responses'][0], 'bid')
+                if bid_requests:
+                    # All bids in the batch have been issued
+                    assert len(bid_requests) == 4
+                    # All bids have been successfully received and processed
+                    assert all(bid.get('status') == 'ready' for bid in bid_requests)
 
-                list_bids_requests = self._filter_commands_from_responses(
-                    transaction['responses'][0], 'list_bids')
+                    list_bids_requests = self._filter_commands_from_responses(
+                        transaction['responses'][0], 'list_bids')
 
-                # The list_bids command has been issued once
-                assert len(list_bids_requests) == 1
+                    # The list_bids command has been issued once
+                    assert len(list_bids_requests) == 1
 
-                # The bid list only contains two bids (the other two have been deleted)
-                current_bids = list_bids_requests[0]['bid_list']
-                assert len(current_bids) == 2
+                    # The bid list only contains two bids (the other two have been deleted)
+                    current_bids = list_bids_requests[0]['bid_list']
+                    assert len(current_bids) == 2
 
-                issued_bids = [json.loads(bid_request['bid']) for bid_request in bid_requests]
+                    issued_bids = [json.loads(bid_request['bid']) for bid_request in bid_requests]
 
-                # The bids have been issued in the correct order
-                assert [
-                    bid['original_bid_price'] for bid in issued_bids
-                ] == [27, 28, 29, 30]
+                    # The bids have been issued in the correct order
+                    assert [
+                               bid['original_bid_price'] for bid in issued_bids
+                           ] == [27, 28, 29, 30]
 
-                # The only two bids left are the last ones that have been issued
-                assert [bid['id'] for bid in current_bids] == \
-                    [bid['id'] for bid in issued_bids[-2:]]
+                    # The only two bids left are the last ones that have been issued
+                    assert [bid['id'] for bid in current_bids] == \
+                           [bid['id'] for bid in issued_bids[-2:]]
 
-                self._has_tested_bids = True
+                    self._has_tested_bids = True
 
-            # Make assertions about the offers, if they happened during this slot
-            offer_requests = self._filter_commands_from_responses(
-                transaction['responses'][0], 'offer')
-            if offer_requests:
-                # All offers in the batch have been issued
-                assert len(offer_requests) == 4
-                # All offers have been successfully received and processed
-                assert all(offer.get('status') == 'ready' for offer in offer_requests)
+                # Make assertions about the offers, if they happened during this slot
+                offer_requests = self._filter_commands_from_responses(
+                    transaction['responses'][0], 'offer')
+                if offer_requests:
+                    # All offers in the batch have been issued
+                    assert len(offer_requests) == 4
+                    # All offers have been successfully received and processed
+                    assert all(offer.get('status') == 'ready' for offer in offer_requests)
 
-                list_offers_requests = self._filter_commands_from_responses(
-                    transaction['responses'][0], 'list_offers')
+                    list_offers_requests = self._filter_commands_from_responses(
+                        transaction['responses'][0], 'list_offers')
 
-                # The list_offers command has been issued once
-                assert len(list_offers_requests) == 1
+                    # The list_offers command has been issued once
+                    assert len(list_offers_requests) == 1
 
-                # The offers list only contains two offers (the other two have been deleted)
-                current_offers = list_offers_requests[0]['offer_list']
-                assert len(current_offers) == 2
+                    # The offers list only contains two offers (the other two have been deleted)
+                    current_offers = list_offers_requests[0]['offer_list']
+                    assert len(current_offers) == 2
 
-                issued_offers = [
-                    json.loads(offer_request['offer']) for offer_request in offer_requests]
+                    issued_offers = [
+                        json.loads(offer_request['offer']) for offer_request in offer_requests]
 
-                # The offers have been issued in the correct order
-                assert [
-                   offer['original_offer_price'] for offer in issued_offers
-                ] == [1.1, 2.2, 3.3, 4.4]
+                    # The offers have been issued in the correct order
+                    assert [
+                               offer['original_offer_price'] for offer in issued_offers
+                           ] == [1.1, 2.2, 3.3, 4.4]
 
-                # The only two offers left are the last ones that have been issued
-                assert [offer['id'] for offer in current_offers] == \
-                       [offer['id'] for offer in issued_offers[-2:]]
+                    # The only two offers left are the last ones that have been issued
+                    assert [offer['id'] for offer in current_offers] == \
+                           [offer['id'] for offer in issued_offers[-2:]]
 
-                self._has_tested_offers = True
+                    self._has_tested_offers = True
 
-            for target_market in ["Grid", "House 1", "House 2"]:
-                self.grid_fees_market_cycle_next_market[
-                    target_market] = self.calculate_grid_fee("load", target_market)
-
+                for target_market in ["Grid", "House 1", "House 2"]:
+                    self.grid_fees_market_cycle_next_market[
+                        target_market] = self.calculate_grid_fee("load", target_market)
         except Exception as ex:
             logging.error(f'Raised exception: {ex}. Traceback: {traceback.format_exc()}')
             self.errors += 1
