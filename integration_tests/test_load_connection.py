@@ -10,7 +10,6 @@ from d3a_api_client.types import device_client_type
 class AutoBidOnLoadDevice(device_client_type):
     def __init__(self, *args, **kwargs):
         self.errors = 0
-        self.error_list = []
         self.status = "running"
         self.latest_stats = {}
         self.market_info = {}
@@ -29,6 +28,7 @@ class AutoBidOnLoadDevice(device_client_type):
                 assert bid_info['buyer_origin_id'] == bid_info['buyer_id'] is not None
                 assert bid_info["price"] == 0.0001 * energy_requirement
                 assert bid_info["energy"] == energy_requirement
+                assert bid_info['replace_existing'] is True
                 # Validate that the bid was placed to the market
                 bid_listing = self.list_bids()
                 listed_bid = next(bid for bid in bid_listing["bid_list"] if bid["id"] == bid_info["id"])
@@ -40,11 +40,13 @@ class AutoBidOnLoadDevice(device_client_type):
                 # Validate that the bid was deleted from the market
                 empty_listing = self.list_bids()
                 assert not any(b for b in empty_listing["bid_list"] if b["id"] == bid_info["id"])
+
                 # Place the bid with a rate that will be acceptable for trading
-                bid = self.bid_energy_rate(energy_requirement, 33)
+                bid = self.bid_energy_rate(energy_requirement, 33, replace_existing=False)
                 bid_info = json.loads(bid["bid"])
                 assert bid_info["price"] == 33 * energy_requirement
                 assert bid_info["energy"] == energy_requirement
+                assert bid_info['replace_existing'] is False
 
             assert "device_bill" in market_info
             self.device_bills = market_info["device_bill"]
@@ -56,14 +58,13 @@ class AutoBidOnLoadDevice(device_client_type):
                    {'min_trade_rate', 'max_trade_rate', 'avg_trade_rate', 'median_trade_rate',
                     'total_traded_energy_kWh'}
 
-            if market_info["start_time"][-5:] == "23:00":
-                self.status = "finished"
-                self.unregister()
-
             self.market_info = market_info
 
         except AssertionError as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
-            self.error_list.append(e)
             raise e
+
+    def on_finish(self, finish_info):
+        self.status = "finished"
+        self.unregister()

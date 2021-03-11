@@ -8,18 +8,19 @@
     + [Interacting with the CLI](#interacting-with-the-cli)
     + [Authentication for REST API](#authentication-for-rest-api)
       - [Via CLI](#via-cli)
-      - [Via environmental variables:](#via-environmental-variables-)
+      - [Via environmental variables](#via-environmental-variables-)
     + [Events](#events)
     + [Asset API](#asset-api)
       - [How to create a connection to a Device](#how-to-create-a-connection-to-a-device)
-      - [Available device commands:](#available-device-commands-)
+      - [Available device commands](#available-device-commands-)
     + [Grid Operator API](#grid-operator-api)
       - [How to create a connection to a Market](#how-to-create-a-connection-to-a-market)
-      - [Available market commands:](#available-market-commands-)
+      - [Available market commands](#available-market-commands-)
     + [Aggregator Connection](#aggregator-connection)
-      - [How to create an Aggregator:](#how-to-create-an-aggregator-)
+      - [How to create an Aggregator](#how-to-create-an-aggregator-)
       - [How to select and unselect an Aggregator](#how-to-select-and-unselect-an-aggregator)
       - [How to send batch commands](#how-to-send-batch-commands)
+      - [Available batch commands](#available-batch-commands)
     + [How to calculate grid fees](#how-to-calculate-grid-fees)
     + [Hardware API](#hardware-api)
       - [Sending Energy Forecast](#sending-energy-forecast)
@@ -121,21 +122,22 @@ device_client.unregister()
 - Send an energy offer with price in cents:
     ```device_client.offer_energy(<energy>, <price_cents>)```
 - Send an energy offer with energy rate in cents/kWh:
-    ```device_client.offer_energy_rate(<energy, <rate_cents_per_kWh>)```
+    ```device_client.offer_energy_rate(<energy>, <rate_cents_per_kWh>)```
 - Send an energy bid with price in cents: 
     ```device_client.bid_energy(<energy>, <price_cents>)```
 - Send an energy bid with energy rate in cents/kWh:
-    ```device_client.bid_energy_rate(<energy, <rate_cents_per_kWh>)```
+    ```device_client.bid_energy_rate(<energy>, <rate_cents_per_kWh>)```
 - List all posted offers:
     ```device_client.list_offers()```
 - Lists all posted bids
     ```device_client.list_bids()```
 - Delete offer using its id
-    ```device_client.delete_offer(<offer_id)```
+    ```device_client.delete_offer(<offer_id>)```
 - Delete bid using its id
-    ```device_client.delete_bid(<bid_id)```
+    ```device_client.delete_bid(<bid_id>)```
 - Get device info (returns demanded energy for Load devices and available energy for PVs)
     ```device_client.device_info()```
+
 ---
 
 ### Grid Operator API
@@ -224,6 +226,73 @@ Finally, the batch commands are sent to the D3A via the following command:
 ```
 aggregator.execute_batch_command()
 ```
+
+#### Available batch commands:
+
+The following commands can be issued as batch commands (refer to [How to send batch commands](#how-to-send-batch-commands) for more information):
+
+- Send an energy bid with price in cents: 
+    ```python
+    bid_energy(area_uuid, energy, price_cents, replace_existing)
+    ```
+- Send an energy bid with energy rate in cents/kWh:
+    ```python
+    bid_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    ```
+- Change grid fees using a percentage value:
+    ```python
+    change_grid_fees_percent(area_uuid, fee_percent)
+    ```
+- Change grid fees using a constant value:
+    ```python
+    grid_fees(area_uuid, fee_cents_kwh)
+    ```
+- Delete offer using its ID:
+    ```python
+    delete_offer(area_uuid, offer_id)
+    ```
+- Delete bid using its ID:
+    ```python
+    delete_bid(area_uuid, bid_id)
+    ```
+- Get device info (returns demanded energy for Load devices and available energy for PVs):
+    ```python
+    device_info(area_uuid)
+    ```
+- List all posted offers:
+    ```python
+    list_offers(area_uuid)
+    ```
+- Lists all posted bids:
+    ```python
+    list_bids(area_uuid)
+    ```
+- Retrieve market statistics: 
+    ```python
+    last_market_stats(area_uuid)
+    ```
+- Retrieve market DSO statistics:
+    ```python
+    last_market_dso_stats(area_uuid)
+    ```
+- Send an energy offer with price in cents:
+    ```python
+    offer_energy(area_uuid, energy, price_cents, replace_existing)
+    ```
+- Send an energy offer with energy rate in cents/kWh:
+    ```python
+    offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    ```
+- Update an energy offer:
+    ```python
+    update_offer(area_uuid, energy, price_cents)
+    ```
+    If the user provides both energy and price, the price of the existing open offers is updated according to the new energy rate (price/energy).
+- Update an energy bid:
+    ```python
+    update_bid(area_uuid, energy, price_cents)
+    ```
+  
 ---
 
 ### How to calculate grid fees
@@ -250,4 +319,3 @@ the following command
 ```
 device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
 ```
-
