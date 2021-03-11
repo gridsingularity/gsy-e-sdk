@@ -23,11 +23,12 @@ class AutoBidOnESSDevice(device_client_type):
                     'energy_to_sell', 'used_storage', 'energy_traded', 'free_storage', 'energy_to_buy'}
             energy = market_info["device_info"]["energy_to_buy"]
             if energy > 0:
-                bid = self.bid_energy(energy, (31 * energy))
+                bid_price = 31 * energy
+                bid = self.bid_energy(energy, bid_price)
                 bid_info = json.loads(bid["bid"])
                 assert bid_info['buyer_origin'] == self.device_id
                 assert bid_info['buyer_origin_id'] == bid_info['buyer_id'] is not None
-                assert bid_info["price"] == 31 * energy
+                assert bid_info["price"] == bid_price
                 assert bid_info["energy"] == energy
                 device_info = self.device_info()
                 assert device_info["device_info"]["energy_to_buy"] == 0.0

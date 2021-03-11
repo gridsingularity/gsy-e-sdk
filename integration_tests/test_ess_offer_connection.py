@@ -23,11 +23,12 @@ class AutoOfferOnESSDevice(device_client_type):
                     'energy_to_sell', 'used_storage', 'energy_traded', 'free_storage', 'energy_to_buy'}
             energy_to_sell = market_info["device_info"]["energy_to_sell"]
             if energy_to_sell > 0:
-                offer = self.offer_energy(energy_to_sell, (20 * energy_to_sell))
+                offer_price = 10 * energy_to_sell
+                offer = self.offer_energy(energy_to_sell, offer_price)
                 offer_info = json.loads(offer["offer"])
                 assert offer_info['seller_origin'] == self.device_id
                 assert offer_info['seller_origin_id'] == offer_info['seller_id'] is not None
-                assert offer_info["price"] == 10 * energy_to_sell
+                assert offer_info["price"] == offer_price
                 assert offer_info["energy"] == energy_to_sell
 
             if market_info["start_time"][-5:] == "23:00":
