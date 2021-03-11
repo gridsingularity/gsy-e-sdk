@@ -178,9 +178,9 @@ class BatchAggregator(RedisAggregator):
 
                     self._has_tested_offers = True
 
-                for target_market in ["Grid", "House 1", "House 2"]:
-                    self.grid_fees_market_cycle_next_market[
-                        target_market] = self.calculate_grid_fee("load", target_market)
+            for target_market in ["Grid", "House 1", "House 2"]:
+                self.grid_fees_market_cycle_next_market[
+                    target_market] = self.calculate_grid_fee("load", target_market)
         except Exception as ex:
             logging.error(f'Raised exception: {ex}. Traceback: {traceback.format_exc()}')
             self.errors += 1
