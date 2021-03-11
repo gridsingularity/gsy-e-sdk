@@ -26,6 +26,5 @@ def main():
         logging.error(traceback.format_exc())
 
 
-
 if __name__ == "__main__":
     main()
