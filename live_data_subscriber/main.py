@@ -20,11 +20,8 @@ def main():
 
 
 def create_process_nonblocking(class_name, class_arg):
-
-    def execute_process(class_name, class_arg):
-        class_name(class_arg)
     try:
-        p = Process(target=execute_process)
+        p = Process(target=class_name, args=(class_arg, ))
         p.start()
     except Exception as e:
         logging.error(f"Subscriber failed with error {e}")
