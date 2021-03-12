@@ -1,8 +1,8 @@
-import os
 import logging
 import traceback
 import threading
 import asyncio
+from time import sleep
 
 from concurrent.futures.thread import ThreadPoolExecutor
 
@@ -56,6 +56,7 @@ class WSConsumer(RestCommunicationMixin):
         self.device_api_client_mapping = device_api_client_mapping
         self.websockets_domain_name = consumer_websocket_domain_name_from_env
         self.start_websocket_connection()
+        self.run_forever()
 
     def start_websocket_connection(self):
         self.dispatcher = LiveDataWebsocketMessageReceiver(self)
@@ -64,4 +65,8 @@ class WSConsumer(RestCommunicationMixin):
         )
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
+
+    def run_forever(self):
+        while True:
+            sleep(0.1)
 
