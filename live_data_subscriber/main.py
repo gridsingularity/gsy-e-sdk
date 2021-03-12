@@ -3,7 +3,7 @@ import traceback
 
 from multiprocessing import Process
 
-from live_data_subscriber.mqtt import generate_api_client_args_mapping
+from live_data_subscriber import generate_api_client_args_mapping
 from live_data_subscriber.mqtt.oli_broker import MQTTConnection
 from live_data_subscriber.websocket.consumer import WSConsumer
 

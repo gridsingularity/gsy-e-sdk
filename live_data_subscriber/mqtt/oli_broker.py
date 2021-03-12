@@ -4,18 +4,15 @@ import logging
 import traceback
 import paho.mqtt.client as mqtt
 from d3a_api_client.rest_device import RestDeviceClient
-from live_data_subscriber.mqtt import allowed_devices_name_mapping, generate_api_client_args_mapping
+from live_data_subscriber import allowed_devices_name_mapping, \
+    refresh_cn_and_device_list
 from time import time
+
+from live_data_subscriber.constants import MQTT_PORT
 
 
 class MQTTBrokerConnectionError(Exception):
     pass
-
-
-MQTT_PORT = 1883
-MINUTES_IN_HOUR = 60
-MEASUREMENT_PERIOD_MINUTES = 15
-RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS = 60 * MEASUREMENT_PERIOD_MINUTES
 
 
 class MQTTConnection:
@@ -41,8 +38,9 @@ class MQTTConnection:
     def on_message(self, client, userdata, msg):
         logging.info(f"Received mqtt message {msg.topic} {str(msg.payload)}")
         try:
-            self.refresh_cn_and_device_list()
-
+            self.last_time_checked, self.topic_api_client_dict = refresh_cn_and_device_list(
+                self.last_time_checked, self.topic_api_client_dict, is_mqtt=True
+            )
             payload = json.loads(msg.payload.decode("utf-8"))
 
             energy = payload["value"]
@@ -55,11 +53,6 @@ class MQTTConnection:
             logging.error(f"API Client failed to send energy forecasts to d3a with error {e}. "
                           f"Resuming operation.")
             logging.error(f"{traceback.format_exc()}")
-
-    def refresh_cn_and_device_list(self):
-        if time() - self.last_time_checked > RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS:
-            self.last_time_checked = time()
-            self.topic_api_client_dict = generate_api_client_args_mapping()
 
     def run_forever(self):
         logging.info("Creating MQTT client")

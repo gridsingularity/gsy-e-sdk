@@ -2,7 +2,7 @@ import logging
 import traceback
 import threading
 import asyncio
-from time import sleep
+from time import sleep, time
 
 from concurrent.futures.thread import ThreadPoolExecutor
 
@@ -12,6 +12,7 @@ from d3a_api_client.websocket_device import WebsocketMessageReceiver
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.websocket_device import retry_coroutine
 from d3a_api_client.rest_device import RestDeviceClient
+from live_data_subscriber import refresh_cn_and_device_list
 
 
 class LiveDataWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -20,6 +21,9 @@ class LiveDataWebsocketMessageReceiver(WebsocketMessageReceiver):
         try:
             if "event" in message and message["event"] == "live_data_subscriber":
                 dev_idf = message['data']['device_identifier']
+                self.client.last_time_checked, self.client.device_api_client_mapping = \
+                    refresh_cn_and_device_list(self.client.last_time_checked,
+                                               self.client.device_api_client_mapping)
                 for api_args in self.client.device_api_client_mapping[dev_idf]:
                     RestDeviceClient(**api_args).set_energy_forecast(
                         message['data']['energy_wh'], do_not_wait=True
@@ -54,6 +58,7 @@ class WSConsumer(RestCommunicationMixin):
         self.jwt_token = retrieve_jwt_key_from_server(self.domain_name)
         self._create_jwt_refresh_timer(self.domain_name)
         self.device_api_client_mapping = device_api_client_mapping
+        self.last_time_checked = time()
         self.websockets_domain_name = consumer_websocket_domain_name_from_env
         self.start_websocket_connection()
         self.run_forever()

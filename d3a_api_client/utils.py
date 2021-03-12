@@ -60,6 +60,7 @@ def execute_graphql_request(domain_name, query, headers=None, url=None, authenti
     if authenticate:
         jwt_key = retrieve_jwt_key_from_server(domain_name)
         if jwt_key is None:
+            logging.error(f"authentication failed")
             return
     url = f"{domain_name}/graphql/" if url is None else url
     headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'} \
@@ -210,7 +211,6 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
       }
     }
     '''
-
     data = execute_graphql_request(domain_name=domain_name, query=query)
 
     logging.debug(f"Received Canary Network data: {data}")
