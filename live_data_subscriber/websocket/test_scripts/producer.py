@@ -13,9 +13,9 @@ async def produce(message: str, host: str, port: int) -> None:
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    data = {'area_name': 'OLI_6', 'energy_wh': randint(0, 100)}
+    data = {'device_identifier': 'OLI_6', 'energy_wh': randint(0, 100)}
     forecast_message = json.dumps(
-        {'event': 'live_data', 'data': data}).\
+        {'event': 'live_data_subscriber', 'data': data}).\
         encode('utf-8')
     loop.run_until_complete(
         produce(forecast_message, host='localhost', port=4000))

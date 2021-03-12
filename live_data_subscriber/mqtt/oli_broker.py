@@ -4,7 +4,7 @@ import logging
 import traceback
 import paho.mqtt.client as mqtt
 from d3a_api_client.rest_device import RestDeviceClient
-from live_data.mqtt_subscriber import allowed_devices_name_mapping, generate_api_client_args_mapping
+from live_data_subscriber.mqtt import allowed_devices_name_mapping, generate_api_client_args_mapping
 from time import time
 
 
@@ -21,10 +21,12 @@ RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS = 60 * MEASUREMENT_PERIOD_MINUTES
 class MQTTConnection:
     def __init__(self, topic_api_client_dict):
         self.topic_api_client_dict = topic_api_client_dict
+        print(f"self.topic_api_client_dict: {self.topic_api_client_dict}")
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.last_time_checked = time()
+        self.run_forever()
 
     def on_connect(self, client, userdata, flags, rc):
         logging.info(f"Connected with result code {str(rc)}")
@@ -47,10 +49,9 @@ class MQTTConnection:
             energy = payload["value"]
 
             # Transmit power values to CN
-            print(f"self.topic_api_client_dict: {self.topic_api_client_dict}")
             print(f"msg.topic: {msg.topic}")
+            print(f"self.topic_api_client_dict: {self.topic_api_client_dict}")
             for api_args in self.topic_api_client_dict[msg.topic]:
-                print(f"api_args: {api_args}")
                 RestDeviceClient(**api_args).set_energy_forecast(energy, do_not_wait=True)
 
         except Exception as e:

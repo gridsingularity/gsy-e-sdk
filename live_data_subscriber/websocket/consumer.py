@@ -18,8 +18,9 @@ class LiveDataWebsocketMessageReceiver(WebsocketMessageReceiver):
 
     def received_message(self, message):
         try:
-            if "event" in message and message["event"] == "live_data":
-                for api_args in self.client.device_api_client_mapping[message['data']['area_name']]:
+            if "event" in message and message["event"] == "live_data_subscriber":
+                dev_idf = message['data']['device_identifier']
+                for api_args in self.client.device_api_client_mapping[dev_idf]:
                     RestDeviceClient(**api_args).set_energy_forecast(
                         message['data']['energy_wh'], do_not_wait=True
                     )
@@ -45,7 +46,7 @@ class LiveDataWebsocketThread(threading.Thread):
         event_loop.close()
 
 
-class LiveDataConsumer(RestCommunicationMixin):
+class WSConsumer(RestCommunicationMixin):
 
     def __init__(self, device_api_client_mapping):
         super().__init__()
