@@ -12,7 +12,6 @@ from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import execute_function_util, log_bid_offer_confirmation, \
     log_market_progression
 from d3a_api_client.enums import Commands
-from d3a_api_client.utils import execute_function_util
 
 
 class RedisAPIException(Exception):
@@ -49,7 +48,7 @@ class RedisClient(APIClientInterface):
     def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
             self._response_topics[c]: self._generate_command_response_callback(c)
-            for c in Commands
+            for c in Commands if c in self._response_topics
         }
 
         channel_subs[f'{self.area_id}/response/register_participant'] = self._on_register
@@ -108,7 +107,9 @@ class RedisClient(APIClientInterface):
     def _command_topics(self):
         return {
             Commands.OFFER: f'{self._channel_prefix}/offer',
+            Commands.UPDATE_OFFER: f'{self._channel_prefix}/update_offer',
             Commands.BID: f'{self._channel_prefix}/bid',
+            Commands.UPDATE_BID: f'{self._channel_prefix}/update_bid',
             Commands.DELETE_OFFER: f'{self._channel_prefix}/delete_offer',
             Commands.DELETE_BID: f'{self._channel_prefix}/delete_bid',
             Commands.LIST_OFFERS: f'{self._channel_prefix}/list_offers',
@@ -121,7 +122,9 @@ class RedisClient(APIClientInterface):
         response_prefix = self._channel_prefix + "/response"
         return {
             Commands.OFFER: f'{response_prefix}/offer',
+            Commands.UPDATE_OFFER: f'{response_prefix}/update_offer',
             Commands.BID: f'{response_prefix}/bid',
+            Commands.UPDATE_BID: f'{response_prefix}/update_bid',
             Commands.DELETE_OFFER: f'{response_prefix}/delete_offer',
             Commands.DELETE_BID: f'{response_prefix}/delete_bid',
             Commands.LIST_OFFERS: f'{response_prefix}/list_offers',

@@ -31,7 +31,7 @@ class RedisDeviceClient(RedisClient):
     def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
             self._response_topics[c]: self._generate_command_response_callback(c)
-            for c in Commands
+            for c in Commands if c in self._response_topics
         }
 
         channel_subs[f'{self.area_id}/response/register_participant'] = self._on_register
