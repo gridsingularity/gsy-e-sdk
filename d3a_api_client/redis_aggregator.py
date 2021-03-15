@@ -244,8 +244,8 @@ class RedisAggregator:
 
     @staticmethod
     def _log_trade_info(message):
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)} cents -->")
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
+                     f"at {round(message.get('trade_price'), 2)} cents -->")
 
     @buffer_grid_tree_info
     def _on_trade(self, message):
