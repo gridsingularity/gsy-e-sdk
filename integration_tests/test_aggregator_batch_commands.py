@@ -45,7 +45,7 @@ class BatchAggregator(RedisAggregator):
         logging.info(f"market_info: {market_info}")
         try:
             if self.initial_grid_fees_market_cycle == {} and \
-                    self.grid_fee_calculation.latest_grid_stats_tree != {} :
+                    self.grid_fee_calculation.latest_grid_stats_tree != {}:
                 self.require_grid_fees(self.initial_grid_fees_market_cycle, "last_market_fee")
 
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():

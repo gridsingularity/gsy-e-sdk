@@ -11,7 +11,8 @@ from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
-from d3a_api_client.utils import log_bid_offer_confirmation, log_market_progression
+from d3a_api_client.utils import log_bid_offer_confirmation, log_market_progression, \
+    execute_function_util
 
 from d3a_api_client.enums import Commands
 
