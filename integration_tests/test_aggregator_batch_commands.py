@@ -18,6 +18,7 @@ class BatchAggregator(RedisAggregator):
         self._setup()
         self.is_active = True
         self.updated_house2_grid_fee_cents_kwh = 5
+        self.updated_offer_bid_price = 60
 
         self._has_tested_bids = False
         self._has_tested_offers = False
