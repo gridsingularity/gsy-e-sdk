@@ -6,7 +6,7 @@ from websockets import WebSocketServerProtocol
 logging.basicConfig(level=logging.INFO)
 
 
-class Server:
+class WSServer:
     clients = set()
 
     async def register(self, ws: WebSocketServerProtocol) -> None:
@@ -35,7 +35,7 @@ class Server:
 
 def start_ws_server():
     logging.info(f"start_ws_server")
-    server = Server()
+    server = WSServer()
     start_server = websockets.serve(server.ws_handler, 'localhost', 4000)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(start_server)

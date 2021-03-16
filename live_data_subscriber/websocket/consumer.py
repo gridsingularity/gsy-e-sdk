@@ -69,7 +69,6 @@ class WSConsumer(RestCommunicationMixin):
             self.websockets_domain_name, self.domain_name, self.dispatcher
         )
         self.websocket_thread.start()
-        self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
     def run_forever(self):
         while True:
