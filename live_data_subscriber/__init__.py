@@ -29,27 +29,6 @@ def generate_api_client_args_mapping(api_client_mapping, is_mqtt=False):
     external_api_domain_name = environ["API_CLIENT_DOMAIN_NAME"]
     websocket_api_domain_name = environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
 
-    def mqtt_mapping(api_client_args, live_data_device_uuids, api_client_mapping,
-                     uuid_name_mapping):
-        for device_uuid in live_data_device_uuids:
-            device_name = uuid_name_mapping[device_uuid]
-            if device_name in allowed_devices_name_mapping:
-                topic_name = allowed_devices_name_mapping[device_name]
-                api_client_mapping[topic_name].append(
-                    {"device_id": device_uuid, **api_client_args}
-                )
-        logging.info(f"Connecting to the following MQTT topics {api_client_mapping}")
-
-    def ws_mapping(api_client_args, live_data_device_uuids, api_client_mapping,
-                   uuid_name_mapping):
-        for device_uuid in live_data_device_uuids:
-            device_name = uuid_name_mapping[device_uuid]
-            if device_name in allowed_devices_name_mapping:
-                api_client_mapping[device_name].append(
-                    {"device_id": device_uuid, **api_client_args}
-                )
-        logging.info(f"Connecting to the following WS devices {api_client_mapping}")
-
     cn_mapping = list_running_canary_networks_and_devices_with_live_data(sim_api_domain_name)
 
     logging.info(f"Canary Networks mapping {cn_mapping}")
@@ -81,12 +60,15 @@ def generate_api_client_args_mapping(api_client_mapping, is_mqtt=False):
             get_area_uuid_and_name_mapping_from_simulation_id(configuration_id, sim_api_domain_name)
         # It is a prerequisite to have unique area names for this to work.
         uuid_name_mapping = {v: k for k, v in name_uuid_mapping.items()}
-        if is_mqtt:
-            mqtt_mapping(api_client_args, live_data_device_uuids, api_client_mapping,
-                         uuid_name_mapping)
-        else:
-            ws_mapping(api_client_args, live_data_device_uuids, api_client_mapping,
-                       uuid_name_mapping)
+        for device_uuid in live_data_device_uuids:
+            device_name = uuid_name_mapping[device_uuid]
+            if device_name in allowed_devices_name_mapping:
+                key_name = allowed_devices_name_mapping[device_name] if is_mqtt else device_name
+                api_client_mapping[key_name].append(
+                    {"device_id": device_uuid, **api_client_args}
+                )
+        log_text = f"MQTT topics" if is_mqtt else f"WS devices"
+        logging.info(f"Connecting to the following {log_text} {api_client_mapping}")
     return api_client_mapping
 
 
