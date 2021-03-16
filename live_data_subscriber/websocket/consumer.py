@@ -4,15 +4,13 @@ import threading
 import asyncio
 from time import sleep, time
 
-from concurrent.futures.thread import ThreadPoolExecutor
-
 from d3a_api_client.utils import consumer_websocket_domain_name_from_env, domain_name_from_env, \
     retrieve_jwt_key_from_server, RestCommunicationMixin
 from d3a_api_client.websocket_device import WebsocketMessageReceiver
-from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.websocket_device import retry_coroutine
 from d3a_api_client.rest_device import RestDeviceClient
-from live_data_subscriber import refresh_cn_and_device_list
+from live_data_subscriber import allowed_devices_name_mapping, refresh_cn_and_device_list
+from live_data_subscriber.constants import RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS
 
 
 class LiveDataWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -52,13 +50,15 @@ class LiveDataWebsocketThread(threading.Thread):
 
 class WSConsumer(RestCommunicationMixin):
 
-    def __init__(self, device_api_client_mapping):
+    def __init__(self):
         super().__init__()
         self.domain_name = domain_name_from_env
         self.jwt_token = retrieve_jwt_key_from_server(self.domain_name)
         self._create_jwt_refresh_timer(self.domain_name)
-        self.device_api_client_mapping = device_api_client_mapping
-        self.last_time_checked = time()
+        self.last_time_checked, self.device_api_client_mapping = refresh_cn_and_device_list(
+            last_time_checked=time() - RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS,
+            api_client_dict={k: [] for k, _ in allowed_devices_name_mapping.items()}
+        )
         self.websockets_domain_name = consumer_websocket_domain_name_from_env
         self.start_websocket_connection()
         self.run_forever()

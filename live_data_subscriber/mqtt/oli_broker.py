@@ -3,12 +3,12 @@ import json
 import logging
 import traceback
 import paho.mqtt.client as mqtt
+from time import time
+
 from d3a_api_client.rest_device import RestDeviceClient
 from live_data_subscriber import allowed_devices_name_mapping, \
     refresh_cn_and_device_list
-from time import time
-
-from live_data_subscriber.constants import MQTT_PORT
+from live_data_subscriber.constants import RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS, MQTT_PORT
 
 
 class MQTTBrokerConnectionError(Exception):
@@ -16,12 +16,15 @@ class MQTTBrokerConnectionError(Exception):
 
 
 class MQTTConnection:
-    def __init__(self, topic_api_client_dict):
-        self.topic_api_client_dict = topic_api_client_dict
+    def __init__(self):
+        self.last_time_checked, self.topic_api_client_dict = refresh_cn_and_device_list(
+            last_time_checked=time() - RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS,
+            api_client_dict={v: [] for _, v in allowed_devices_name_mapping.items()},
+            is_mqtt=True
+        )
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-        self.last_time_checked = time()
         self.run_forever()
 
     def on_connect(self, client, userdata, flags, rc):

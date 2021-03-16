@@ -10,18 +10,16 @@ from live_data_subscriber.websocket.consumer import WSConsumer
 
 def main():
     logging.getLogger().setLevel(logging.INFO)
-    topic_api_client_mapping, device_api_client_mapping = generate_api_client_args_mapping()
-
     # start WS
-    create_process_nonblocking(WSConsumer, device_api_client_mapping)
+    create_process_nonblocking(WSConsumer)
 
     # start mqtt
-    create_process_nonblocking(MQTTConnection, topic_api_client_mapping)
+    create_process_nonblocking(MQTTConnection)
 
 
-def create_process_nonblocking(class_name, class_arg):
+def create_process_nonblocking(class_name):
     try:
-        p = Process(target=class_name, args=(class_arg, ))
+        p = Process(target=class_name, args=())
         p.start()
     except Exception as e:
         logging.error(f"Subscriber failed with error {e}")
