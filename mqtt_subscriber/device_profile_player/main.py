@@ -29,7 +29,7 @@ class DeviceProfilePlayback:
                 if filename.endswith(".csv")]
 
     async def _scheduled_call(self, websocket):
-        current_timestamp = now().timestamp()
+        current_timestamp = int(time())
         offset_seconds = current_timestamp % self._cycle_duration_s
         requested_datetime = from_timestamp(current_timestamp - offset_seconds)\
             .replace(year=self._year_to_replay)
