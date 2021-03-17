@@ -44,13 +44,13 @@ class RedisAggregator:
 
     def _subscribe_to_response_channels(self):
         event_channel = f'external-aggregator/*/{self.aggregator_uuid}/events/all'
-        channel_dict = {"aggregator_response": self._aggregator_response_callback,
-                        event_channel: self._events_callback_dict,
+        channel_dict = {event_channel: self._events_callback_dict,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
                         }
 
         self.pubsub.psubscribe(**channel_dict)
+        self.pubsub.subscribe(**{"aggregator_response": self._aggregator_response_callback})
         self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):

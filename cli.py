@@ -108,8 +108,7 @@ def load_client_script(base_setup_path, setup_module_name):
 
 
 def set_json_file_env(base_setup_path, simulation_info, run_on_redis):
-    print(f"set_json_file_env: {run_on_redis}")
-    if run_on_redis is False:
+    if run_on_redis is True:
         os.environ["JSON_FILE_PATH"] = ""
         return
     if simulation_info is None:
