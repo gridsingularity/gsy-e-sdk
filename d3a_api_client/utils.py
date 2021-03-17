@@ -14,7 +14,8 @@ from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
     RepeatingTimer
 
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+    API_CLIENT_SIMULATION_ID
 
 
 class AreaNotFoundException(Exception):
@@ -256,6 +257,9 @@ domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_N
 websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
 
 
+simulation_id_from_env = os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
+
+
 def log_bid_offer_confirmation(message):
     try:
         if message.get("status") == "ready":
@@ -268,3 +272,18 @@ def log_bid_offer_confirmation(message):
                          f"{round(energy, 2)} kWh at {price} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
+
+
+def get_simulation_info(simulation_id=simulation_id_from_env, domain_name=domain_name_from_env,
+                        websockets_domain_name=websocket_domain_name_from_env):
+    if os.environ['JSON_FILE_PATH'] != "":
+        with open(os.environ['JSON_FILE_PATH']) as json_file:
+            simulation_info = json.load(json_file)
+            simulation_id = simulation_info['uuid']
+            domain_name = simulation_info['domain_name']
+            websockets_domain_name = simulation_info['web_socket_domain_name']
+    else:
+        simulation_id = simulation_id
+        domain_name = domain_name
+        websockets_domain_name = websockets_domain_name
+    return simulation_id, domain_name, websockets_domain_name

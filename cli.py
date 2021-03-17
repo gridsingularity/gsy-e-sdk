@@ -60,7 +60,7 @@ _setup_modules = iterate_over_all_modules(modules_path)
 
 
 @main.command()
-@click.option('-b', 'base_setup_path', default=None, type=str,
+@click.option('-base-path', 'base_setup_path', default=None, type=str,
               help="Accept absolute or relative path for client script")
 @click.option('--setup', 'setup_module_name', default="auto_offer_bid_on_device",
               help="Setup module of client script. Available modules: [{}]".format(
@@ -84,7 +84,7 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
-    set_json_file_env(base_setup_path, simulation_info, run_on_redis)
+    set_simulation_file_env(base_setup_path, simulation_info, run_on_redis)
 
     load_client_script(base_setup_path, setup_module_name)
 
@@ -107,17 +107,13 @@ def load_client_script(base_setup_path, setup_module_name):
         log.error("Could not find the specified module")
 
 
-def set_json_file_env(base_setup_path, simulation_info, run_on_redis):
+def set_simulation_file_env(base_setup_path, simulation_info, run_on_redis):
     if run_on_redis is True:
         os.environ["JSON_FILE_PATH"] = ""
         return
     if simulation_info is None:
         if base_setup_path is None:
-            json_file = [l for l in os.listdir(setups.__path__[0]) if l.endswith('.json')]
-            os.environ["JSON_FILE_PATH"] = os.path.join(setups.__path__[0], json_file[0])
-        else:
-            json_file = [l for l in os.listdir(base_setup_path) if l.endswith('.json')]
-            os.environ["JSON_FILE_PATH"] = os.path.join(base_setup_path, json_file[0])
+            os.environ["JSON_FILE_PATH"] = ""
     elif os.path.isabs(simulation_info):
         os.environ["JSON_FILE_PATH"] = simulation_info
     else:
