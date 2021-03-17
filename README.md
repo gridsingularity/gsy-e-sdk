@@ -4,14 +4,27 @@
 - [D3A API Client](#d3a-api-client)
   * [Overview](#overview)
   * [Installation Instructions](#installation-instructions)
-  * [Authentication for REST API](#authentication-for-rest-api)
   * [How to use the Client](#how-to-use-the-client)
+    + [Interacting with the CLI](#interacting-with-the-cli)
+    + [Authentication for REST API](#authentication-for-rest-api)
+      - [Via CLI](#via-cli)
+      - [Via environmental variables](#via-environmental-variables-)
     + [Events](#events)
-    + [Trading API](#trading-api)
-    + [Market/DSO API](#marketdso-api)
+    + [Asset API](#asset-api)
+      - [How to create a connection to a Device](#how-to-create-a-connection-to-a-device)
+      - [Available device commands](#available-device-commands-)
+    + [Grid Operator API](#grid-operator-api)
+      - [How to create a connection to a Market](#how-to-create-a-connection-to-a-market)
+      - [Available market commands](#available-market-commands-)
     + [Aggregator Connection](#aggregator-connection)
+      - [How to create an Aggregator](#how-to-create-an-aggregator-)
+      - [How to select and unselect an Aggregator](#how-to-select-and-unselect-an-aggregator)
+      - [How to send batch commands](#how-to-send-batch-commands)
+      - [Available batch commands](#available-batch-commands)
+    + [How to calculate grid fees](#how-to-calculate-grid-fees)
     + [Hardware API](#hardware-api)
-  * [Run a predefined script from the cli](#cli-manual)
+      - [Sending Energy Forecast](#sending-energy-forecast)
+
 
 
 ## Overview
@@ -35,13 +48,32 @@ pip install git+https://github.com/gridsingularity/d3a-api-client.git
 ```
 ---
 
-## Authentication for REST API
-Authentication is done implicitly: The d3a-client is reading the following two variable from the environment
+## How to use the Client
+
+### Interacting with the CLI
+You can run one of the setup scripts residing in the `d3a_api_client/setups` folder, or you can 
+set the path for your scripts directory as list in the `d3a_api_client.constants` .
+In order to run a module you can use the following command
+```
+d3a-api-client run --setup {module_name}
+```
+
+### Authentication for REST API
+Authentication is done implicitly. The d3a-client is reading the following two variable from the environment
 and requests a auth token from the D3A API which will be reused internally for all communication.
 ```
 API_CLIENT_USERNAME
 API_CLIENT_PASSWORD
 ```
+The user credentials can be provided in two ways:
+#### Via CLI
+Users can use the following parameters in the `d3a_api_client` cli for setting username and password
+```
+  -u, --username TEXT     D3A username
+  -p, --password TEXT     D3A password
+```
+
+#### Via environmental variables:
 On linux bash shell one can set the environmental variables by:
 ```
 export API_CLIENT_USERNAME=<username>
@@ -49,9 +81,6 @@ export API_CLIENT_PASSWORD=<password>
 ```
 ---
 
-## How to use the Client
-In the following an overview of the functionality of the client and the connection to the D3A is given.
-Code examples can be found under the `tests/` folder.
 
 ### Events
 In order to facilitate offer and bid management and scheduling, 
@@ -93,21 +122,22 @@ device_client.unregister()
 - Send an energy offer with price in cents:
     ```device_client.offer_energy(<energy>, <price_cents>)```
 - Send an energy offer with energy rate in cents/kWh:
-    ```device_client.offer_energy_rate(<energy, <rate_cents_per_kWh>)```
+    ```device_client.offer_energy_rate(<energy>, <rate_cents_per_kWh>)```
 - Send an energy bid with price in cents: 
     ```device_client.bid_energy(<energy>, <price_cents>)```
 - Send an energy bid with energy rate in cents/kWh:
-    ```device_client.bid_energy_rate(<energy, <rate_cents_per_kWh>)```
+    ```device_client.bid_energy_rate(<energy>, <rate_cents_per_kWh>)```
 - List all posted offers:
     ```device_client.list_offers()```
 - Lists all posted bids
     ```device_client.list_bids()```
 - Delete offer using its id
-    ```device_client.delete_offer(<offer_id)```
+    ```device_client.delete_offer(<offer_id>)```
 - Delete bid using its id
-    ```device_client.delete_bid(<bid_id)```
+    ```device_client.delete_bid(<bid_id>)```
 - Get device info (returns demanded energy for Load devices and available energy for PVs)
     ```device_client.device_info()```
+
 ---
 
 ### Grid Operator API
@@ -152,6 +182,17 @@ commands in order to react to an event simultaneously for each owned device.
     ``` 
     aggregator = AutoAggregator(<aggregator_name>)
     ```
+### How to list your aggregators
+To list your aggregators, its configuration id and the registered devices, you should :
+```python
+from d3a_api_client.utils import get_aggregators_list
+my_aggregators = get_aggregators_list(domain_name="Domain Name")
+```
+The returned value is a list of aggregators and its connected devices
+```python
+[{'configUuid': 'f7330248-9a72-4979-8477-dfbcff0c46a0', 'name': 'My aggregator',
+ 'devicesList': [{"deviceUuid":"My_device_uuid"},{"deviceUuid":"My_device_uuid 2"}]}]
+```
 #### How to select and unselect an Aggregator
 The device or market can select the Aggregator 
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):
@@ -185,6 +226,88 @@ Finally, the batch commands are sent to the D3A via the following command:
 ```
 aggregator.execute_batch_command()
 ```
+
+#### Available batch commands:
+
+The following commands can be issued as batch commands (refer to [How to send batch commands](#how-to-send-batch-commands) for more information):
+
+- Send an energy bid with price in cents: 
+    ```python
+    bid_energy(area_uuid, energy, price_cents, replace_existing)
+    ```
+- Send an energy bid with energy rate in cents/kWh:
+    ```python
+    bid_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    ```
+- Change grid fees using a percentage value:
+    ```python
+    change_grid_fees_percent(area_uuid, fee_percent)
+    ```
+- Change grid fees using a constant value:
+    ```python
+    grid_fees(area_uuid, fee_cents_kwh)
+    ```
+- Delete offer using its ID:
+    ```python
+    delete_offer(area_uuid, offer_id)
+    ```
+- Delete bid using its ID:
+    ```python
+    delete_bid(area_uuid, bid_id)
+    ```
+- Get device info (returns demanded energy for Load devices and available energy for PVs):
+    ```python
+    device_info(area_uuid)
+    ```
+- List all posted offers:
+    ```python
+    list_offers(area_uuid)
+    ```
+- Lists all posted bids:
+    ```python
+    list_bids(area_uuid)
+    ```
+- Retrieve market statistics: 
+    ```python
+    last_market_stats(area_uuid)
+    ```
+- Retrieve market DSO statistics:
+    ```python
+    last_market_dso_stats(area_uuid)
+    ```
+- Send an energy offer with price in cents:
+    ```python
+    offer_energy(area_uuid, energy, price_cents, replace_existing)
+    ```
+- Send an energy offer with energy rate in cents/kWh:
+    ```python
+    offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    ```
+- Update an energy offer:
+    ```python
+    update_offer(area_uuid, energy, price_cents)
+    ```
+    If the user provides both energy and price, the price of the existing open offers is updated according to the new energy rate (price/energy).
+- Update an energy bid:
+    ```python
+    update_bid(area_uuid, energy, price_cents)
+    ```
+  
+---
+
+### How to calculate grid fees
+The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
+markets in the grid:
+```
+Aggregator.calculate_grid_fee(start_market_or_device_name, target_market_or_device_name, fee_type):
+```
+The algorithm retrieves the path between `start_market_or_device_name` and `target_market_or_device_name` 
+and accumulates all corresponding grid fees along the way. Market and device names are supported.
+`target_market_or_device_name` is optional, if left blank, only the grid fee of the 
+`start_market_or_device_name` is returned. 
+The user can chose between `next_market_fee` and `last_market_fee`, which is toggled by providing 
+the corresponding string in the `fee_type` input parameter. 
+
 ---
 
 ### Hardware API
@@ -196,10 +319,3 @@ the following command
 ```
 device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
 ```
-
----
-## Interacting with the CLI
-You can run one of the setup scripts residing in the `d3a_api_client/setups` folder, or you can 
-set the path for your scripts directory as list in the `d3a_api_client.constants` .
-In order to run a module you can use the following command
-`d3a-api-client run --setup {module_name}`

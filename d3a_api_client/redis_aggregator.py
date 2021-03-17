@@ -9,7 +9,8 @@ from d3a_interface.utils import wait_until_timeout_blocking
 
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util
+from d3a_api_client.utils import execute_function_util, log_market_progression
+from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 
 
 class RedisAPIException(Exception):
@@ -21,6 +22,7 @@ class RedisAggregator:
     def __init__(self, aggregator_name, accept_all_devices=True,
                  redis_url='redis://localhost:6379'):
 
+        self.grid_fee_calculation = GridFeeCalculation()
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
@@ -72,6 +74,8 @@ class RedisAggregator:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
         if data['status'] == "SELECTED":
             self._selected_by_device(data)
+        if data['status'] == "UNSELECTED":
+            self._unselected_by_device(data)
 
     def _events_callback_dict(self, message):
         payload = json.loads(message['data'])
@@ -84,7 +88,7 @@ class RedisAggregator:
         elif "event" in payload and payload["event"] == "finish":
             self._on_finish(payload)
 
-        self.on_event_or_response(payload)
+        self._on_event_or_response(payload)
 
     def _check_transaction_id_cached_out(self, transaction_id):
         return transaction_id in self._transaction_id_buffer
@@ -150,10 +154,38 @@ class RedisAggregator:
         """
         return self._client_command_buffer
 
+    @property
+    def commands_buffer_length(self):
+        """
+        Returns the length of the batch commands buffer
+        """
+        return self._client_command_buffer.buffer_length
+
+    def batch_command(self, batch_command_dict, is_blocking=True):
+        # TODO: Remove this as this is kept atm for the backward compatibility
+        self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
+        transaction_id = str(uuid.uuid4())
+        batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
+                           "aggregator_uuid": self.aggregator_uuid,
+                           "batch_commands": batch_command_dict}
+        batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
+        self.redis_db.publish(batch_channel, json.dumps(batched_command))
+        self._transaction_id_buffer.append(transaction_id)
+
+        if is_blocking:
+            try:
+                wait_until_timeout_blocking(
+                    lambda: not self._check_transaction_id_cached_out(transaction_id)
+                )
+                return self._transaction_id_response_buffer.get(transaction_id, None)
+            except AssertionError:
+                raise RedisAPIException(f'API registration process timed out.')
+
     def execute_batch_commands(self, is_blocking=True):
-        batch_command_dict = self._client_command_buffer.execute_batch()
-        if not batch_command_dict:
+        if not self.commands_buffer_length:
             return
+        batch_command_dict = self._client_command_buffer.execute_batch()
+        self._client_command_buffer.clear()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id = str(uuid.uuid4())
         batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
@@ -167,33 +199,52 @@ class RedisAggregator:
                 wait_until_timeout_blocking(
                     lambda: not self._check_transaction_id_cached_out(transaction_id)
                 )
-                self._client_command_buffer.clear()
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
                 raise RedisAPIException(f'API registration process timed out.')
-        self._client_command_buffer.clear()
+
+    def _on_event_or_response(self, message):
+        logging.info(f"A new message was received. Message information: {message}")
+        log_market_progression(message)
+        function = lambda: self.on_event_or_response(message)
+        self.executor.submit(execute_function_util, function=function,
+                             function_name="on_event_or_response")
+
+    def calculate_grid_fee(self, start_market_or_device_name: str,
+                           target_market_or_device_name: str = None,
+                           fee_type: str = "next_market_fee"):
+        return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
+                                                            target_market_or_device_name, fee_type)
 
     def _on_market_cycle(self, message):
-        logging.info(f"A new market was created. Market information: {message}")
+        self.grid_fee_calculation.handle_grid_stats(message)
         function = lambda: self.on_market_cycle(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
 
     def _on_tick(self, message):
-        logging.info(f"Time has elapsed on the device. Progress info: {message}")
         function = lambda: self.on_tick(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_tick")
 
-    def _on_trade(self, message):
-        logging.info(f"A trade took place on the device. Trade information: {message}")
-        function = lambda: self.on_trade(message)
+    @staticmethod
+    def _log_trade_info(message):
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
+                     f"at {round(message.get('price'), 2)} cents -->")
 
+    def _on_trade(self, message):
+        if "content" not in message:
+            # Device message
+            self._log_trade_info(message)
+        else:
+            # Aggregator message
+            for individual_trade in message["content"]:
+                self._log_trade_info(individual_trade)
+        function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")
 
     def _on_finish(self, message):
-        logging.info(f"Simulation finished. Information: {message}")
         function = lambda: self.on_finish(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_finish")

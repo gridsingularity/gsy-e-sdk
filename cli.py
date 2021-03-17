@@ -38,7 +38,7 @@ log = getLogger(__name__)
 
 @click.group(name='d3a-api-client', cls=DefaultGroup, default='run', default_if_no_args=True,
              context_settings={'max_content_width': 120})
-@click.option('-l', '--log-level', type=Choice(list(logging._nameToLevel.keys())), default='INFO',
+@click.option('-l', '--log-level', type=Choice(list(logging._nameToLevel.keys())), default='ERROR',
               show_default=True, help="Log level")
 def main(log_level):
     handler = logging.StreamHandler()
