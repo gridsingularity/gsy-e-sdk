@@ -57,7 +57,7 @@ def generate_api_client_args_mapping(allowed_device_mapping):
 
 
 def refresh_cn_and_device_list(last_time_checked, api_client_dict,
-                               default_api_client_map):
+                               allowed_device_mapping):
     if time() - last_time_checked >= RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS:
         last_time_checked = time()
         api_client_dict = generate_api_client_args_mapping(default_api_client_map)
