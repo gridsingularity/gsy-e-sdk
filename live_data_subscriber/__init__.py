@@ -56,12 +56,10 @@ def generate_api_client_args_mapping(allowed_device_mapping):
     return api_client_mapping
 
 
-def refresh_cn_and_device_list(last_time_checked, api_client_dict, is_mqtt=False):
+def refresh_cn_and_device_list(last_time_checked, api_client_dict,
+                               default_api_client_map):
     if time() - last_time_checked >= RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS:
         last_time_checked = time()
-        allowed_device_mapping = mqtt_devices_name_mapping if is_mqtt else ws_devices_name_mapping
-        api_client_dict = generate_api_client_args_mapping(allowed_device_mapping)
-        log_text = f"MQTT topics" if is_mqtt else f"WS devices"
-        logging.info(f"Connecting to the following {log_text} {api_client_dict}")
-        return last_time_checked, api_client_dict
+        api_client_dict = generate_api_client_args_mapping(default_api_client_map)
+        logging.info(f"Connecting to {api_client_dict}")
     return last_time_checked, api_client_dict

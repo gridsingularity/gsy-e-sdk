@@ -20,7 +20,7 @@ class MQTTConnection:
         self.last_time_checked, self.topic_api_client_dict = refresh_cn_and_device_list(
             last_time_checked=time() - RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS,
             api_client_dict={v: [] for _, v in mqtt_devices_name_mapping.items()},
-            is_mqtt=True
+            default_api_client_map=mqtt_devices_name_mapping
         )
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
@@ -42,7 +42,8 @@ class MQTTConnection:
         logging.info(f"Received mqtt message {msg.topic} {str(msg.payload)}")
         try:
             self.last_time_checked, self.topic_api_client_dict = refresh_cn_and_device_list(
-                self.last_time_checked, self.topic_api_client_dict, is_mqtt=True
+                self.last_time_checked, self.topic_api_client_dict,
+                default_api_client_map=mqtt_devices_name_mapping
             )
             payload = json.loads(msg.payload.decode("utf-8"))
 

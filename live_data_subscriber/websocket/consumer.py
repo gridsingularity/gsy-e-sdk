@@ -21,7 +21,8 @@ class LiveDataWebsocketMessageReceiver(WebsocketMessageReceiver):
                 dev_idf = message['data']['device_identifier']
                 self.client.last_time_checked, self.client.device_api_client_mapping = \
                     refresh_cn_and_device_list(self.client.last_time_checked,
-                                               self.client.device_api_client_mapping)
+                                               self.client.device_api_client_mapping,
+                                               default_api_client_map=ws_devices_name_mapping)
                 for api_args in self.client.device_api_client_mapping[dev_idf]:
                     RestDeviceClient(**api_args).set_energy_forecast(
                         message['data']['energy_wh'], do_not_wait=True
@@ -57,7 +58,8 @@ class WSConsumer(RestCommunicationMixin):
         self._create_jwt_refresh_timer(self.domain_name)
         self.last_time_checked, self.device_api_client_mapping = refresh_cn_and_device_list(
             last_time_checked=time() - RELOAD_CN_DEVICE_LIST_TIMEOUT_SECONDS,
-            api_client_dict={k: [] for k, _ in ws_devices_name_mapping.items()}
+            api_client_dict={k: [] for k, _ in ws_devices_name_mapping.items()},
+            default_api_client_map=ws_devices_name_mapping
         )
         self.websockets_domain_name = consumer_websocket_domain_name_from_env
         self.start_websocket_connection()
