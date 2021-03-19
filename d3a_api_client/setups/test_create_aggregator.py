@@ -1,3 +1,6 @@
+import os
+import sys
+
 from pendulum import today
 import logging
 from time import sleep
@@ -53,10 +56,12 @@ class TestAggregator(Aggregator):
         self.is_finished = True
 
 
-import os
-simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
-domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
-websocket_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
+try:
+    simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
+    domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
+    websocket_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
+except KeyError as ex:
+    sys.exit(f'Missing environment variable: {ex.args[0]}. The script cannot continue.')
 
 
 aggr = TestAggregator(
