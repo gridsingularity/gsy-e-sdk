@@ -25,6 +25,8 @@ class AreaNotFoundException(Exception):
 class RedisAPIException(Exception):
     pass
 
+class SimulationInfoException(Exception):
+    pass
 
 class RestCommunicationMixin:
 
@@ -276,12 +278,15 @@ def log_bid_offer_confirmation(message):
 
 def get_simulation_info(simulation_id=simulation_id_from_env, domain_name=domain_name_from_env,
                         websockets_domain_name=websocket_domain_name_from_env):
-    if os.environ['JSON_FILE_PATH'] != "":
+    if os.environ.get('JSON_FILE_PATH', "") != "":
         with open(os.environ['JSON_FILE_PATH']) as json_file:
             simulation_info = json.load(json_file)
-            simulation_id = simulation_info['uuid']
-            domain_name = simulation_info['domain_name']
-            websockets_domain_name = simulation_info['web_socket_domain_name']
+        if set(simulation_info.keys()) != {"username", "name", "uuid", "domain_name",
+                                           "web_socket_domain_name", "global_settings", "registry"}:
+            raise SimulationInfoException(f"Simulation_file doesn't have all the keys")
+        simulation_id = simulation_info['uuid']
+        domain_name = simulation_info['domain_name']
+        websockets_domain_name = simulation_info['web_socket_domain_name']
     else:
         simulation_id = simulation_id
         domain_name = domain_name

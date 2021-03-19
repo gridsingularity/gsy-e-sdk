@@ -19,7 +19,9 @@ import importlib
 import logging
 import click
 import os
+import inspect
 import sys
+
 
 from click.types import Choice
 from click_default_group import DefaultGroup
@@ -28,12 +30,15 @@ from logging import getLogger
 
 from d3a_interface.exceptions import D3AException
 from d3a_interface.utils import iterate_over_all_modules
+from d3a_api_client.utils import SimulationInfoException
+import d3a_api_client
 
 import d3a_api_client.setups as setups
 from d3a_api_client.constants import SETUP_FILE_PATH, DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
 
 
 log = getLogger(__name__)
+api_client_path = os.path.dirname(inspect.getsourcefile(d3a_api_client))
 
 
 @click.group(name='d3a-api-client', cls=DefaultGroup, default='run', default_if_no_args=True,
@@ -60,7 +65,7 @@ _setup_modules = iterate_over_all_modules(modules_path)
 
 
 @main.command()
-@click.option('-base-path', 'base_setup_path', default=None, type=str,
+@click.option('-b', '--base-setup-path', default=None, type=str,
               help="Accept absolute or relative path for client script")
 @click.option('--setup', 'setup_module_name', default="auto_offer_bid_on_device",
               help="Setup module of client script. Available modules: [{}]".format(
@@ -85,6 +90,7 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
     set_simulation_file_env(base_setup_path, simulation_info, run_on_redis)
+    print(f"JSON_FILE_PATH: {os.environ['JSON_FILE_PATH']}")
 
     load_client_script(base_setup_path, setup_module_name)
 
@@ -112,9 +118,18 @@ def set_simulation_file_env(base_setup_path, simulation_info, run_on_redis):
         os.environ["JSON_FILE_PATH"] = ""
         return
     if simulation_info is None:
-        if base_setup_path is None:
-            os.environ["JSON_FILE_PATH"] = ""
+        raise SimulationInfoException(f"simulation-file must be provided")
     elif os.path.isabs(simulation_info):
         os.environ["JSON_FILE_PATH"] = simulation_info
+    elif base_setup_path is None:
+        os.environ["JSON_FILE_PATH"] = os.path.join(api_client_path, 'setups',
+                                                    simulation_info)
+    elif base_setup_path is not None:
+        if os.path.isabs(base_setup_path):
+            os.environ["JSON_FILE_PATH"] = os.path.join(base_setup_path, simulation_info)
+        else:
+            os.environ["JSON_FILE_PATH"] = os.path.join(os.getcwd(), base_setup_path,
+                                                        simulation_info)
+
     else:
         os.environ["JSON_FILE_PATH"] = os.path.join(os.getcwd(), simulation_info)
