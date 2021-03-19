@@ -1,11 +1,9 @@
 import json
 import logging
-from math import isclose
 import traceback
 
 from d3a_interface.utils import key_in_dict_and_not_none
 
-from d3a_api_client.enums import Commands, command_enum_to_command_name
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
@@ -103,7 +101,6 @@ class BatchAggregator(RedisAggregator):
                 self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
                                                      fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
                 self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
-                self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
 
             if self.commands_buffer_length:
                 transaction = self.execute_batch_commands()

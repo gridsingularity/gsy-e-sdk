@@ -28,8 +28,8 @@ class TestAggregator(Aggregator):
             area_uuid = area_event["area_uuid"]
             if area_uuid is None:
                 continue
-            self.add_to_batch_commands.last_market_stats(area_uuid=area_uuid).\
-                grid_fees(area_uuid=area_uuid, fee_cents_kwh=self.fee_cents_per_kwh)
+            self.add_to_batch_commands.grid_fees(
+                area_uuid=area_uuid, fee_cents_kwh=self.fee_cents_per_kwh)
         response = self.execute_batch_commands()
         logging.info(f"Batch command placed on the new market: {response}")
 

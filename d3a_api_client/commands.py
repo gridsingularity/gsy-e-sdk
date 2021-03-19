@@ -66,9 +66,6 @@ class ClientCommandBuffer:
     def device_info(self, area_uuid):
         return self._add_to_buffer(area_uuid, Commands.DEVICE_INFO, {})
 
-    def last_market_stats(self, area_uuid):
-        return self._add_to_buffer(area_uuid, Commands.MARKET_STATS, {"data": {}})
-
     def last_market_dso_stats(self, area_uuid):
         return self._add_to_buffer(area_uuid, Commands.DSO_MARKET_STATS, {"data": {}})
 

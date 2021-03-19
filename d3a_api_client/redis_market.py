@@ -164,11 +164,6 @@ class RedisMarketClient:
         logging.debug(f"Command {command_type} got response {command_output}")
         return command_output
 
-    def last_market_stats(self):
-        logging.debug(f"Client tries to last_market_stats.")
-        self.redis_db.publish(f"{self._channel_prefix}/market_stats", json.dumps({}))
-        return self._wait_and_consume_command_response("market_stats")
-
     def grid_fees(self, fee_cents_kwh):
         logging.debug(f"Client tries to change grid fees.")
         self.redis_db.publish(f"{self._channel_prefix}/grid_fees", json.dumps({"fee_const": fee_cents_kwh}))

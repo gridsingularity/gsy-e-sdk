@@ -31,8 +31,8 @@ class AutoAggregator(RedisAggregator):
                     device_event["device_info"]["energy_requirement_kWh"] > 0.0:
                 self.add_to_batch_commands.bid_energy(area_uuid=device_event["area_uuid"], price=30,
                                                       energy=device_event["device_info"]["energy_requirement_kWh"] / 2) \
-                    .list_bids(area_uuid=device_event["area_uuid"]) \
-                    .last_market_stats(area_uuid=device_event["area_uuid"])
+                    .list_bids(area_uuid=device_event["area_uuid"])
+
         response = self.execute_batch_commands()
         logging.info(f"Batch command placed on the new market: {response}")
 
@@ -70,7 +70,6 @@ selected = pv.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
 
 redis_market = RedisMarketClient('house-2')
-last_market_stats_results = redis_market.last_market_stats()
 
 while not aggregator.is_finished:
     sleep(0.5)

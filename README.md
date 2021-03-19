@@ -158,7 +158,6 @@ device_client.unregister()
 - list statistics: 
     ```
     market_client.last_market_dso_stats()
-    market_client.last_market_stats()
     ```
 - change grid fees: 
 
@@ -266,10 +265,6 @@ The following commands can be issued as batch commands (refer to [How to send ba
 - Lists all posted bids:
     ```python
     list_bids(area_uuid)
-    ```
-- Retrieve market statistics: 
-    ```python
-    last_market_stats(area_uuid)
     ```
 - Retrieve market DSO statistics:
     ```python
