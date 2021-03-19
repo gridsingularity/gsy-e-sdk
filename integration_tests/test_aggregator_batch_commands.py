@@ -1,9 +1,11 @@
 import json
 import logging
+from math import isclose
 import traceback
 
 from d3a_interface.utils import key_in_dict_and_not_none
 
+from d3a_api_client.enums import Commands, command_enum_to_command_name
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
@@ -20,6 +22,7 @@ class BatchAggregator(RedisAggregator):
         self._setup()
         self.is_active = True
         self.updated_house2_grid_fee_cents_kwh = 5
+        self.updated_offer_bid_price = 60
 
         self._has_tested_bids = False
         self._has_tested_offers = False
