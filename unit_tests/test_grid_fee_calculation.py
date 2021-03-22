@@ -54,7 +54,7 @@ class TestGridFeeCalculation(unittest.TestCase):
         self.grid_fee_calc._get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(
             self.grid_fee_calc.latest_grid_stats_tree, [])
 
-    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_leaf_devices(self, fee_type):
         leaf_names = ['PV 2.1', 'PV 1.2', 'PV 3']
         for leaf_name in leaf_names:
@@ -63,7 +63,7 @@ class TestGridFeeCalculation(unittest.TestCase):
                 expected_fee += 1.
             assert expected_fee == self.grid_fee_calc.calculate_grid_fee(leaf_name, fee_type=fee_type)
 
-    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_markets(self, fee_type):
         market_names = ['House 2.1', 'House 1.2', 'Street 1', 'Grid 10']
         for market_name in market_names:
@@ -72,7 +72,7 @@ class TestGridFeeCalculation(unittest.TestCase):
                 expected_fee += 1.
             assert expected_fee == self.grid_fee_calc.calculate_grid_fee(market_name, fee_type=fee_type)
 
-    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_leaf_to_grid(self, fee_type):
         target_market = 'Grid 10'
         if fee_type == 'next_market_fee':
@@ -105,7 +105,7 @@ class TestGridFeeCalculation(unittest.TestCase):
                 target_market_or_device_name=leaf_names[1],
                 fee_type=fee_type))
 
-    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_market_to_leaf(self, fee_type):
         if fee_type == 'next_market_fee':
             leaf_name_expected_fee = {21.3: ['House 2.1', 'Load 1.2'],
@@ -121,7 +121,7 @@ class TestGridFeeCalculation(unittest.TestCase):
                 target_market_or_device_name=leaf_names[1],
                 fee_type=fee_type))
 
-    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_market_to_market(self, fee_type):
         if fee_type == 'next_market_fee':
             leaf_name_expected_fee = {21.3: ['House 2.1', 'House 1.2'],
@@ -137,7 +137,7 @@ class TestGridFeeCalculation(unittest.TestCase):
                 target_market_or_device_name=leaf_names[1],
                 fee_type=fee_type))
 
-    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_device_to_parent(self, fee_type):
         if fee_type == 'next_market_fee':
             leaf_name_expected_fee = {3.1: ['House 2.1', 'Load 2.1'],
@@ -151,7 +151,7 @@ class TestGridFeeCalculation(unittest.TestCase):
                 target_market_or_device_name=leaf_names[1],
                 fee_type=fee_type))
 
-    @parameterized.expand([['last_market_fee'], ['next_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_device_to_street(self, fee_type):
         if fee_type == 'next_market_fee':
             leaf_name_expected_fee = {6.1: ['Load 2.1', 'Street 2'],
@@ -165,7 +165,7 @@ class TestGridFeeCalculation(unittest.TestCase):
                 target_market_or_device_name=leaf_names[1],
                 fee_type=fee_type))
 
-    @parameterized.expand([['last_market_fee']])
+    @parameterized.expand(['last_market_fee', 'next_market_fee'])
     def test_grid_fee_is_calculated_correctly_for_street_to_grid(self, fee_type):
         if fee_type == 'next_market_fee':
             leaf_name_expected_fee = {13.: ['Street 1', 'Grid 10'],
