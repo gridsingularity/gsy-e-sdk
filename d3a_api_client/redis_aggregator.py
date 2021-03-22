@@ -45,12 +45,13 @@ class RedisAggregator:
     def _subscribe_to_response_channels(self):
         event_channel = f'external-aggregator/*/{self.aggregator_uuid}/events/all'
         channel_dict = {event_channel: self._events_callback_dict,
+                        "aggregator_response": self._aggregator_response_callback,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
                         }
 
         self.pubsub.psubscribe(**channel_dict)
-        self.pubsub.subscribe(**{"aggregator_response": self._aggregator_response_callback})
+        # self.pubsub.subscribe(**{"aggregator_response": self._aggregator_response_callback})
         self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):
@@ -68,6 +69,7 @@ class RedisAggregator:
         self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
+        print(f"_aggregator_response_callback: {message}")
         data = json.loads(message['data'])
 
         if data['transaction_id'] in self._transaction_id_buffer:
@@ -131,6 +133,7 @@ class RedisAggregator:
                 raise RedisAPIException(f'API has timed out.')
 
     def _selected_by_device(self, message):
+        print(f"_selected_by_device: {message}")
         if self.accept_all_devices:
             self.device_uuid_list.append(message["device_uuid"])
 

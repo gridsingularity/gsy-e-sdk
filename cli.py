@@ -30,7 +30,7 @@ from logging import getLogger
 
 from d3a_interface.exceptions import D3AException
 from d3a_interface.utils import iterate_over_all_modules
-from d3a_api_client.utils import SimulationInfoException
+from d3a_interface.simulation_config import SimulationConfigException
 import d3a_api_client
 
 import d3a_api_client.setups as setups
@@ -76,12 +76,12 @@ _setup_modules = iterate_over_all_modules(modules_path)
               type=str, help="D3A domain name")
 @click.option('-w', '--web-socket', default=DEFAULT_WEBSOCKET_DOMAIN,
               type=str, help="D3A websocket URL")
-@click.option('-i', '--simulation-info', type=str,
-              help="Simulation File info (accept absolute and relative path)")
+@click.option('-i', '--simulation-config-path', type=str,
+              help="Simulation Config info (accept absolute and relative path)")
 @click.option('--run-on-redis', is_flag=True, default=False,
               help="Start the client using the Redis API")
 def run(base_setup_path, setup_module_name, username, password, domain_name, web_socket,
-        simulation_info, run_on_redis, **kwargs):
+        simulation_config_path, run_on_redis, **kwargs):
     if username is not None:
         os.environ["API_CLIENT_USERNAME"] = username
     if password is not None:
@@ -89,8 +89,8 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
-    set_simulation_file_env(base_setup_path, simulation_info, run_on_redis)
-    print(f"JSON_FILE_PATH: {os.environ['JSON_FILE_PATH']}")
+    set_simulation_file_env(base_setup_path, simulation_config_path, run_on_redis)
+    print(f"SIMULATION_CONFIG_FILE_PATH: {os.environ['SIMULATION_CONFIG_FILE_PATH']}")
 
     load_client_script(base_setup_path, setup_module_name)
 
@@ -113,23 +113,25 @@ def load_client_script(base_setup_path, setup_module_name):
         log.error("Could not find the specified module")
 
 
-def set_simulation_file_env(base_setup_path, simulation_info, run_on_redis):
+def set_simulation_file_env(base_setup_path, simulation_config_path, run_on_redis):
     if run_on_redis is True:
-        os.environ["JSON_FILE_PATH"] = ""
+        os.environ["SIMULATION_CONFIG_FILE_PATH"] = ""
         return
-    if simulation_info is None:
-        raise SimulationInfoException(f"simulation-file must be provided")
-    elif os.path.isabs(simulation_info):
-        os.environ["JSON_FILE_PATH"] = simulation_info
+    if simulation_config_path is None:
+        raise SimulationConfigException(f"simulation_config_path must be provided")
+    elif os.path.isabs(simulation_config_path):
+        os.environ["SIMULATION_CONFIG_FILE_PATH"] = simulation_config_path
     elif base_setup_path is None:
-        os.environ["JSON_FILE_PATH"] = os.path.join(api_client_path, 'setups',
-                                                    simulation_info)
+        os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
+            os.path.join(api_client_path, 'setups', simulation_config_path)
     elif base_setup_path is not None:
         if os.path.isabs(base_setup_path):
-            os.environ["JSON_FILE_PATH"] = os.path.join(base_setup_path, simulation_info)
+            os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
+                os.path.join(base_setup_path, simulation_config_path)
         else:
-            os.environ["JSON_FILE_PATH"] = os.path.join(os.getcwd(), base_setup_path,
-                                                        simulation_info)
+            os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
+                os.path.join(os.getcwd(), base_setup_path, simulation_config_path)
 
     else:
-        os.environ["JSON_FILE_PATH"] = os.path.join(os.getcwd(), simulation_info)
+        os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
+            os.path.join(os.getcwd(), simulation_config_path)

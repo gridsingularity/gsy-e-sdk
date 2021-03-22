@@ -6,7 +6,7 @@ from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunication
     logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util, log_market_progression
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
-    get_simulation_info
+    get_simulation_config
 
 
 class RestMarketClient(RestCommunicationMixin):
@@ -16,7 +16,7 @@ class RestMarketClient(RestCommunicationMixin):
 
         self.device_id = area_id
         self.simulation_id, self.domain_name, websockets_domain_name = \
-            get_simulation_info(simulation_id, domain_name, websockets_domain_name)
+            get_simulation_config(simulation_id, domain_name, websockets_domain_name)
         self.jwt_token = retrieve_jwt_key_from_server(domain_name)
         self._create_jwt_refresh_timer(domain_name)
         self.dispatcher = WebsocketMessageReceiver(self)

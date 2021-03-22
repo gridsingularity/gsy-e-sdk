@@ -50,7 +50,7 @@ pip install git+https://github.com/gridsingularity/d3a-api-client.git
 
 ## How to use the Client
 
-### Interacting with the CLI
+### Interacting with CLI
 You can run one of the setup scripts residing in the `d3a_api_client/setups` folder, or you can 
 set the path for your scripts directory as list in the `d3a_api_client.constants` .
 In order to run a module you can use the following command
