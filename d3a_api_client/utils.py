@@ -11,6 +11,7 @@ from tabulate import tabulate
 from sgqlc.endpoint.http import HTTPEndpoint
 
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     CUSTOMER_WEBSOCKET_DOMAIN_NAME
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
@@ -18,6 +19,17 @@ from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_
 
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     API_CLIENT_SIMULATION_ID
+
+DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
+
+
+WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
+
+CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
+                                                         CUSTOMER_WEBSOCKET_DOMAIN_NAME)
+
+
+SIMULATION_ID_FROM_ENV = os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
 
 
 class AreaNotFoundException(Exception):
@@ -253,18 +265,6 @@ def log_market_progression(message):
         logging.warning(f"Error while logging market progression {e}")
 
 
-domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
-
-
-websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
-
-consumer_websocket_domain_name_from_env = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
-                                                         CUSTOMER_WEBSOCKET_DOMAIN_NAME)
-
-
-simulation_id_from_env = os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
-
-
 def log_bid_offer_confirmation(message):
     try:
         if message.get("status") == "ready":
@@ -279,13 +279,13 @@ def log_bid_offer_confirmation(message):
         logging.error(f"Logging bid/offer info failed.{e}")
 
 
-def get_simulation_config(simulation_id=simulation_id_from_env, domain_name=domain_name_from_env,
-                          websockets_domain_name=websocket_domain_name_from_env):
-    if os.environ.get('SIMULATION_CONFIG_FILE_PATH', "") != "":
+def get_simulation_config(simulation_id=SIMULATION_ID_FROM_ENV, domain_name=DOMAIN_NAME_FROM_ENV,
+                          websockets_domain_name=WEBSOCKET_DOMAIN_NAME_FROM_ENV):
+    if os.environ.get('SIMULATION_CONFIG_FILE_PATH') not in ["", None]:
         with open(os.environ['SIMULATION_CONFIG_FILE_PATH']) as json_file:
             simulation_config = json.load(json_file)
-        from d3a_interface.simulation_config import validate_simulation_config
-        validate_simulation_config(simulation_config)
+            print(f"simulation_config: {simulation_config}")
+        validate_api_simulation_config(simulation_config)
         simulation_id = simulation_config['uuid']
         domain_name = simulation_config['domain_name']
         websockets_domain_name = simulation_config['web_socket_domain_name']

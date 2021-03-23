@@ -4,7 +4,7 @@ import threading
 import asyncio
 from time import sleep, time
 
-from d3a_api_client.utils import consumer_websocket_domain_name_from_env, domain_name_from_env, \
+from d3a_api_client.utils import CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV, DOMAIN_NAME_FROM_ENV, \
     retrieve_jwt_key_from_server, RestCommunicationMixin
 from d3a_api_client.websocket_device import WebsocketMessageReceiver
 from d3a_api_client.websocket_device import retry_coroutine
@@ -53,7 +53,7 @@ class WSConsumer(RestCommunicationMixin):
 
     def __init__(self):
         super().__init__()
-        self.domain_name = domain_name_from_env
+        self.domain_name = DOMAIN_NAME_FROM_ENV
         self.jwt_token = retrieve_jwt_key_from_server(self.domain_name)
         self._create_jwt_refresh_timer(self.domain_name)
         self.last_time_checked, self.device_api_client_mapping = refresh_cn_and_device_list(
@@ -61,7 +61,7 @@ class WSConsumer(RestCommunicationMixin):
             api_client_dict={k: [] for k, _ in ws_devices_name_mapping.items()},
             default_api_client_map=ws_devices_name_mapping
         )
-        self.websockets_domain_name = consumer_websocket_domain_name_from_env
+        self.websockets_domain_name = CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV
         self.start_websocket_connection()
         self.run_forever()
 

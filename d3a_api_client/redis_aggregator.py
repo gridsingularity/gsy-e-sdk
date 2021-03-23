@@ -51,7 +51,6 @@ class RedisAggregator:
                         }
 
         self.pubsub.psubscribe(**channel_dict)
-        # self.pubsub.subscribe(**{"aggregator_response": self._aggregator_response_callback})
         self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):

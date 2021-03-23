@@ -30,7 +30,7 @@ from logging import getLogger
 
 from d3a_interface.exceptions import D3AException
 from d3a_interface.utils import iterate_over_all_modules
-from d3a_interface.simulation_config import SimulationConfigException
+from d3a_interface.api_simulation_config import ApiSimulationConfigException
 import d3a_api_client
 
 import d3a_api_client.setups as setups
@@ -77,7 +77,7 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @click.option('-w', '--web-socket', default=DEFAULT_WEBSOCKET_DOMAIN,
               type=str, help="D3A websocket URI")
 @click.option('-i', '--simulation-config-path', type=str,
-              help="Simulation Config info (accept absolute and relative path)")
+              help="Path to simulation config file (accept absolute and relative path)")
 @click.option('--run-on-redis', is_flag=True, default=False,
               help="Start the client using the Redis API")
 def run(base_setup_path, setup_module_name, username, password, domain_name, web_socket,
@@ -117,7 +117,7 @@ def set_simulation_file_env(base_setup_path, simulation_config_path, run_on_redi
         os.environ["SIMULATION_CONFIG_FILE_PATH"] = ""
         return
     if simulation_config_path is None:
-        raise SimulationConfigException(f"simulation_config_path must be provided")
+        raise ApiSimulationConfigException(f"simulation_config_path must be provided")
     elif os.path.isabs(simulation_config_path):
         os.environ["SIMULATION_CONFIG_FILE_PATH"] = simulation_config_path
     elif base_setup_path is None:

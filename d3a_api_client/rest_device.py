@@ -6,7 +6,7 @@ from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util, \
-    log_market_progression, domain_name_from_env, websocket_domain_name_from_env, \
+    log_market_progression, DOMAIN_NAME_FROM_ENV, WEBSOCKET_DOMAIN_NAME_FROM_ENV, \
     log_bid_offer_confirmation, get_simulation_config
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
@@ -17,8 +17,8 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def __init__(self, device_id=None, simulation_id=None,
-                 domain_name=domain_name_from_env,
-                 websockets_domain_name=websocket_domain_name_from_env,
+                 domain_name=DOMAIN_NAME_FROM_ENV,
+                 websockets_domain_name=WEBSOCKET_DOMAIN_NAME_FROM_ENV,
                  autoregister=False, start_websocket=True,
                  sim_api_domain_name=None):
         self.simulation_id, self.domain_name, self.websockets_domain_name = \

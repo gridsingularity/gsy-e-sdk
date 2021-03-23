@@ -51,8 +51,7 @@ pip install git+https://github.com/gridsingularity/d3a-api-client.git
 ## How to use the Client
 
 ### Interacting via CLI
-It helps to trigger your client script interact with your interested d3a's collaboration/CN conveniently via bash terminal.
-In order to get help of supported flag with its minimal explanation, please do the following
+In order to get help, please run:
 ```
 d3a-api-client run --help
 ```
@@ -64,7 +63,7 @@ Following is the more in depth explanation of individual flags supported,
 - domain-name --> D3A domain name
 - web-socket --> D3A websocket URI
 - simulation-config-path --> Path of JSON format file that contains agent's point of interest's collaboration/CN's info (It could downloaded from the registry page of UI) 
-- run-on-redis --> This flag targets the local testing of api client, where no user authentication is needed and needs to be skipped.
+- run-on-redis --> This flag targets the local testing of api client, where no user authentication. A locally running redis server d3a simulation is needed here.
 
 #### Examples
 - For local testing of api-client
