@@ -81,6 +81,15 @@ load1 = RestDeviceClient(
     **device_args
 )
 
+
+load2_uuid = get_area_uuid_from_area_name_and_collaboration_id(
+    device_args["simulation_id"], "Load 2", device_args["domain_name"])
+device_args["device_id"] = load2_uuid
+
+load2 = RestDeviceClient(
+    **device_args
+)
+
 pv1_uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, "PV", domain_name)
 device_args["device_id"] = pv1_uuid
 pv1 = RestDeviceClient(

@@ -69,7 +69,6 @@ class RedisAggregator:
         self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
-        print(f"_aggregator_response_callback: {message}")
         data = json.loads(message['data'])
 
         if data['transaction_id'] in self._transaction_id_buffer:
@@ -133,7 +132,6 @@ class RedisAggregator:
                 raise RedisAPIException(f'API has timed out.')
 
     def _selected_by_device(self, message):
-        print(f"_selected_by_device: {message}")
         if self.accept_all_devices:
             self.device_uuid_list.append(message["device_uuid"])
 
