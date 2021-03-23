@@ -20,6 +20,7 @@ class AutoGridFeeUpdateOnMarket(market_client_type):
         self.current_time = None
         self.updated_fee = None
         self.list_dso_stats = None
+        self.wait_script = True
 
     def on_market_cycle(self, market_info):
 
@@ -43,4 +44,5 @@ class AutoGridFeeUpdateOnMarket(market_client_type):
             raise e
 
     def on_finish(self, finish_info):
+        self.wait_script = False
         self.status = "finished"
