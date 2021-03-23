@@ -11,8 +11,8 @@ from d3a_api_client.utils import DOMAIN_NAME_FROM_ENV, WEBSOCKET_DOMAIN_NAME_FRO
 
 class RestMarketClient(RestCommunicationMixin):
 
-    def __init__(self, area_id, simulation_id=None, domain_name=DOMAIN_NAME_FROM_ENV,
-                 websockets_domain_name=WEBSOCKET_DOMAIN_NAME_FROM_ENV):
+    def __init__(self, area_id, simulation_id=None, domain_name=None,
+                 websockets_domain_name=None):
 
         self.device_id = area_id
         self.simulation_id, self.domain_name, websockets_domain_name = \

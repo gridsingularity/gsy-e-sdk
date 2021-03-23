@@ -279,18 +279,22 @@ def log_bid_offer_confirmation(message):
         logging.error(f"Logging bid/offer info failed.{e}")
 
 
-def get_simulation_config(simulation_id=SIMULATION_ID_FROM_ENV, domain_name=DOMAIN_NAME_FROM_ENV,
-                          websockets_domain_name=WEBSOCKET_DOMAIN_NAME_FROM_ENV):
+def get_simulation_config(simulation_id=None, domain_name=None, websockets_domain_name=None):
     if os.environ.get('SIMULATION_CONFIG_FILE_PATH') not in ["", None]:
         with open(os.environ['SIMULATION_CONFIG_FILE_PATH']) as json_file:
             simulation_config = json.load(json_file)
-            print(f"simulation_config: {simulation_config}")
         validate_api_simulation_config(simulation_config)
-        simulation_id = simulation_config['uuid']
-        domain_name = simulation_config['domain_name']
-        websockets_domain_name = simulation_config['web_socket_domain_name']
+        simulation_id = simulation_config['uuid'] \
+            if simulation_id is None else simulation_id
+        domain_name = simulation_config['domain_name'] \
+            if domain_name is None else domain_name
+        websockets_domain_name = simulation_config['web_socket_domain_name'] \
+            if websockets_domain_name is None else websockets_domain_name
     else:
-        simulation_id = simulation_id
-        domain_name = domain_name
-        websockets_domain_name = websockets_domain_name
+        simulation_id = SIMULATION_ID_FROM_ENV \
+            if simulation_id is None else simulation_id
+        domain_name = DOMAIN_NAME_FROM_ENV \
+            if domain_name is None else domain_name
+        websockets_domain_name = WEBSOCKET_DOMAIN_NAME_FROM_ENV \
+            if websockets_domain_name is None else websockets_domain_name
     return simulation_id, domain_name, websockets_domain_name
