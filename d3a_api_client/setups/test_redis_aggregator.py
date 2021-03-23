@@ -4,7 +4,6 @@ from time import sleep
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_interface.utils import key_in_dict_and_not_none
-from d3a_api_client.redis_market import RedisMarketClient
 
 
 class AutoAggregator(RedisAggregator):
@@ -63,13 +62,10 @@ load = RedisDeviceClient('load', autoregister=True)
 pv = RedisDeviceClient('pv', autoregister=True)
 
 selected = load.select_aggregator(aggregator.aggregator_uuid)
-selected = load.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
 
 selected = pv.select_aggregator(aggregator.aggregator_uuid)
 logging.info(f"SELECTED: {selected}")
-
-redis_market = RedisMarketClient('house-2')
 
 while not aggregator.is_finished:
     sleep(0.5)
