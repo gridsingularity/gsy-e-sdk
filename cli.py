@@ -75,7 +75,7 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @click.option('-d', '--domain-name', default=DEFAULT_DOMAIN_NAME,
               type=str, help="D3A domain name")
 @click.option('-w', '--web-socket', default=DEFAULT_WEBSOCKET_DOMAIN,
-              type=str, help="D3A websocket URL")
+              type=str, help="D3A websocket URI")
 @click.option('-i', '--simulation-config-path', type=str,
               help="Simulation Config info (accept absolute and relative path)")
 @click.option('--run-on-redis', is_flag=True, default=False,
@@ -90,7 +90,6 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
     set_simulation_file_env(base_setup_path, simulation_config_path, run_on_redis)
-    print(f"SIMULATION_CONFIG_FILE_PATH: {os.environ['SIMULATION_CONFIG_FILE_PATH']}")
 
     load_client_script(base_setup_path, setup_module_name)
 
