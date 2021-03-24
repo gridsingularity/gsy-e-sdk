@@ -1,6 +1,5 @@
-import logging
-
 from concurrent.futures.thread import ThreadPoolExecutor
+import logging
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread

@@ -21,14 +21,10 @@ from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMA
     API_CLIENT_SIMULATION_ID
 
 DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
-
-
-WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
-
+WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME",
+                                                DEFAULT_WEBSOCKET_DOMAIN)
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
-
-
 SIMULATION_ID_FROM_ENV = os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
 
 
@@ -280,7 +276,7 @@ def log_bid_offer_confirmation(message):
 
 
 def get_simulation_config(simulation_id=None, domain_name=None, websockets_domain_name=None):
-    if os.environ.get('SIMULATION_CONFIG_FILE_PATH') not in ["", None]:
+    if os.environ.get('SIMULATION_CONFIG_FILE_PATH'):
         with open(os.environ['SIMULATION_CONFIG_FILE_PATH']) as json_file:
             simulation_config = json.load(json_file)
         validate_api_simulation_config(simulation_config)

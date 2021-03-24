@@ -50,13 +50,11 @@ class Aggregator(RestDeviceClient):
 
     def _connect_to_simulation(self):
         user_aggrs = self.list_aggregators()
-        print(f"user_aggrs: {user_aggrs}")
         for a in user_aggrs:
             if a["name"] == self.aggregator_name:
                 self.aggregator_uuid = a["uuid"]
         if self.aggregator_uuid is None:
             aggr = self._create_aggregator()
-            print(f"aggr: {aggr}")
             self.aggregator_uuid = aggr["uuid"]
         self.start_websocket_connection()
 

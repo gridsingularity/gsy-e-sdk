@@ -56,26 +56,26 @@ In order to get help, please run:
 d3a-api-client run --help
 ```
 Following is the more in depth explanation of individual flags supported,
-- base-setup-path --> Sets the base path where you client script resides else `d3a_api_client/setups` is taken as default for your client-scripts. User could provided both an absolute and relative file path.
-- setup --> Name of your api-client module/script.
-- username --> Username of agent authorized to communicate with respective collaboration/CN.
-- password --> Password of respective agent
-- domain-name --> D3A domain name
-- web-socket --> D3A websocket URI
-- simulation-config-path --> Path of JSON format file that contains agent's point of interest's collaboration/CN's info (It could downloaded from the registry page of UI) 
-- run-on-redis --> This flag targets the local testing of api client, where no user authentication. A locally running redis server d3a simulation is needed here.
+- `base-setup-path` --> Set the base path where user's client script resides, otherwise `d3a_api_client/setups` is taken as default for user's client scripts. User can provide either an absolute or a relative file path.
+- `setup` --> Name of user's API client module/script.
+- `username` --> Username of agent authorized to communicate with respective collaboration/CN.
+- `password` --> Password of respective agent
+- `domain-name` --> D3A domain name
+- `web-socket` --> D3A websocket URI
+- `simulation-config-path` --> Path to the JSON file that contains the user's collaboration/CN information. This file can be downloaded from the "Registry" page on the D3A website. 
+- `run-on-redis` --> This flag targets the local testing of the API client, where no user authentication is required. A locally running redis server and d3a simulation are needed here.
 
 #### Examples
-- For local testing of api-client
+- For local testing of the API client:
 ```
 d3a-api-client --log-level ERROR run --setup test_redis_aggregator --run-on-redis
 ```
 - For testing your api client script on remote server hosting d3a's collaboration/CNs.
-    - If your client script resides on `d3a_api_client/setups`
+    - If user's client script resides on `d3a_api_client/setups`
     ```
     d3a-api-client run -u <username> -p <password> --setup test_create_aggregator --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```
-    - If your client script resides on any specific directory, then it needs to set via --base-setup-path
+    - If user's client script resides on a different directory, then its path needs to be set via `--base-setup-path`
     ```
     d3a-api-client run -u <username> -p <password> --base-setup-path <absolute/relative-path-to-your-client-script> --setup <name-of-your-script> --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```

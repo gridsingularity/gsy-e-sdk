@@ -89,7 +89,9 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
-    set_simulation_file_env(base_setup_path, simulation_config_path, run_on_redis)
+    os.environ["SIMULATION_CONFIG_FILE_PATH"] = create_simulation_config_path(
+        base_setup_path, simulation_config_path, run_on_redis
+    )
 
     load_client_script(base_setup_path, setup_module_name)
 
@@ -112,25 +114,20 @@ def load_client_script(base_setup_path, setup_module_name):
         log.error("Could not find the specified module")
 
 
-def set_simulation_file_env(base_setup_path, simulation_config_path, run_on_redis):
+def create_simulation_config_path(base_setup_path, simulation_config_path, run_on_redis):
     if run_on_redis is True:
-        os.environ["SIMULATION_CONFIG_FILE_PATH"] = ""
-        return
-    if simulation_config_path is None:
-        raise ApiSimulationConfigException(f"simulation_config_path must be provided")
+        return ""
+    if not simulation_config_path:
+        raise ApiSimulationConfigException("simulation_config_path must be provided")
     elif os.path.isabs(simulation_config_path):
-        os.environ["SIMULATION_CONFIG_FILE_PATH"] = simulation_config_path
+        return simulation_config_path
     elif base_setup_path is None:
-        os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
-            os.path.join(api_client_path, 'setups', simulation_config_path)
+        return os.path.join(api_client_path, 'setups', simulation_config_path)
     elif base_setup_path is not None:
         if os.path.isabs(base_setup_path):
-            os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
-                os.path.join(base_setup_path, simulation_config_path)
+            return os.path.join(base_setup_path, simulation_config_path)
         else:
-            os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
-                os.path.join(os.getcwd(), base_setup_path, simulation_config_path)
+            return os.path.join(os.getcwd(), base_setup_path, simulation_config_path)
 
     else:
-        os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
-            os.path.join(os.getcwd(), simulation_config_path)
+        return os.path.join(os.getcwd(), simulation_config_path)
