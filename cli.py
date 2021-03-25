@@ -90,8 +90,8 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
     os.environ["SIMULATION_CONFIG_FILE_PATH"] = create_simulation_config_path(
-        base_setup_path, simulation_config_path, run_on_redis
-    )
+        base_setup_path, simulation_config_path
+    ) if run_on_redis is False else ""
 
     load_client_script(base_setup_path, setup_module_name)
 
@@ -114,9 +114,7 @@ def load_client_script(base_setup_path, setup_module_name):
         log.error("Could not find the specified module")
 
 
-def create_simulation_config_path(base_setup_path, simulation_config_path, run_on_redis):
-    if run_on_redis is True:
-        return ""
+def create_simulation_config_path(base_setup_path, simulation_config_path):
     if not simulation_config_path:
         raise ApiSimulationConfigException("simulation_config_path must be provided")
     elif os.path.isabs(simulation_config_path):

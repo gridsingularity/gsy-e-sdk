@@ -44,23 +44,22 @@ class TestSimulationInfo(unittest.TestCase):
             get_simulation_config()
 
     def test_default_simulation_info_is_under_setup_module_if_base_path_isnt_provided(self):
-        os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
-            create_simulation_config_path(base_setup_path=None, simulation_config_path='test.json',
-                                          run_on_redis=False)
+        os.environ["SIMULATION_CONFIG_FILE_PATH"] = create_simulation_config_path(
+            base_setup_path=None, simulation_config_path='test.json'
+        )
         assert os.environ['SIMULATION_CONFIG_FILE_PATH'] == os.path.join(self.api_client_path,
                                                                          'setups/test.json')
 
     def test_default_simulation_info_file_is_under_base_path(self):
         base_path = "/Users/test.user/somefolder"
-        os.environ["SIMULATION_CONFIG_FILE_PATH"] = \
-            create_simulation_config_path(
-                base_setup_path=base_path, simulation_config_path='test.json', run_on_redis=False
-            )
+        os.environ["SIMULATION_CONFIG_FILE_PATH"] = create_simulation_config_path(
+            base_setup_path=base_path, simulation_config_path='test.json'
+        )
         assert os.environ['SIMULATION_CONFIG_FILE_PATH'] == os.path.join(base_path, 'test.json')
 
     def test_exception_is_raised_if_simulation_info_filename_not_provided(self):
         base_path = "/Users/test.user/somefolder"
         with self.assertRaises(ApiSimulationConfigException):
             os.environ["SIMULATION_CONFIG_FILE_PATH"] = create_simulation_config_path(
-                base_setup_path=base_path, simulation_config_path=None, run_on_redis=False
+                base_setup_path=base_path, simulation_config_path=None
             )
