@@ -19,6 +19,9 @@ import importlib
 import logging
 import click
 import os
+import inspect
+import sys
+
 
 from click.types import Choice
 from click_default_group import DefaultGroup
@@ -27,12 +30,15 @@ from logging import getLogger
 
 from d3a_interface.exceptions import D3AException
 from d3a_interface.utils import iterate_over_all_modules
+from d3a_interface.api_simulation_config import ApiSimulationConfigException
+import d3a_api_client
 
 import d3a_api_client.setups as setups
 from d3a_api_client.constants import SETUP_FILE_PATH, DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
 
 
 log = getLogger(__name__)
+api_client_path = os.path.dirname(inspect.getsourcefile(d3a_api_client))
 
 
 @click.group(name='d3a-api-client', cls=DefaultGroup, default='run', default_if_no_args=True,
@@ -59,6 +65,8 @@ _setup_modules = iterate_over_all_modules(modules_path)
 
 
 @main.command()
+@click.option('-b', '--base-setup-path', default=None, type=str,
+              help="Accept absolute or relative path for client script")
 @click.option('--setup', 'setup_module_name', default="auto_offer_bid_on_device",
               help="Setup module of client script. Available modules: [{}]".format(
                   ', '.join(_setup_modules)))
@@ -67,9 +75,13 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @click.option('-d', '--domain-name', default=DEFAULT_DOMAIN_NAME,
               type=str, help="D3A domain name")
 @click.option('-w', '--web-socket', default=DEFAULT_WEBSOCKET_DOMAIN,
-              type=str, help="D3A websocket URL")
-@click.option('--run-on-redis', is_flag=True, default=False, help="Start the client using the Redis API")
-def run(setup_module_name, username, password, domain_name, web_socket, run_on_redis, **kwargs):
+              type=str, help="D3A websocket URI")
+@click.option('-i', '--simulation-config-path', type=str,
+              help="Path to simulation config file (accept absolute and relative path)")
+@click.option('--run-on-redis', is_flag=True, default=False,
+              help="Start the client using the Redis API")
+def run(base_setup_path, setup_module_name, username, password, domain_name, web_socket,
+        simulation_config_path, run_on_redis, **kwargs):
     if username is not None:
         os.environ["API_CLIENT_USERNAME"] = username
     if password is not None:
@@ -77,11 +89,43 @@ def run(setup_module_name, username, password, domain_name, web_socket, run_on_r
     os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
     os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
+    os.environ["SIMULATION_CONFIG_FILE_PATH"] = create_simulation_config_path(
+        base_setup_path, simulation_config_path
+    ) if run_on_redis is False else ""
 
+    load_client_script(base_setup_path, setup_module_name)
+
+
+def load_client_script(base_setup_path, setup_module_name):
     try:
-        importlib.import_module(f"d3a_api_client.setups.{setup_module_name}")
+        if base_setup_path is None:
+            importlib.import_module(f"d3a_api_client.setups.{setup_module_name}")
+        elif base_setup_path and os.path.isabs(base_setup_path):
+            sys.path.append(base_setup_path)
+            importlib.import_module(setup_module_name)
+        else:
+            setup_file_path = os.path.join(os.getcwd(), base_setup_path)
+            sys.path.append(setup_file_path)
+            importlib.import_module(setup_module_name)
 
     except D3AException as ex:
         raise click.BadOptionUsage(ex.args[0])
     except ModuleNotFoundError as ex:
         log.error("Could not find the specified module")
+
+
+def create_simulation_config_path(base_setup_path, simulation_config_path):
+    if not simulation_config_path:
+        raise ApiSimulationConfigException("simulation_config_path must be provided")
+    elif os.path.isabs(simulation_config_path):
+        return simulation_config_path
+    elif base_setup_path is None:
+        return os.path.join(api_client_path, 'setups', simulation_config_path)
+    elif base_setup_path is not None:
+        if os.path.isabs(base_setup_path):
+            return os.path.join(base_setup_path, simulation_config_path)
+        else:
+            return os.path.join(os.getcwd(), base_setup_path, simulation_config_path)
+
+    else:
+        return os.path.join(os.getcwd(), simulation_config_path)

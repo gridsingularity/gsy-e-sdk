@@ -5,7 +5,7 @@
   * [Overview](#overview)
   * [Installation Instructions](#installation-instructions)
   * [How to use the Client](#how-to-use-the-client)
-    + [Interacting with the CLI](#interacting-with-the-cli)
+    + [Interacting via CLI](#interacting-via-cli)
     + [Authentication for REST API](#authentication-for-rest-api)
       - [Via CLI](#via-cli)
       - [Via environmental variables](#via-environmental-variables-)
@@ -50,35 +50,36 @@ pip install git+https://github.com/gridsingularity/d3a-api-client.git
 
 ## How to use the Client
 
-### Interacting with the CLI
-You can run one of the setup scripts residing in the `d3a_api_client/setups` folder, or you can 
-set the path for your scripts directory as list in the `d3a_api_client.constants` .
-In order to run a module you can use the following command
+### Interacting via CLI
+In order to get help, please run:
 ```
-d3a-api-client run --setup {module_name}
+d3a-api-client run --help
 ```
+Following is the more in depth explanation of individual flags supported,
+- `base-setup-path` --> Set the base path where user's client script resides, otherwise `d3a_api_client/setups` is taken as default for user's client scripts. User can provide either an absolute or a relative file path.
+- `setup` --> Name of user's API client module/script.
+- `username` --> Username of agent authorized to communicate with respective collaboration/CN.
+- `password` --> Password of respective agent
+- `domain-name` --> D3A domain name
+- `web-socket` --> D3A websocket URI
+- `simulation-config-path` --> Path to the JSON file that contains the user's collaboration/CN information. This file can be downloaded from the "Registry" page on the D3A website. 
+- `run-on-redis` --> This flag targets the local testing of the API client, where no user authentication is required. A locally running redis server and d3a simulation are needed here.
 
-### Authentication for REST API
-Authentication is done implicitly. The d3a-client is reading the following two variable from the environment
-and requests a auth token from the D3A API which will be reused internally for all communication.
+#### Examples
+- For local testing of the API client:
 ```
-API_CLIENT_USERNAME
-API_CLIENT_PASSWORD
+d3a-api-client --log-level ERROR run --setup test_redis_aggregator --run-on-redis
 ```
-The user credentials can be provided in two ways:
-#### Via CLI
-Users can use the following parameters in the `d3a_api_client` cli for setting username and password
-```
-  -u, --username TEXT     D3A username
-  -p, --password TEXT     D3A password
-```
+- For testing your api client script on remote server hosting d3a's collaboration/CNs.
+    - If user's client script resides on `d3a_api_client/setups`
+    ```
+    d3a-api-client run -u <username> -p <password> --setup test_create_aggregator --simulation-config-path <your-downloaded-simulation-config-file-path>
+    ```
+    - If user's client script resides on a different directory, then its path needs to be set via `--base-setup-path`
+    ```
+    d3a-api-client run -u <username> -p <password> --base-setup-path <absolute/relative-path-to-your-client-script> --setup <name-of-your-script> --simulation-config-path <your-downloaded-simulation-config-file-path>
+    ```
 
-#### Via environmental variables:
-On linux bash shell one can set the environmental variables by:
-```
-export API_CLIENT_USERNAME=<username>
-export API_CLIENT_PASSWORD=<password>
-```
 ---
 
 

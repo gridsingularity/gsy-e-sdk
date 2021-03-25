@@ -49,8 +49,8 @@ class RedisAggregator:
             self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
 
         event_channel = f'external-aggregator/*/{self.aggregator_uuid}/events/all'
-        channel_dict = {"aggregator_response": self._aggregator_response_callback,
-                        event_channel: self._events_callback_dict,
+        channel_dict = {event_channel: self._events_callback_dict,
+                        "aggregator_response": self._aggregator_response_callback,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
                         }
