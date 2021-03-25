@@ -10,14 +10,14 @@ from d3a_api_client.websocket_device import WebsocketAsyncConnection
 class TestWebsocket(unittest.TestCase):
 
     def setUp(self):
-        self.coro_backup = WebsocketAsyncConnection.websocket_coroutine
+        self.coro_backup = WebsocketAsyncConnection._connection_loop_coroutine
         WebsocketAsyncConnection._generate_websocket_connection_headers = lambda x: None
         d3a_api_client.websocket_device.WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 0
         d3a_api_client.websocket_device.WEBSOCKET_MAX_CONNECTION_RETRIES = 5
         d3a_api_client.websocket_device.WEBSOCKET_ERROR_THRESHOLD_SECONDS = 30
 
     def tearDown(self):
-        WebsocketAsyncConnection.websocket_coroutine = self.coro_backup
+        WebsocketAsyncConnection._connection_loop_coroutine = self.coro_backup
 
     @parameterized.expand(
         [(1, ),
@@ -33,11 +33,11 @@ class TestWebsocket(unittest.TestCase):
             coro_execution_counter += 1
             raise Exception("exception!")
 
-        WebsocketAsyncConnection.websocket_coroutine = exception_raising_coroutine
+        WebsocketAsyncConnection._connection_loop_coroutine = exception_raising_coroutine
 
         try:
             asyncio.get_event_loop().run_until_complete(
-                WebsocketAsyncConnection(None, None, None).retry_coroutine()
+                WebsocketAsyncConnection(None, None, None).run_coroutine()
             )
         except Exception:
             pass
@@ -53,12 +53,12 @@ class TestWebsocket(unittest.TestCase):
         async def exception_raising_coro(s, _1):
             raise Exception("exception!")
 
-        WebsocketAsyncConnection.websocket_coroutine = exception_raising_coro
+        WebsocketAsyncConnection._connection_loop_coroutine = exception_raising_coro
 
         start_time = time()
         try:
             asyncio.get_event_loop().run_until_complete(
-                WebsocketAsyncConnection(None, None, None).retry_coroutine()
+                WebsocketAsyncConnection(None, None, None).run_coroutine()
             )
         except Exception:
             pass
@@ -87,11 +87,11 @@ class TestWebsocket(unittest.TestCase):
                 await asyncio.sleep(0.12)
             raise Exception("exception!")
 
-        WebsocketAsyncConnection.websocket_coroutine = exception_after_time_coro
+        WebsocketAsyncConnection._connection_loop_coroutine = exception_after_time_coro
 
         try:
             asyncio.get_event_loop().run_until_complete(
-                WebsocketAsyncConnection(None, None, None).retry_coroutine()
+                WebsocketAsyncConnection(None, None, None).run_coroutine()
             )
         except Exception:
             pass

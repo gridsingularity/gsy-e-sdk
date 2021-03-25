@@ -64,7 +64,7 @@ class WebsocketAsyncConnection:
         self._websockets_uri = websockets_uri
         self._http_domain_name = http_domain_name
 
-    async def websocket_coroutine(self, websocket_headers):
+    async def _connection_loop_coroutine(self, websocket_headers):
         websocket = await websockets.connect(self._websockets_uri, extra_headers=websocket_headers)
         while True:
             try:
@@ -82,11 +82,11 @@ class WebsocketAsyncConnection:
             "Authorization": f"JWT {retrieve_jwt_key_from_server(self._http_domain_name)}"
         }
 
-    async def retry_coroutine(self, retry_count=0):
+    async def run_coroutine(self, retry_count=0):
         websocket_headers = self._generate_websocket_connection_headers()
         ws_connect_time = time()
         try:
-            await self.websocket_coroutine(websocket_headers)
+            await self._connection_loop_coroutine(websocket_headers)
         except Exception as e:
             logging.warning(f"Connection failed, trying to reconnect.")
             ws_error_time = time()
@@ -95,7 +95,7 @@ class WebsocketAsyncConnection:
             await asyncio.sleep(WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS)
             if retry_count >= WEBSOCKET_MAX_CONNECTION_RETRIES:
                 raise e
-            await self.retry_coroutine(retry_count=retry_count+1)
+            await self.run_coroutine(retry_count=retry_count+1)
 
 
 class WebsocketThread(threading.Thread):
@@ -113,6 +113,6 @@ class WebsocketThread(threading.Thread):
         asyncio.set_event_loop(event_loop)
         websockets_uri = f"{self.domain_name}/{self.sim_id}/{self.area_uuid}/"
         event_loop.run_until_complete(
-            WebsocketAsyncConnection(websockets_uri, self.http_domain_name, self.message_dispatcher).retry_coroutine()
+            WebsocketAsyncConnection(websockets_uri, self.http_domain_name, self.message_dispatcher).run_coroutine()
         )
         event_loop.close()
