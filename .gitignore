@@ -132,3 +132,4 @@ dmypy.json
 
 .docker/
 .dump.rdb
+dump.rdb
