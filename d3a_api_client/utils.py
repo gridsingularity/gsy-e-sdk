@@ -237,12 +237,25 @@ def log_market_progression(message):
         headers = ["event", ]
         table_data = [event, ]
         data_dict = message.get("content") if "content" in message.keys() else message
-        if "slot_completion" in data_dict:
-            headers.append("slot_completion")
-            table_data.append(data_dict.get("slot_completion"))
+
+        # TODO: "start_time" key will be deprecated
+        #  once the non-aggregator connection is deprecated
         if "start_time" in data_dict:
             headers.extend(["start_time", "duration_min", ])
             table_data.extend([data_dict.get("start_time"), data_dict.get("duration_min")])
+
+        if "slot_completion" in data_dict:
+            headers.append("slot_completion")
+            table_data.append(data_dict.get("slot_completion"))
+
+        if event == "market" and "market_slot" in data_dict:
+            headers.extend(["market_slot"])
+            table_data.extend([data_dict.get("market_slot")])
+
+        if event == "tick":
+            slot_completion_int = get_slot_completion_percentage_int_from_message(message)
+            if slot_completion_int is not None and slot_completion_int < 10:
+                return
 
         logging.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
     except Exception as e:
@@ -318,3 +331,8 @@ def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) ->
             else:
                 area_name_uuid_mapping[area_dict["area_name"]] = [area_uuid]
     return area_name_uuid_mapping
+
+
+def get_slot_completion_percentage_int_from_message(message):
+    if "slot_completion" in message:
+        return int(message["slot_completion"].split("%")[0])

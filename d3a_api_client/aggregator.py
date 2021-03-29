@@ -6,10 +6,11 @@ from d3a_api_client.utils import logging_decorator, blocking_get_request, \
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.constants import MAX_WORKER_THREADS, \
+    MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
-    create_area_name_uuid_mapping_from_tree_info
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
 
 
 class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -155,6 +156,10 @@ class Aggregator(RestDeviceClient):
 
     @buffer_grid_tree_info
     def _on_tick(self, message):
+        slot_completion_int = get_slot_completion_percentage_int_from_message(message)
+        if slot_completion_int is not None and slot_completion_int < \
+                MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE:
+            return
         super()._on_tick(message)
 
     @buffer_grid_tree_info

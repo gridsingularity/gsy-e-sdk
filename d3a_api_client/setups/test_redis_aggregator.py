@@ -12,13 +12,12 @@ class AutoAggregator(RedisAggregator):
         self.is_finished = False
 
     def on_market_cycle(self, market_info):
-        market_uuid = self.get_uuid_from_area_name("Grid")
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
 
             logging.info(
-                f"current_market_fee: {self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid)}")
+                f'current_market_maker_rate: {market_info["market_maker_rate"]}')
             if "available_energy_kWh" in area_dict["asset_info"] and \
                     area_dict["asset_info"]["available_energy_kWh"] > 0.0:
                 self.add_to_batch_commands.offer_energy(area_uuid=area_uuid, price=1,

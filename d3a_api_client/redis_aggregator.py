@@ -10,11 +10,12 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_interface.utils import wait_until_timeout_blocking
 
 from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.constants import MAX_WORKER_THREADS, \
+    MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
 from d3a_api_client.utils import execute_function_util, log_market_progression
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
-    create_area_name_uuid_mapping_from_tree_info
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
 
 
 class RedisAPIException(Exception):
@@ -239,6 +240,10 @@ class RedisAggregator:
 
     @buffer_grid_tree_info
     def _on_tick(self, message):
+        slot_completion_int = get_slot_completion_percentage_int_from_message(message)
+        if slot_completion_int is not None and slot_completion_int < \
+                MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE:
+            return
         self.executor.submit(execute_function_util, function=lambda: self.on_tick(message),
                              function_name="on_tick")
 
