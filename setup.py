@@ -35,7 +35,7 @@ setup(
     install_requires=REQUIREMENTS,
     entry_points={
         'console_scripts': [
-            'd3a-api-client = cli:main',
+            'd3a-api-client = d3a_api_client.cli:main',
         ]
     },
     zip_safe=False,
