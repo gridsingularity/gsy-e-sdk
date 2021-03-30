@@ -3,7 +3,7 @@ import os
 import inspect
 from jsonschema import ValidationError
 
-from cli import create_simulation_config_path
+from d3a_api_client.cli import create_simulation_config_path
 import d3a_api_client
 from d3a_api_client.utils import get_simulation_config, DOMAIN_NAME_FROM_ENV, \
     WEBSOCKET_DOMAIN_NAME_FROM_ENV, SIMULATION_ID_FROM_ENV
