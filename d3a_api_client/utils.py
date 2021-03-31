@@ -94,9 +94,7 @@ def retrieve_jwt_key_from_server(domain_name):
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
         logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
-                     f"Response body: {resp.text}")
-        print({"username": os.environ["API_CLIENT_USERNAME"],
-                         "password": os.environ["API_CLIENT_PASSWORD"]})
+                      f"Response body: {resp.text}")
         return
     return json.loads(resp.text)["token"]
 

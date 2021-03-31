@@ -92,7 +92,6 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
 
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
     if simulation_config_path is not None and not run_on_redis:
-        print(base_setup_path)
         config_file_path = create_simulation_config_path(base_setup_path, simulation_config_path)
         config = read_simulation_config_file(config_file_path)
         os.environ["API_CLIENT_DOMAIN_NAME"] = config["domain_name"]

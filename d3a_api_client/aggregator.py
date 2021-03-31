@@ -1,5 +1,5 @@
 import logging
-import traceback
+
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.utils import logging_decorator, blocking_get_request, \
     blocking_post_request, domain_name_from_env, websocket_domain_name_from_env, \
@@ -53,7 +53,6 @@ class Aggregator(RestDeviceClient):
 
     def _connect_to_simulation(self):
         user_aggrs = self.list_aggregators()
-        print(user_aggrs)
         for a in user_aggrs:
             if a["name"] == self.aggregator_name:
                 self.aggregator_uuid = a["uuid"]

@@ -32,15 +32,17 @@ class TestAggregator(Aggregator):
             return
 
         for device_event in market_info['content']:
+            if 'device_info' not in device_event or device_event['device_info'] is None:
+                continue
             if key_in_dict_and_not_none_and_greater_than_zero(
-                    device_event, 'available_energy_kWh'):
+                    device_event['device_info'], 'available_energy_kWh'):
                 self.add_to_batch_commands.\
                     offer_energy(device_event['area_uuid'], price=1,
                                  energy=device_event['device_info']['available_energy_kWh'] / 2)
                 self.add_to_batch_commands.list_offers(device_event['area_uuid'])
 
             if key_in_dict_and_not_none_and_greater_than_zero(
-                    device_event, 'energy_requirement_kWh'):
+                    device_event['device_info'], 'energy_requirement_kWh'):
                 self.add_to_batch_commands.\
                     bid_energy(device_event['area_uuid'], price=30,
                                energy=device_event['device_info']['energy_requirement_kWh'] / 2)
@@ -100,7 +102,7 @@ pv1.select_aggregator(aggr.aggregator_uuid)
 area_uuid = get_area_uuid_from_area_name_and_collaboration_id(
     simulation_id, 'House', domain_name)
 
-rest_market = RestMarketClient(area_uuid, simulation_id, domain_name, websocket_domain_name)
+rest_market = RestMarketClient(area_uuid, simulation_id, domain_name, websockets_domain_name)
 market_slot_string = today().add(minutes=60).format(DATE_TIME_FORMAT)
 last_market_stats = rest_market.last_market_stats()
 
