@@ -5,11 +5,11 @@ from pendulum import today
 
 from d3a_api_client.aggregator import Aggregator
 from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id, \
-    get_simulation_config
+from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 from d3a_interface.constants_limits import DATE_TIME_FORMAT
 from d3a_api_client.rest_market import RestMarketClient
 from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
+from d3a_api_client.utils import get_sim_id_and_domain_names
 
 
 class TestAggregator(Aggregator):
@@ -59,8 +59,7 @@ class TestAggregator(Aggregator):
         self.is_finished = True
 
 
-simulation_id, domain_name, websocket_domain_name = get_simulation_config()
-
+simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
 
 aggr = TestAggregator(
     aggregator_name='test_aggr',

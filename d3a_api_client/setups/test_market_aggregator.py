@@ -1,7 +1,8 @@
 import logging
 from time import sleep
 from d3a_api_client.aggregator import Aggregator
-from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
+from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id, \
+    get_sim_id_and_domain_names
 from d3a_api_client.rest_market import RestMarketClient
 
 
@@ -43,21 +44,19 @@ class TestAggregator(Aggregator):
         self.is_finished = True
 
 
-simulation_id = "af779128-04a0-4af4-95a2-d8dc7c63079b"
-domain_name = "http://localhost:8000"
-websocket_domain_name = 'ws://localhost:8000/external-ws'
+simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
 
 aggr = TestAggregator(
     simulation_id=simulation_id,
     domain_name=domain_name,
     aggregator_name="test_aggregator",
-    websockets_domain_name=websocket_domain_name
+    websockets_domain_name=websockets_domain_name
 )
 
 market_args = {
     "simulation_id": simulation_id,
     "domain_name": domain_name,
-    "websockets_domain_name": websocket_domain_name
+    "websockets_domain_name": websockets_domain_name
 }
 
 house_1_uuid = get_area_uuid_from_area_name_and_collaboration_id(

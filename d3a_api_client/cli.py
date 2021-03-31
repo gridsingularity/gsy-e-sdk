@@ -30,11 +30,12 @@ from logging import getLogger
 
 from d3a_interface.exceptions import D3AException
 from d3a_interface.utils import iterate_over_all_modules
-from d3a_interface.api_simulation_config import ApiSimulationConfigException
 import d3a_api_client
 
 import d3a_api_client.setups as setups
-from d3a_api_client.constants import SETUP_FILE_PATH, DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+from d3a_api_client.constants import SETUP_FILE_PATH
+from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
+    simulation_id_from_env, read_simulation_config_file
 
 
 log = getLogger(__name__)
@@ -72,28 +73,50 @@ _setup_modules = iterate_over_all_modules(modules_path)
                   ', '.join(_setup_modules)))
 @click.option('-u', '--username', default=None, type=str, help="D3A username")
 @click.option('-p', '--password', default=None, type=str, help="D3A password")
-@click.option('-d', '--domain-name', default=DEFAULT_DOMAIN_NAME,
+@click.option('-d', '--domain-name', default=None,
               type=str, help="D3A domain name")
-@click.option('-w', '--web-socket', default=DEFAULT_WEBSOCKET_DOMAIN,
+@click.option('-w', '--web-socket', default=None,
               type=str, help="D3A websocket URI")
-@click.option('-i', '--simulation-config-path', type=str,
+@click.option('-i', '--simulation-config-path', type=str, default=None,
               help="Path to simulation config file (accept absolute and relative path)")
+@click.option('-s', '--simulation-id', type=str, default=None,
+              help="Simulation id")
 @click.option('--run-on-redis', is_flag=True, default=False,
               help="Start the client using the Redis API")
 def run(base_setup_path, setup_module_name, username, password, domain_name, web_socket,
-        simulation_config_path, run_on_redis, **kwargs):
+        simulation_config_path, simulation_id, run_on_redis, **kwargs):
     if username is not None:
         os.environ["API_CLIENT_USERNAME"] = username
     if password is not None:
         os.environ["API_CLIENT_PASSWORD"] = password
-    os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name
-    os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket
+
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
-    os.environ["SIMULATION_CONFIG_FILE_PATH"] = create_simulation_config_path(
-        base_setup_path, simulation_config_path
-    ) if run_on_redis is False else ""
+    if simulation_config_path is not None and not run_on_redis:
+        print(base_setup_path)
+        config_file_path = create_simulation_config_path(base_setup_path, simulation_config_path)
+        config = read_simulation_config_file(config_file_path)
+        os.environ["API_CLIENT_DOMAIN_NAME"] = config["domain_name"]
+        os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = config["web_socket_domain_name"]
+        os.environ["API_CLIENT_SIMULATION_ID"] = config["uuid"]
+    else:
+        os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name \
+            if domain_name is not None else domain_name_from_env()
+        os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket \
+            if web_socket is not None else websocket_domain_name_from_env()
+        os.environ["API_CLIENT_SIMULATION_ID"] = simulation_id \
+            if simulation_id is not None else simulation_id_from_env()
+
+    validate_settings_are_set_before_launch()
 
     load_client_script(base_setup_path, setup_module_name)
+
+
+def validate_settings_are_set_before_launch():
+    settings_list = ["API_CLIENT_DOMAIN_NAME", "API_CLIENT_WEBSOCKET_DOMAIN_NAME",
+                     "API_CLIENT_SIMULATION_ID", "API_CLIENT_RUN_ON_REDIS"]
+    for setting in settings_list:
+        if os.environ.get(setting) is None:
+            raise ValueError(f"{setting} was not set, please provide")
 
 
 def load_client_script(base_setup_path, setup_module_name):
@@ -115,17 +138,11 @@ def load_client_script(base_setup_path, setup_module_name):
 
 
 def create_simulation_config_path(base_setup_path, simulation_config_path):
-    if not simulation_config_path:
-        raise ApiSimulationConfigException("simulation_config_path must be provided")
-    elif os.path.isabs(simulation_config_path):
-        return simulation_config_path
-    elif base_setup_path is None:
-        return os.path.join(api_client_path, 'setups', simulation_config_path)
-    elif base_setup_path is not None:
+    if base_setup_path is not None:
         if os.path.isabs(base_setup_path):
             return os.path.join(base_setup_path, simulation_config_path)
         else:
             return os.path.join(os.getcwd(), base_setup_path, simulation_config_path)
 
     else:
-        return os.path.join(os.getcwd(), simulation_config_path)
+        return simulation_config_path
