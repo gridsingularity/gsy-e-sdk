@@ -19,7 +19,7 @@ class TestSimulationInfo(unittest.TestCase):
     def tearDown(self) -> None:
         os.environ.pop('SIMULATION_CONFIG_FILE_PATH', None)
 
-    def test_get_sim_id_and_domain_names_returns_the_defaults(self):
+    def test_get_sim_id_and_domain_names_returns_correct_env_values(self):
         os.environ["API_CLIENT_SIMULATION_ID"] = "test-simulation-id"
         os.environ["API_CLIENT_DOMAIN_NAME"] = "test-domain-name"
         os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = "test-websocket-name"
@@ -29,7 +29,7 @@ class TestSimulationInfo(unittest.TestCase):
         assert domain_name == "test-domain-name"
         assert websockets_domain_name == "test-websocket-name"
 
-    def test_get_sim_id_and_domain_names_returns_correct_env_values(self):
+    def test_get_sim_id_and_domain_names_returns_the_defaults(self):
         simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
         assert simulation_id is None
         assert domain_name == DEFAULT_DOMAIN_NAME
