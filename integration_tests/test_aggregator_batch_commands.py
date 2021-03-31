@@ -1,11 +1,9 @@
 import json
 import logging
-from math import isclose
 import traceback
 
 from d3a_interface.utils import key_in_dict_and_not_none
 
-from d3a_api_client.enums import Commands, command_enum_to_command_name
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
