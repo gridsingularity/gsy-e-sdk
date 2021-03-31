@@ -32,7 +32,7 @@ class TestAggregator(Aggregator):
             return
 
         for device_event in market_info['content']:
-            if 'device_info' not in device_event or device_event['device_info'] is None:
+            if not device_event.get('device_info'):
                 continue
             if key_in_dict_and_not_none_and_greater_than_zero(
                     device_event['device_info'], 'available_energy_kWh'):

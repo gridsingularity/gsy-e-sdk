@@ -11,14 +11,12 @@ from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_fro
 
 class RestMarketClient(RestCommunicationMixin):
 
-    def __init__(self, area_id, simulation_id=simulation_id_from_env(),
-                 domain_name=domain_name_from_env(),
-                 websockets_domain_name=websocket_domain_name_from_env(),):
-
+    def __init__(self, area_id, simulation_id=None, domain_name=None, websockets_domain_name=None):
         self.device_id = area_id
-        self.simulation_id = simulation_id
-        self.domain_name = domain_name
-        self.websockets_domain_name = websockets_domain_name
+        self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
+        self.domain_name = domain_name if domain_name else domain_name_from_env()
+        self.websockets_domain_name = websockets_domain_name \
+            if websockets_domain_name else websocket_domain_name_from_env()
         self.jwt_token = retrieve_jwt_key_from_server(domain_name)
         self._create_jwt_refresh_timer(domain_name)
         self.dispatcher = WebsocketMessageReceiver(self)

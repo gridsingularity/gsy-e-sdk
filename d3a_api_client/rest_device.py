@@ -15,14 +15,12 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
-    def __init__(self, device_id, simulation_id=simulation_id_from_env(),
-                 domain_name=domain_name_from_env(),
-                 websockets_domain_name=websocket_domain_name_from_env(),
-                 autoregister=False, start_websocket=True,
-                 sim_api_domain_name=None):
-        self.simulation_id = simulation_id
-        self.domain_name = domain_name
-        self.websockets_domain_name = websockets_domain_name
+    def __init__(self, device_id, simulation_id=None, domain_name=None, websockets_domain_name=None,
+                 autoregister=False, start_websocket=True, sim_api_domain_name=None):
+        self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
+        self.domain_name = domain_name if domain_name else domain_name_from_env()
+        self.websockets_domain_name = websockets_domain_name \
+            if websockets_domain_name else websocket_domain_name_from_env()
         self.device_id = device_id
         if sim_api_domain_name is None:
             sim_api_domain_name = self.domain_name

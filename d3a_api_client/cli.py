@@ -99,11 +99,11 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
         os.environ["API_CLIENT_SIMULATION_ID"] = config["uuid"]
     else:
         os.environ["API_CLIENT_DOMAIN_NAME"] = domain_name \
-            if domain_name is not None else domain_name_from_env()
+            if domain_name else domain_name_from_env()
         os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = web_socket \
-            if web_socket is not None else websocket_domain_name_from_env()
+            if web_socket else websocket_domain_name_from_env()
         os.environ["API_CLIENT_SIMULATION_ID"] = simulation_id \
-            if simulation_id is not None else simulation_id_from_env()
+            if simulation_id else simulation_id_from_env()
 
     validate_settings_are_set_before_launch()
 

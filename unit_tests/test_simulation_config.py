@@ -5,9 +5,9 @@ from jsonschema import ValidationError
 
 from d3a_api_client.cli import create_simulation_config_path
 import d3a_api_client
-from d3a_api_client.utils import read_simulation_config_file, domain_name_from_env, \
-    websocket_domain_name_from_env, simulation_id_from_env, get_sim_id_and_domain_names
+from d3a_api_client.utils import read_simulation_config_file, get_sim_id_and_domain_names
 from unit_tests import FIXTURES_DIR
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
 
 
 class TestSimulationInfo(unittest.TestCase):
@@ -20,10 +20,20 @@ class TestSimulationInfo(unittest.TestCase):
         os.environ.pop('SIMULATION_CONFIG_FILE_PATH', None)
 
     def test_get_sim_id_and_domain_names_returns_the_defaults(self):
+        os.environ["API_CLIENT_SIMULATION_ID"] = "test-simulation-id"
+        os.environ["API_CLIENT_DOMAIN_NAME"] = "test-domain-name"
+        os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"] = "test-websocket-name"
+
         simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
-        assert simulation_id == simulation_id_from_env()
-        assert domain_name == domain_name_from_env()
-        assert websockets_domain_name == websocket_domain_name_from_env()
+        assert simulation_id == "test-simulation-id"
+        assert domain_name == "test-domain-name"
+        assert websockets_domain_name == "test-websocket-name"
+
+    def test_get_sim_id_and_domain_names_returns_correct_env_values(self):
+        simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
+        assert simulation_id is None
+        assert domain_name == DEFAULT_DOMAIN_NAME
+        assert websockets_domain_name == DEFAULT_WEBSOCKET_DOMAIN
 
     def test_simulation_info_file_is_correctly_parsed_json_file(self):
         config_file_path = os.path.join(
