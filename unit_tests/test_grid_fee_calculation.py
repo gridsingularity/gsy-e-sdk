@@ -144,7 +144,35 @@ class TestGridFeeCalculation(unittest.TestCase):
                                       2.2: ['Load 1.2', 'House 1.2', ]}
         else:
             leaf_name_expected_fee = {2.1: ['House 2.1', 'Load 2.1'],
-                                      1.2: ['Load 1.2', 'House 1.2', ]}
+                                      1.2: ['Load 1.2', 'House 1.2']}
+        for expected_fee, leaf_names in leaf_name_expected_fee.items():
+            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
+                start_market_or_device_uuid=leaf_names[0],
+                target_market_or_device_uuid=leaf_names[1],
+                fee_type=fee_type))
+
+    @parameterized.expand([['last_market_fee'], ['current_market_fee']])
+    def test_grid_fee_is_calculated_correctly_for_device_to_street(self, fee_type):
+        if fee_type == 'current_market_fee':
+            leaf_name_expected_fee = {6.1: ['Load 2.1', 'Street 2'],
+                                      4.2: ['Load 1.2', 'Street 1']}
+        else:
+            leaf_name_expected_fee = {4.1: ['Load 2.1', 'Street 2'],
+                                      2.2: ['Load 1.2', 'Street 1']}
+        for expected_fee, leaf_names in leaf_name_expected_fee.items():
+            assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
+                start_market_or_device_uuid=leaf_names[0],
+                target_market_or_device_uuid=leaf_names[1],
+                fee_type=fee_type))
+
+    @parameterized.expand(['last_market_fee', 'current_market_fee'])
+    def test_grid_fee_is_calculated_correctly_for_street_to_grid(self, fee_type):
+        if fee_type == 'current_market_fee':
+            leaf_name_expected_fee = {13.: ['Street 1', 'Grid 10'],
+                                      14.: ['Street 2', 'Grid 10']}
+        else:
+            leaf_name_expected_fee = {11.: ['Street 1', 'Grid 10'],
+                                      12.: ['Street 2', 'Grid 10']}
         for expected_fee, leaf_names in leaf_name_expected_fee.items():
             assert isclose(expected_fee, self.grid_fee_calc.calculate_grid_fee(
                 start_market_or_device_uuid=leaf_names[0],

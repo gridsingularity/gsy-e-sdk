@@ -8,5 +8,6 @@ SETUP_FILE_PATH = None
 
 DEFAULT_DOMAIN_NAME = 'https://d3aweb.gridsingularity.com'
 DEFAULT_WEBSOCKET_DOMAIN = 'wss://d3aweb.gridsingularity.com/external-ws'
-
 MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE = 10
+API_CLIENT_SIMULATION_ID = ''
+CUSTOMER_WEBSOCKET_DOMAIN_NAME = 'ws://localhost:4000'

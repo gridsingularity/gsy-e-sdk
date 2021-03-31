@@ -1,4 +1,7 @@
+import os
 from setuptools import setup, find_packages
+
+target_branch = os.environ.get('BRANCH', 'master')
 
 
 try:
@@ -6,7 +9,7 @@ try:
         REQUIREMENTS = [r.partition('#')[0] for r in req if not r.startswith('-e')]
         REQUIREMENTS.extend(
             ['d3a-interface @ '
-             f'git+https://github.com/gridsingularity/d3a-interface.git@master'])
+             f'git+https://github.com/gridsingularity/d3a-interface.git@{ target_branch }'])
 
 except OSError:
     # Shouldn't happen
@@ -32,7 +35,7 @@ setup(
     install_requires=REQUIREMENTS,
     entry_points={
         'console_scripts': [
-            'd3a-api-client = cli:main',
+            'd3a-api-client = d3a_api_client.cli:main',
         ]
     },
     zip_safe=False,

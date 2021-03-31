@@ -9,11 +9,21 @@ from functools import wraps
 
 from tabulate import tabulate
 from sgqlc.endpoint.http import HTTPEndpoint
+
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
     RepeatingTimer
 
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+    API_CLIENT_SIMULATION_ID, CUSTOMER_WEBSOCKET_DOMAIN_NAME
+
+DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
+WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME",
+                                                DEFAULT_WEBSOCKET_DOMAIN)
+CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
+                                                         CUSTOMER_WEBSOCKET_DOMAIN_NAME)
+SIMULATION_ID_FROM_ENV = os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
 
 
 class AreaNotFoundException(Exception):
@@ -59,6 +69,7 @@ def execute_graphql_request(domain_name, query, headers=None, url=None, authenti
     if authenticate:
         jwt_key = retrieve_jwt_key_from_server(domain_name)
         if jwt_key is None:
+            logging.error(f"authentication failed")
             return
     url = f"{domain_name}/graphql/" if url is None else url
     headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'} \
@@ -209,7 +220,6 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
       }
     }
     '''
-
     data = execute_graphql_request(domain_name=domain_name, query=query)
 
     logging.debug(f"Received Canary Network data: {data}")
@@ -260,12 +270,6 @@ def log_market_progression(message):
         logging.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
     except Exception as e:
         logging.warning(f"Error while logging market progression {e}")
-
-
-domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
-
-
-websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
 
 
 def log_bid_offer_confirmation(message):
@@ -336,3 +340,25 @@ def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) ->
 def get_slot_completion_percentage_int_from_message(message):
     if "slot_completion" in message:
         return int(message["slot_completion"].split("%")[0])
+
+
+def get_simulation_config(simulation_id=None, domain_name=None, websockets_domain_name=None):
+    if os.environ.get('SIMULATION_CONFIG_FILE_PATH'):
+        with open(os.environ['SIMULATION_CONFIG_FILE_PATH']) as json_file:
+            simulation_config = json.load(json_file)
+        validate_api_simulation_config(simulation_config)
+        simulation_id = simulation_config['uuid'] \
+            if simulation_id is None else simulation_id
+        domain_name = simulation_config['domain_name'] \
+            if domain_name is None else domain_name
+        websockets_domain_name = simulation_config['web_socket_domain_name'] \
+            if websockets_domain_name is None else websockets_domain_name
+    else:
+        simulation_id = SIMULATION_ID_FROM_ENV \
+            if simulation_id is None else simulation_id
+        domain_name = DOMAIN_NAME_FROM_ENV \
+            if domain_name is None else domain_name
+        websockets_domain_name = WEBSOCKET_DOMAIN_NAME_FROM_ENV \
+            if websockets_domain_name is None else websockets_domain_name
+    return simulation_id, domain_name, websockets_domain_name
+

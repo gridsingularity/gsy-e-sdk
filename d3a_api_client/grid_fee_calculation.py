@@ -19,7 +19,7 @@ class GridFeeCalculation:
     def _get_grid_fee_area_mapping_and_paths_from_grid_stats_dict(self, indict, parent_path):
         for child_uuid, child_stats in indict.items():
             sub_path = parent_path + [child_uuid]
-            self.paths_to_root_mapping[child_uuid] = parent_path
+            self.paths_to_root_mapping[child_uuid] = sub_path
             for fee_type in ["last_market_fee", "current_market_fee"]:
                 if fee_type in child_stats:
                     self.market_area_uuid_grid_fee_mapping[fee_type][child_uuid] = child_stats[fee_type]
@@ -54,7 +54,7 @@ class GridFeeCalculation:
             if start_market_or_device_uuid not in self.market_area_uuid_grid_fee_mapping[fee_type]:
                 # if the target_market_or_device is a device, return the grid_fee of the connected market
                 return self.market_area_uuid_grid_fee_mapping[fee_type][
-                    self.paths_to_root_mapping[start_market_or_device_uuid][-1]]
+                    self.paths_to_root_mapping[start_market_or_device_uuid][-2]]
             else:
                 # if the target_market_or_device is a market, return the grid_fee directly
                 return self.market_area_uuid_grid_fee_mapping[fee_type][start_market_or_device_uuid]

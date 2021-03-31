@@ -36,6 +36,7 @@ class RedisAggregator:
         self._transaction_id_buffer = []
         self._transaction_id_response_buffer = {}
         self.device_uuid_list = []
+        self._subscribed_aggregator_response_cb = None
         self._client_command_buffer = ClientCommandBuffer()
         self._connect_to_simulation(is_blocking=True)
         self._subscribe_to_response_channels()
@@ -51,9 +52,13 @@ class RedisAggregator:
             self.aggregator_uuid = aggr_id
 
     def _subscribe_to_response_channels(self):
+
+        if b'aggregator_response' in self.pubsub.patterns:
+            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
+
         event_channel = f'external-aggregator/*/{self.aggregator_uuid}/events/all'
-        channel_dict = {"aggregator_response": self._aggregator_response_callback,
-                        event_channel: self._events_callback_dict,
+        channel_dict = {event_channel: self._events_callback_dict,
+                        "aggregator_response": self._aggregator_response_callback,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
                         }
@@ -76,6 +81,8 @@ class RedisAggregator:
         self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
+        if self._subscribed_aggregator_response_cb is not None:
+            self._subscribed_aggregator_response_cb(message)
         data = json.loads(message['data'])
 
         if data['transaction_id'] in self._transaction_id_buffer:
