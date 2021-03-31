@@ -13,11 +13,12 @@ from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMA
 class TestSimulationInfo(unittest.TestCase):
 
     def setUp(self) -> None:
-        os.environ.pop('SIMULATION_CONFIG_FILE_PATH', None)
         self.api_client_path = os.path.dirname(inspect.getsourcefile(d3a_api_client))
 
     def tearDown(self) -> None:
-        os.environ.pop('SIMULATION_CONFIG_FILE_PATH', None)
+        os.environ.pop('API_CLIENT_SIMULATION_ID', None)
+        os.environ.pop('API_CLIENT_DOMAIN_NAME', None)
+        os.environ.pop('API_CLIENT_WEBSOCKET_DOMAIN_NAME', None)
 
     def test_get_sim_id_and_domain_names_returns_correct_env_values(self):
         os.environ["API_CLIENT_SIMULATION_ID"] = "test-simulation-id"
