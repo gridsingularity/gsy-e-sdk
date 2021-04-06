@@ -1,11 +1,9 @@
 import json
 import logging
-from math import isclose
 import traceback
 
 from d3a_interface.utils import key_in_dict_and_not_none
 
-from d3a_api_client.enums import Commands, command_enum_to_command_name
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
@@ -47,7 +45,7 @@ class BatchAggregator(RedisAggregator):
                         'load', target_market, 'last_market_fee')
 
             for device_event in market_info['content']:
-                if 'device_info' not in device_event or device_event['device_info'] is None:
+                if not device_event.get('device_info'):
                     continue
                 if key_in_dict_and_not_none(device_event, 'grid_stats_tree'):
                     json_grid_tree = json.dumps(device_event['grid_stats_tree'], indent=2)
