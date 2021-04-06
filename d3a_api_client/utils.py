@@ -16,14 +16,23 @@ from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_
     RepeatingTimer
 
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
-    API_CLIENT_SIMULATION_ID, CUSTOMER_WEBSOCKET_DOMAIN_NAME
+    CUSTOMER_WEBSOCKET_DOMAIN_NAME
 
-DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
-WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME",
-                                                DEFAULT_WEBSOCKET_DOMAIN)
+
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
-SIMULATION_ID_FROM_ENV = os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
+
+
+def domain_name_from_env():
+    return os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
+
+
+def websocket_domain_name_from_env():
+    return os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
+
+
+def simulation_id_from_env():
+    return os.environ.get("API_CLIENT_SIMULATION_ID", None)
 
 
 class AreaNotFoundException(Exception):
@@ -87,7 +96,7 @@ def retrieve_jwt_key_from_server(domain_name):
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
         logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
-                     f"Response body: {resp.text}")
+                      f"Response body: {resp.text}")
         return
     return json.loads(resp.text)["token"]
 
@@ -347,18 +356,11 @@ def get_simulation_config(simulation_id=None, domain_name=None, websockets_domai
         with open(os.environ['SIMULATION_CONFIG_FILE_PATH']) as json_file:
             simulation_config = json.load(json_file)
         validate_api_simulation_config(simulation_config)
-        simulation_id = simulation_config['uuid'] \
-            if simulation_id is None else simulation_id
-        domain_name = simulation_config['domain_name'] \
-            if domain_name is None else domain_name
-        websockets_domain_name = simulation_config['web_socket_domain_name'] \
-            if websockets_domain_name is None else websockets_domain_name
+        return simulation_config
     else:
-        simulation_id = SIMULATION_ID_FROM_ENV \
-            if simulation_id is None else simulation_id
-        domain_name = DOMAIN_NAME_FROM_ENV \
-            if domain_name is None else domain_name
-        websockets_domain_name = WEBSOCKET_DOMAIN_NAME_FROM_ENV \
-            if websockets_domain_name is None else websockets_domain_name
-    return simulation_id, domain_name, websockets_domain_name
+        raise ValueError("SIMULATION_CONFIG_FILE_PATH environmental variable must be provided ")
+
+
+def get_sim_id_and_domain_names():
+    return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()
 

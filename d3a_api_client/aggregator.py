@@ -2,7 +2,8 @@ import logging
 
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.utils import logging_decorator, blocking_get_request, \
-    blocking_post_request, DOMAIN_NAME_FROM_ENV, WEBSOCKET_DOMAIN_NAME_FROM_ENV
+    blocking_post_request, domain_name_from_env, websocket_domain_name_from_env, \
+    simulation_id_from_env
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.rest_device import RestDeviceClient
@@ -36,11 +37,15 @@ class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
 
 class Aggregator(RestDeviceClient):
 
-    def __init__(self, aggregator_name, simulation_id=None, domain_name=DOMAIN_NAME_FROM_ENV,
-                 websockets_domain_name=WEBSOCKET_DOMAIN_NAME_FROM_ENV, accept_all_devices=True):
+    def __init__(self, aggregator_name, simulation_id=None, domain_name=None,
+                 websockets_domain_name=None, accept_all_devices=True):
         super().__init__(
-            simulation_id=simulation_id, device_id="", domain_name=domain_name,
-            websockets_domain_name=websockets_domain_name, autoregister=False,
+            simulation_id=simulation_id if simulation_id else simulation_id_from_env(),
+            domain_name= domain_name if domain_name else domain_name_from_env(),
+            websockets_domain_name=websockets_domain_name
+            if websockets_domain_name else websocket_domain_name_from_env(),
+            device_id="",
+            autoregister=False,
             start_websocket=False)
 
         self.grid_fee_calculation = GridFeeCalculation()
@@ -74,7 +79,8 @@ class Aggregator(RestDeviceClient):
 
     @logging_decorator('create_aggregator')
     def list_aggregators(self):
-        list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/', {}, self.jwt_token)
+        list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/',
+                                                   {}, self.jwt_token)
         if list_of_aggregators is None:
             logging.error(f"No aggregators found on {self.aggregator_prefix}")
             list_of_aggregators = []
