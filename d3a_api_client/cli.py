@@ -74,9 +74,9 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @click.option('-u', '--username', default=None, type=str, help="D3A username")
 @click.option('-p', '--password', default=None, type=str, help="D3A password")
 @click.option('-d', '--domain-name', default=None,
-              type=str, help="D3A domain name")
+              type=str, help="D3A domain URL")
 @click.option('-w', '--web-socket', default=None,
-              type=str, help="D3A websocket URI")
+              type=str, help="D3A websocket URL")
 @click.option('-i', '--simulation-config-path', type=str, default=None,
               help="Path to simulation config file (accept absolute and relative path)")
 @click.option('-s', '--simulation-id', type=str, default=None,
