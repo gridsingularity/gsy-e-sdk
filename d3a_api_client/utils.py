@@ -351,9 +351,9 @@ def get_slot_completion_percentage_int_from_message(message):
         return int(message["slot_completion"].split("%")[0])
 
 
-def get_simulation_config(simulation_id=None, domain_name=None, websockets_domain_name=None):
-    if os.environ.get('SIMULATION_CONFIG_FILE_PATH'):
-        with open(os.environ['SIMULATION_CONFIG_FILE_PATH']) as json_file:
+def read_simulation_config_file(config_file_path):
+    if config_file_path:
+        with open(config_file_path) as json_file:
             simulation_config = json.load(json_file)
         validate_api_simulation_config(simulation_config)
         return simulation_config
