@@ -106,14 +106,14 @@ def run(base_setup_path, setup_module_name, username, password, domain_name, web
             os.environ["API_CLIENT_SIMULATION_ID"] = simulation_id \
                 if simulation_id else simulation_id_from_env()
 
-        validate_settings_are_set_before_launch()
+        validate_general_settings_are_set()
 
     load_client_script(base_setup_path, setup_module_name)
 
 
-def validate_settings_are_set_before_launch():
+def validate_general_settings_are_set():
     settings_list = ["API_CLIENT_DOMAIN_NAME", "API_CLIENT_WEBSOCKET_DOMAIN_NAME",
-                     "API_CLIENT_SIMULATION_ID", "API_CLIENT_RUN_ON_REDIS"]
+                     "API_CLIENT_SIMULATION_ID"]
     for setting in settings_list:
         if os.environ.get(setting) is None:
             raise ValueError(f"{setting} was not set, please provide")
