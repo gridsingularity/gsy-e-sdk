@@ -26,14 +26,18 @@ logger.disabled = False
 
 oracle_name = 'oracle'
 
-load_names = ['Load 1','Load 2']
+load_names = ['Load 1', 'Load 2']
 pv_names = ['PV 1', 'PV 2']
 storage_names = ['Storage 1','Storage 2']
+
+# load_names = []
+# pv_names = ['CHP 22']
+# storage_names = []
 
 # load_names = ['Load 1','Load 2','Load 3','Load 4','Load 5','Load 6','Load 7','Load 8','Load 10','Load 11','Load 12',
 #               'Load 13','Load 14','Load 15','Load 16','Load 17','Load 18','Load 19','Load 20','Load 21','Load 22','Load 23','Load 24','Load 25']
 # pv_names = ['PV 1','PV 2','PV 3','PV 4','PV 5','PV 7','PV 8','PV 9','PV 10','PV 11','PV 12','PV 13','PV 14','PV 16','PV 17','PV 18',
-#             'PV 19','PV 20','PV 23','PV 24','PV 25']
+#             'PV 19','PV 20','PV 23','PV 24','PV 25','CHP 6','CHP 13','CHP 15','CHP 21','CHP 22']
 # storage_names = ['Storage 1','Storage 2','Storage 3','Storage 4','Storage 5','Storage 7','Storage 8','Storage 10','Storage 11','Storage 12','Storage 14','Storage 16','Storage 17','Storage 18',
 #                  'Storage 19','Storage 20','Storage 23','Storage 24','Storage 25']
 
@@ -233,8 +237,8 @@ class Oracle(aggregator_client_type):
                 "available_energy_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["sell_rates"][i]
                 energy = area_dict["asset_info"]["available_energy_kWh"]
-                # self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
-                self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=rate*energy, energy=energy)
+                self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
+                # self.add_to_batch_commands.update_offer(area_uuid=area_uuid, price=rate*energy, energy=energy)
 
 
             # Battery strategy
@@ -275,7 +279,7 @@ class Oracle(aggregator_client_type):
     # TRIGGERS EACH COMMAND RESPONSE AND EVENT
     ################################################
     def on_event_or_response(self, message):
-        #print("message",message)
+        print("message",message)
         pass
     ################################################
     # SIMULATION TERMINATION CONDITION
