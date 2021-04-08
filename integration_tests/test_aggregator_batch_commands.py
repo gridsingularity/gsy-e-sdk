@@ -118,7 +118,7 @@ class BatchAggregator(RedisAggregator):
 
                 # Make assertions about the bids, if they happened during this slot
                 bid_requests = self._filter_commands_from_responses(
-                    transaction['responses'][0], 'bid')
+                    transaction['responses'], 'bid')
                 if bid_requests:
                     # All bids in the batch have been issued
                     assert len(bid_requests) == 4
@@ -126,7 +126,7 @@ class BatchAggregator(RedisAggregator):
                     assert all(bid.get('status') == 'ready' for bid in bid_requests)
 
                     list_bids_requests = self._filter_commands_from_responses(
-                        transaction['responses'][0], 'list_bids')
+                        transaction['responses'], 'list_bids')
 
                     # The list_bids command has been issued once
                     assert len(list_bids_requests) == 1
@@ -150,7 +150,7 @@ class BatchAggregator(RedisAggregator):
 
                 # Make assertions about the offers, if they happened during this slot
                 offer_requests = self._filter_commands_from_responses(
-                    transaction['responses'][0], 'offer')
+                    transaction['responses'], 'offer')
                 if offer_requests:
                     # All offers in the batch have been issued
                     assert len(offer_requests) == 4
@@ -158,7 +158,7 @@ class BatchAggregator(RedisAggregator):
                     assert all(offer.get('status') == 'ready' for offer in offer_requests)
 
                     list_offers_requests = self._filter_commands_from_responses(
-                        transaction['responses'][0], 'list_offers')
+                        transaction['responses'], 'list_offers')
 
                     # The list_offers command has been issued once
                     assert len(list_offers_requests) == 1
@@ -189,7 +189,12 @@ class BatchAggregator(RedisAggregator):
 
     @staticmethod
     def _filter_commands_from_responses(responses, command_name):
-        return [resp for resp in responses if resp.get('command') == command_name]
+        filtered_commands = []
+        for area_uuid, response in responses.items():
+            for command_dict in response:
+                if command_dict["command"] == command_name:
+                    filtered_commands.append(response)
+        return filtered_commands
 
     @staticmethod
     def _can_place_bid(asset_info):
