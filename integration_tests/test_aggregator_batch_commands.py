@@ -193,7 +193,7 @@ class BatchAggregator(RedisAggregator):
         for area_uuid, response in responses.items():
             for command_dict in response:
                 if command_dict["command"] == command_name:
-                    filtered_commands.append(response)
+                    filtered_commands.append(command_dict)
         return filtered_commands
 
     @staticmethod
