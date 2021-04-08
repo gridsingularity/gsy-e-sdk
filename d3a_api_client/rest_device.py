@@ -1,12 +1,12 @@
-import logging
 from concurrent.futures.thread import ThreadPoolExecutor
+import logging
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util, \
     log_market_progression, domain_name_from_env, websocket_domain_name_from_env, \
-    log_bid_offer_confirmation
+    log_bid_offer_confirmation, simulation_id_from_env
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 
@@ -15,20 +15,18 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
-    def __init__(self, simulation_id, device_id,
-                 domain_name=domain_name_from_env,
-                 websockets_domain_name=websocket_domain_name_from_env,
-                 autoregister=False, start_websocket=True,
-                 sim_api_domain_name=None):
-        self.simulation_id = simulation_id
+    def __init__(self, device_id, simulation_id=None, domain_name=None, websockets_domain_name=None,
+                 autoregister=False, start_websocket=True, sim_api_domain_name=None):
+        self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
+        self.domain_name = domain_name if domain_name else domain_name_from_env()
+        self.websockets_domain_name = websockets_domain_name \
+            if websockets_domain_name else websocket_domain_name_from_env()
         self.device_id = device_id
-        self.domain_name = domain_name
         if sim_api_domain_name is None:
             sim_api_domain_name = self.domain_name
         self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
         self._create_jwt_refresh_timer(sim_api_domain_name)
-        self.websockets_domain_name = websockets_domain_name
-        self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
+        self.aggregator_prefix = get_aggregator_prefix(self.domain_name, self.simulation_id)
         self.active_aggregator = None
         if start_websocket or autoregister:
             self.start_websocket_connection()
@@ -105,6 +103,14 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             log_bid_offer_confirmation(response)
             return response
 
+    @logging_decorator('update_offer')
+    def offer_energy(self, energy, price):
+        transaction_id, posted = self._post_request('update_offer', {"energy": energy, "price": price})
+        if posted:
+            response = self.dispatcher.wait_for_command_response('update_offer', transaction_id)
+            log_bid_offer_confirmation(response)
+            return response
+
     @logging_decorator('bid')
     def bid_energy(self, energy: float, price: float, replace_existing: bool = True):
         transaction_id, posted = self._post_request(
@@ -124,6 +130,13 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         if posted:
             response = self.dispatcher.wait_for_command_response('bid', transaction_id)
             log_bid_offer_confirmation(response)
+            return response
+
+    @logging_decorator('update_bid')
+    def update_bid(self, energy, price):
+        transaction_id, posted = self._post_request('update_bid', {"energy": energy, "price": price})
+        if posted:
+            response = self.dispatcher.wait_for_command_response('update_bid', transaction_id)
             return response
 
     @logging_decorator('delete offer')

@@ -31,6 +31,7 @@ class RedisAggregator:
         self._transaction_id_buffer = []
         self._transaction_id_response_buffer = {}
         self.device_uuid_list = []
+        self._subscribed_aggregator_response_cb = None
         self._client_command_buffer = ClientCommandBuffer()
         self._connect_to_simulation(is_blocking=True)
         self._subscribe_to_response_channels()
@@ -43,9 +44,13 @@ class RedisAggregator:
             self.aggregator_uuid = aggr_id
 
     def _subscribe_to_response_channels(self):
+
+        if b'aggregator_response' in self.pubsub.patterns:
+            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
+
         event_channel = f'external-aggregator/*/{self.aggregator_uuid}/events/all'
-        channel_dict = {"aggregator_response": self._aggregator_response_callback,
-                        event_channel: self._events_callback_dict,
+        channel_dict = {event_channel: self._events_callback_dict,
+                        "aggregator_response": self._aggregator_response_callback,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
                             self._batch_response,
                         }
@@ -68,6 +73,8 @@ class RedisAggregator:
         self.executor.submit(executor_function)
 
     def _aggregator_response_callback(self, message):
+        if self._subscribed_aggregator_response_cb is not None:
+            self._subscribed_aggregator_response_cb(message)
         data = json.loads(message['data'])
 
         if data['transaction_id'] in self._transaction_id_buffer:
@@ -160,6 +167,26 @@ class RedisAggregator:
         Returns the length of the batch commands buffer
         """
         return self._client_command_buffer.buffer_length
+
+    def batch_command(self, batch_command_dict, is_blocking=True):
+        # TODO: Remove this as this is kept atm for the backward compatibility
+        self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
+        transaction_id = str(uuid.uuid4())
+        batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
+                           "aggregator_uuid": self.aggregator_uuid,
+                           "batch_commands": batch_command_dict}
+        batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
+        self.redis_db.publish(batch_channel, json.dumps(batched_command))
+        self._transaction_id_buffer.append(transaction_id)
+
+        if is_blocking:
+            try:
+                wait_until_timeout_blocking(
+                    lambda: not self._check_transaction_id_cached_out(transaction_id)
+                )
+                return self._transaction_id_response_buffer.get(transaction_id, None)
+            except AssertionError:
+                raise RedisAPIException(f'API registration process timed out.')
 
     def execute_batch_commands(self, is_blocking=True):
         if not self.commands_buffer_length:

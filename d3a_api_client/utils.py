@@ -9,12 +9,28 @@ from functools import wraps
 
 from tabulate import tabulate
 from sgqlc.endpoint.http import HTTPEndpoint
-from d3a_interface.utils import key_in_dict_and_not_none, get_area_name_uuid_mapping,RepeatingTimer
+
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+    CUSTOMER_WEBSOCKET_DOMAIN_NAME
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
     RepeatingTimer
 
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
+                                                         CUSTOMER_WEBSOCKET_DOMAIN_NAME)
+
+
+def domain_name_from_env():
+    return os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
+
+
+def websocket_domain_name_from_env():
+    return os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
+
+
+def simulation_id_from_env():
+    return os.environ.get("API_CLIENT_SIMULATION_ID", None)
 
 
 class AreaNotFoundException(Exception):
@@ -60,6 +76,7 @@ def execute_graphql_request(domain_name, query, headers=None, url=None, authenti
     if authenticate:
         jwt_key = retrieve_jwt_key_from_server(domain_name)
         if jwt_key is None:
+            logging.error(f"authentication failed")
             return
     url = f"{domain_name}/graphql/" if url is None else url
     headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'} \
@@ -77,7 +94,7 @@ def retrieve_jwt_key_from_server(domain_name):
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
         logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
-                     f"Response body: {resp.text}")
+                      f"Response body: {resp.text}")
         return
     return json.loads(resp.text)["token"]
 
@@ -210,7 +227,6 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
       }
     }
     '''
-
     data = execute_graphql_request(domain_name=domain_name, query=query)
 
     logging.debug(f"Received Canary Network data: {data}")
@@ -250,12 +266,6 @@ def log_market_progression(message):
         logging.warning(f"Error while logging market progression {e}")
 
 
-domain_name_from_env = os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
-
-
-websocket_domain_name_from_env = os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
-
-
 def log_bid_offer_confirmation(message):
     try:
         if message.get("status") == "ready":
@@ -268,3 +278,17 @@ def log_bid_offer_confirmation(message):
                          f"{round(energy, 2)} kWh at {price} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
+
+
+def read_simulation_config_file(config_file_path):
+    if config_file_path:
+        with open(config_file_path) as json_file:
+            simulation_config = json.load(json_file)
+        validate_api_simulation_config(simulation_config)
+        return simulation_config
+    else:
+        raise ValueError("SIMULATION_CONFIG_FILE_PATH environmental variable must be provided ")
+
+
+def get_sim_id_and_domain_names():
+    return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()

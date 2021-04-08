@@ -12,6 +12,7 @@ class RedisDeviceClient(RedisClient):
                  pubsub_thread=None):
         self.device_id = device_id
         self._transaction_id_buffer = []
+        self._subscribed_aggregator_response_cb = None
         super().__init__(device_id, None, autoregister, redis_url, pubsub_thread)
 
     def _on_register(self, msg):
@@ -31,7 +32,7 @@ class RedisDeviceClient(RedisClient):
     def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
             self._response_topics[c]: self._generate_command_response_callback(c)
-            for c in Commands
+            for c in Commands if c in self._response_topics
         }
 
         channel_subs[f'{self.area_id}/response/register_participant'] = self._on_register
@@ -40,13 +41,20 @@ class RedisDeviceClient(RedisClient):
         channel_subs[f'{self._channel_prefix}/events/tick'] = self._on_tick
         channel_subs[f'{self._channel_prefix}/events/trade'] = self._on_trade
         channel_subs[f'{self._channel_prefix}/events/finish'] = self._on_finish
+
+        if b'aggregator_response' in self.pubsub.patterns:
+            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
+
         channel_subs["aggregator_response"] = self._aggregator_response_callback
+
         channel_subs[f'{self._channel_prefix}/*'] = self._on_event_or_response
         self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
             self.pubsub.run_in_thread(daemon=True)
 
     def _aggregator_response_callback(self, message):
+        if self._subscribed_aggregator_response_cb is not None:
+            self._subscribed_aggregator_response_cb(message)
         data = json.loads(message['data'])
         if data['transaction_id'] in self._transaction_id_buffer:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))

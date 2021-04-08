@@ -1,0 +1,90 @@
+{
+  "username": "muhammad@gridsingularity.com",
+  "name": "collab3218",
+  "uuid": "84d221fa-46e1-49e0-823b-26cfb3425a5a",
+  "domain_name": "localhost",
+  "web_socket_domain_name": "ws://localhost/external-ws",
+  "global_settings": {
+    "start_date": "2021-02-25",
+    "spot_market_type": "1",
+    "slot_length": "0:15:00",
+    "grid_fee_type": "1",
+    "tick_length": "0:00:15",
+    "progress_info": "{'eta_seconds': 18, 'elapsed_time_seconds': 5, 'percentage_completed': 21}",
+    "slot_length_realtime": "0:00:00"
+  },
+  "registry": {
+    "name": "Market",
+    "type": "Area",
+    "uuid": "c0b428cc-0f96-46af-979b-74e8e177163e",
+    "children": [
+      {
+        "name": "Market Maker",
+        "type": "InfiniteBus",
+        "uuid": "cf3b262c-26af-4cad-aa8a-02d1d4aef5c1",
+        "attributes": null,
+        "registered": null,
+        "aggregator_name": null
+      },
+      {
+        "name": "Market 2",
+        "type": "Area",
+        "uuid": "556d3b3a-8475-4547-82dd-2b24dad98eff",
+        "children": [
+          {
+            "name": "Market 3",
+            "type": "Area",
+            "uuid": "8069981c-39e9-44c7-be1f-61d909af08fc",
+            "children": [
+              {
+                "name": "PV",
+                "type": "PV",
+                "uuid": "26090dea-a100-4c9b-9d2c-fcd582be8b2d",
+                "attributes": null,
+                "registered": true,
+                "aggregator_name": "test_aggr"
+              }
+            ],
+            "attributes": null,
+            "registered": null,
+            "aggregator_name": null
+          }
+        ],
+        "attributes": null,
+        "registered": null,
+        "aggregator_name": null
+      },
+      {
+        "name": "Market 4",
+        "type": "Area",
+        "uuid": "e40062c8-17a8-4f8b-9431-57e080d0deec",
+        "children": [
+          {
+            "name": "Market 5",
+            "type": "Area",
+            "uuid": "4f776abb-11f4-4a8c-a6d7-a3c8642d387c",
+            "children": [
+              {
+                "name": "Load",
+                "type": "Load",
+                "uuid": "5f9c3e13-f75d-42af-92e4-55244faec4b4",
+                "attributes": null,
+                "registered": true,
+                "aggregator_name": "test_aggr"
+              }
+            ],
+            "attributes": null,
+            "registered": null,
+            "aggregator_name": null
+          }
+        ],
+        "attributes": null,
+        "registered": null,
+        "aggregator_name": null
+      }
+    ],
+    "attributes": null,
+    "registered": null,
+    "aggregator_name": null
+  }
+}

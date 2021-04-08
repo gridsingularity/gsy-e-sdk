@@ -20,6 +20,7 @@ class BatchAggregator(RedisAggregator):
         self._setup()
         self.is_active = True
         self.updated_house2_grid_fee_cents_kwh = 5
+        self.updated_offer_bid_price = 60
 
         self._has_tested_bids = False
         self._has_tested_offers = False
@@ -44,7 +45,7 @@ class BatchAggregator(RedisAggregator):
                         'load', target_market, 'last_market_fee')
 
             for device_event in market_info['content']:
-                if 'device_info' not in device_event or device_event['device_info'] is None:
+                if not device_event.get('device_info'):
                     continue
                 if key_in_dict_and_not_none(device_event, 'grid_stats_tree'):
                     json_grid_tree = json.dumps(device_event['grid_stats_tree'], indent=2)
