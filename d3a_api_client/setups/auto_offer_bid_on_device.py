@@ -24,7 +24,7 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
         if "energy_requirement_kWh" in market_info['device_info'] and \
                 market_info['device_info']["energy_requirement_kWh"] > 0.0:
             logging.debug(market_info['device_info']['energy_requirement_kWh'])
-            bid = self.bid_energy(market_info['device_info']["energy_requirement_kWh"], 100)
+            bid = self.bid_energy(market_info['device_info']["energy_requirement_kWh"], 90)
             logging.debug(f"Bid placed on the new market: {bid}")
 
     def on_tick(self, tick_info):
@@ -35,7 +35,7 @@ class AutoOfferBidOnMarket(RedisDeviceClient):
 
 
 # Connects one client to the load device
-load = AutoOfferBidOnMarket('load', autoregister=True)
+# load = AutoOfferBidOnMarket('load', autoregister=True)
 # Connects a second client to the pv device
 pv = AutoOfferBidOnMarket('pv', autoregister=True)
 

@@ -2,6 +2,7 @@ import logging
 import json
 import uuid
 
+from copy import copy
 from functools import wraps
 from redis import StrictRedis
 
@@ -9,8 +10,10 @@ from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not
 from d3a_api_client import APIClientInterface
 from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util, log_bid_offer_confirmation, \
-    log_market_progression
+
+from d3a_api_client.utils import log_bid_offer_confirmation, log_market_progression, \
+    execute_function_util
+
 from d3a_api_client.enums import Commands
 
 
@@ -270,9 +273,12 @@ class RedisClient(APIClientInterface):
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_market_cycle")
 
-    def _on_event_or_response(self, msg):
-        message = json.loads(msg["data"])
-        logging.info(f"A new message was received. Message information: {message}")
+    def _on_event_or_response(self, log_msg):
+        message = json.loads(log_msg["data"])
+        log_msg = copy(message)
+        if 'grid_tree' in log_msg:
+            log_msg['grid_tree'] = '{...}'
+        logging.info(f"A new message was received. Message information: {log_msg}")
         log_market_progression(message)
         function = lambda: self.on_event_or_response(message)
         self.executor.submit(execute_function_util, function=function,
@@ -286,8 +292,8 @@ class RedisClient(APIClientInterface):
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)} cents -->")
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
+                     f"at {round(message.get('trade_price'), 2)} cents -->")
         function = lambda: self.on_trade(message)
         self.executor.submit(execute_function_util, function=function,
                              function_name="on_trade")

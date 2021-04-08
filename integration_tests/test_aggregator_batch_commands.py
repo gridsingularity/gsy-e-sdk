@@ -1,8 +1,7 @@
-import json
 import logging
-import traceback
 
-from d3a_interface.utils import key_in_dict_and_not_none
+import json
+import traceback
 
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
@@ -35,73 +34,76 @@ class BatchAggregator(RedisAggregator):
         self.redis_market = RedisMarketClient('house-2')
         self.redis_market.select_aggregator(self.aggregator_uuid)
 
+    def require_grid_fees(self, grid_fee_buffer_dict, fee_type):
+        if self.area_name_uuid_mapping:
+            load_uuid = self.get_uuid_from_area_name("load")
+            for target_market in ["Grid", "House 1", "House 2"]:
+                market_uuid = self.get_uuid_from_area_name(target_market)
+                grid_fee_buffer_dict[target_market] = \
+                    self.calculate_grid_fee(load_uuid, market_uuid, fee_type)
+
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
         try:
             if self.initial_grid_fees_market_cycle == {} and \
-                    self.grid_fee_calculation.latest_grid_stats_tree:
-                for target_market in ['Grid', 'House 1', 'House 2']:
-                    self.initial_grid_fees_market_cycle[target_market] = self.calculate_grid_fee(
-                        'load', target_market, 'last_market_fee')
+                    self.grid_fee_calculation.latest_grid_stats_tree != {}:
+                self.require_grid_fees(self.initial_grid_fees_market_cycle, "last_market_fee")
 
-            for device_event in market_info['content']:
-                if not device_event.get('device_info'):
+            for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+                if area_uuid == self.redis_market.area_uuid:
+                    self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
+                                                         fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
+                    self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
+                    self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
+                if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                     continue
-                if key_in_dict_and_not_none(device_event, 'grid_stats_tree'):
-                    json_grid_tree = json.dumps(device_event['grid_stats_tree'], indent=2)
-                    logging.warning(json_grid_tree)
-
-                if self._can_place_offer(device_event):
+                asset_info = area_dict["asset_info"]
+                if self._can_place_offer(asset_info):
                     self.add_to_batch_commands.offer_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=1.1,
-                        energy=device_event['device_info']['available_energy_kWh'] / 4,
+                        energy=asset_info['available_energy_kWh'] / 4,
                         replace_existing=False
                     ).offer_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=2.2,
-                        energy=device_event['device_info']['available_energy_kWh'] / 4,
+                        energy=asset_info['available_energy_kWh'] / 4,
                         replace_existing=False
                     ).offer_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=3.3,
-                        energy=device_event['device_info']['available_energy_kWh'] / 4,
+                        energy=asset_info['available_energy_kWh'] / 4,
                         replace_existing=True
                     ).offer_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=4.4,
-                        energy=device_event['device_info']['available_energy_kWh'] / 4,
+                        energy=asset_info['available_energy_kWh'] / 4,
                         replace_existing=False
-                    ).list_offers(area_uuid=device_event['area_uuid'])
+                    ).list_offers(area_uuid=area_uuid)
 
-                if self._can_place_bid(device_event):
+                if self._can_place_bid(asset_info):
                     self.add_to_batch_commands.bid_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=27,
-                        energy=device_event['device_info']['energy_requirement_kWh'] / 4,
+                        energy=asset_info['energy_requirement_kWh'] / 4,
                         replace_existing=False
                     ).bid_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=28,
-                        energy=device_event['device_info']['energy_requirement_kWh'] / 4,
+                        energy=asset_info['energy_requirement_kWh'] / 4,
                         replace_existing=False
                     ).bid_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=29,
-                        energy=device_event['device_info']['energy_requirement_kWh'] / 4,
+                        energy=asset_info['energy_requirement_kWh'] / 4,
                         replace_existing=True
                     ).bid_energy(
-                        area_uuid=device_event['area_uuid'],
+                        area_uuid=area_uuid,
                         price=30,
-                        energy=device_event['device_info']['energy_requirement_kWh'] / 4,
+                        energy=asset_info['energy_requirement_kWh'] / 4,
                         replace_existing=False
                     ).list_bids(
-                        area_uuid=device_event['area_uuid'])
-
-                self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
-                                                     fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
-                self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
-                self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
+                        area_uuid=area_uuid)
 
             if self.commands_buffer_length:
                 transaction = self.execute_batch_commands()
@@ -179,9 +181,8 @@ class BatchAggregator(RedisAggregator):
 
                     self._has_tested_offers = True
 
-            for target_market in ["Grid", "House 1", "House 2"]:
-                self.grid_fees_market_cycle_next_market[
-                    target_market] = self.calculate_grid_fee("load", target_market)
+            self.require_grid_fees(self.grid_fees_market_cycle_next_market, "current_market_fee")
+
         except Exception as ex:
             logging.error(f'Raised exception: {ex}. Traceback: {traceback.format_exc()}')
             self.errors += 1
@@ -191,20 +192,19 @@ class BatchAggregator(RedisAggregator):
         return [resp for resp in responses if resp.get('command') == command_name]
 
     @staticmethod
-    def _can_place_bid(event):
+    def _can_place_bid(asset_info):
         return (
-            'energy_requirement_kWh' in event['device_info'] and
-            event['device_info']['energy_requirement_kWh'] > 0.0)
+            'energy_requirement_kWh' in asset_info and
+            asset_info['energy_requirement_kWh'] > 0.0)
 
     @staticmethod
-    def _can_place_offer(event):
+    def _can_place_offer(asset_info):
         return (
-            'available_energy_kWh' in event['device_info'] and
-            event['device_info']['available_energy_kWh'] > 0.0)
+            'available_energy_kWh' in asset_info and
+            asset_info['available_energy_kWh'] > 0.0)
 
     def on_tick(self, tick_info):
-        for target_market in ["Grid", "House 1", "House 2"]:
-            self.grid_fees_tick_last_market[target_market] = self.calculate_grid_fee("load", target_market, "last_market_fee")
+        self.require_grid_fees(self.grid_fees_tick_last_market, "last_market_fee")
 
     def on_finish(self, finish_info):
         # Make sure that all test cases have been run
