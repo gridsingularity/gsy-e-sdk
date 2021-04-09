@@ -136,7 +136,7 @@ def request_response_returns_http_2xx(endpoint, resp):
         return False
 
 
-def get_aggregator_prefix(domain_name, simulation_id):
+def get_aggregator_prefix(domain_name, simulation_id=None):
     return f"{domain_name}/external-connection/aggregator-api/{simulation_id}/"
 
 
@@ -147,7 +147,8 @@ def blocking_get_request(endpoint, data, jwt_token):
         data=json.dumps(data),
         headers={"Content-Type": "application/json",
                  "Authorization": f"JWT {jwt_token}"})
-    return json.loads(resp.json()) if request_response_returns_http_2xx(endpoint, resp) else None
+
+    return resp.json() if request_response_returns_http_2xx(endpoint, resp) else None
 
 
 def get_area_uuid_from_area_name(serialized_scenario, area_name):
