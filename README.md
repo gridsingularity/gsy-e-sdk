@@ -324,3 +324,16 @@ the following command
 ```
 device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
 ```
+
+In case the user wants to send device measurements without using the API client, the raw REST API 
+can be used instead:
+```
+# Authentication is done via JWT token, therefore the user needs to authenticate first to 
+# retrieve the token
+POST https://d3aweb-dev.gridsingularity.com/api-token-auth/ 
+Form Body {username: <your_username>, password: "your_password"}
+# Send the JWT token via the Authorization HTTP header when sending the measurement data 
+# (add "Authorization: JWT <your_token>" to the HTTP headers)
+POST https://d3aweb-dev.gridsingularity.com/external-connection/api/<Canary Network UUID>/<Device UUID>/set_energy_forecast/
+Form Body: {energy_Wh: <energy_value_for_device>}
+```
