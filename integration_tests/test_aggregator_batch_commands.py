@@ -110,16 +110,15 @@ class BatchAggregator(RedisAggregator):
                 if transaction is None:
                     self.errors += 1
                 else:
-                    for response in transaction["responses"]:
-                        for area_response in response:
-                            if area_response['status'] == 'error':
+                    for area_uuid, response in transaction["responses"].items():
+                        for command_dict in response:
+                            if command_dict["status"] == "error":
                                 self.errors += 1
-
-                logging.info(f'Batch command placed on the new market')
+                logging.info(f"Batch command placed on the new market")
 
                 # Make assertions about the bids, if they happened during this slot
                 bid_requests = self._filter_commands_from_responses(
-                    transaction['responses'][0], 'bid')
+                    transaction['responses'], 'bid')
                 if bid_requests:
                     # All bids in the batch have been issued
                     assert len(bid_requests) == 4
@@ -127,7 +126,7 @@ class BatchAggregator(RedisAggregator):
                     assert all(bid.get('status') == 'ready' for bid in bid_requests)
 
                     list_bids_requests = self._filter_commands_from_responses(
-                        transaction['responses'][0], 'list_bids')
+                        transaction['responses'], 'list_bids')
 
                     # The list_bids command has been issued once
                     assert len(list_bids_requests) == 1
@@ -140,18 +139,18 @@ class BatchAggregator(RedisAggregator):
 
                     # The bids have been issued in the correct order
                     assert [
-                        bid['original_bid_price'] for bid in issued_bids
-                    ] == [27, 28, 29, 30]
+                               bid['original_bid_price'] for bid in issued_bids
+                           ] == [27, 28, 29, 30]
 
                     # The only two bids left are the last ones that have been issued
                     assert [bid['id'] for bid in current_bids] == \
-                        [bid['id'] for bid in issued_bids[-2:]]
+                           [bid['id'] for bid in issued_bids[-2:]]
 
                     self._has_tested_bids = True
 
                 # Make assertions about the offers, if they happened during this slot
                 offer_requests = self._filter_commands_from_responses(
-                    transaction['responses'][0], 'offer')
+                    transaction['responses'], 'offer')
                 if offer_requests:
                     # All offers in the batch have been issued
                     assert len(offer_requests) == 4
@@ -159,7 +158,7 @@ class BatchAggregator(RedisAggregator):
                     assert all(offer.get('status') == 'ready' for offer in offer_requests)
 
                     list_offers_requests = self._filter_commands_from_responses(
-                        transaction['responses'][0], 'list_offers')
+                        transaction['responses'], 'list_offers')
 
                     # The list_offers command has been issued once
                     assert len(list_offers_requests) == 1
@@ -173,8 +172,8 @@ class BatchAggregator(RedisAggregator):
 
                     # The offers have been issued in the correct order
                     assert [
-                       offer['original_offer_price'] for offer in issued_offers
-                    ] == [1.1, 2.2, 3.3, 4.4]
+                               offer['original_offer_price'] for offer in issued_offers
+                           ] == [1.1, 2.2, 3.3, 4.4]
 
                     # The only two offers left are the last ones that have been issued
                     assert [offer['id'] for offer in current_offers] == \
@@ -190,7 +189,12 @@ class BatchAggregator(RedisAggregator):
 
     @staticmethod
     def _filter_commands_from_responses(responses, command_name):
-        return [resp for resp in responses if resp.get('command') == command_name]
+        filtered_commands = []
+        for area_uuid, response in responses.items():
+            for command_dict in response:
+                if command_dict["command"] == command_name:
+                    filtered_commands.append(command_dict)
+        return filtered_commands
 
     @staticmethod
     def _can_place_bid(asset_info):
