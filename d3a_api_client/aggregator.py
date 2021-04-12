@@ -1,14 +1,15 @@
 import logging
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import List
 
 from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.utils import logging_decorator, blocking_get_request, \
-    blocking_post_request, domain_name_from_env, websocket_domain_name_from_env, \
-    simulation_id_from_env
-from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
-from concurrent.futures.thread import ThreadPoolExecutor
-from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
+from d3a_api_client.rest_device import RestDeviceClient
+from d3a_api_client.utils import (
+    logging_decorator, blocking_get_request, blocking_post_request, domain_name_from_env,
+    websocket_domain_name_from_env, simulation_id_from_env)
+from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 
 
 class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -79,6 +80,15 @@ class Aggregator(RestDeviceClient):
             logging.error(f"No aggregators found on {self.aggregator_prefix}")
             list_of_aggregators = []
         return list_of_aggregators
+
+    @logging_decorator('connected-assets')
+    def get_connected_assets(self) -> List:
+        """Retrieve the list of all assets that are connected to the aggregator."""
+        connected_assets = blocking_get_request(
+            f'{self.aggregator_prefix}aggregators/{self.aggregator_uuid}/connected-assets',
+            {}, self.jwt_token)
+
+        return connected_assets
 
     @property
     def _url_prefix(self):
