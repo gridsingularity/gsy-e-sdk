@@ -72,7 +72,7 @@ class Aggregator(RestDeviceClient):
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
-    @logging_decorator('create_aggregator')
+    @logging_decorator('list-aggregators')
     def list_aggregators(self):
         list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/',
                                                    {}, self.jwt_token)
@@ -94,12 +94,12 @@ class Aggregator(RestDeviceClient):
     def _url_prefix(self):
         return f'{self.domain_name}/external-connection/aggregator-api/{self.simulation_id}'
 
-    @logging_decorator('create_aggregator')
+    @logging_decorator('create-aggregator')
     def _create_aggregator(self):
         return blocking_post_request(f'{self.aggregator_prefix}create-aggregator/',
                                      {"name": self.aggregator_name}, self.jwt_token)
 
-    @logging_decorator('create_aggregator')
+    @logging_decorator('delete-aggregator')
     def delete_aggregator(self):
         return blocking_post_request(f'{self.aggregator_prefix}delete-aggregator/',
                                      {"aggregator_uuid": self.aggregator_uuid}, self.jwt_token)
