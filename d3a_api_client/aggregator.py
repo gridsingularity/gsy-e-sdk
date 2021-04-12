@@ -72,7 +72,7 @@ class Aggregator(RestDeviceClient):
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
-    @logging_decorator('list-aggregators')
+    @logging_decorator("list-aggregators")
     def list_aggregators(self):
         list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/',
                                                    {}, self.jwt_token)
@@ -81,11 +81,11 @@ class Aggregator(RestDeviceClient):
             list_of_aggregators = []
         return list_of_aggregators
 
-    @logging_decorator('connected-assets')
+    @logging_decorator("connected-assets")
     def get_connected_assets(self) -> List:
         """Retrieve the list of all assets that are connected to the aggregator."""
         connected_assets = blocking_get_request(
-            f'{self.aggregator_prefix}aggregators/{self.aggregator_uuid}/connected-assets',
+            f"{self.aggregator_prefix}aggregators/{self.aggregator_uuid}/connected-assets",
             {}, self.jwt_token)
 
         return connected_assets
@@ -94,12 +94,12 @@ class Aggregator(RestDeviceClient):
     def _url_prefix(self):
         return f'{self.domain_name}/external-connection/aggregator-api/{self.simulation_id}'
 
-    @logging_decorator('create-aggregator')
+    @logging_decorator("create-aggregator")
     def _create_aggregator(self):
         return blocking_post_request(f'{self.aggregator_prefix}create-aggregator/',
                                      {"name": self.aggregator_name}, self.jwt_token)
 
-    @logging_decorator('delete-aggregator')
+    @logging_decorator("delete-aggregator")
     def delete_aggregator(self):
         return blocking_post_request(f'{self.aggregator_prefix}delete-aggregator/',
                                      {"aggregator_uuid": self.aggregator_uuid}, self.jwt_token)
