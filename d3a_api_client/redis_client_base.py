@@ -1,20 +1,14 @@
-import logging
 import json
+import logging
 import uuid
-
-from copy import copy
+from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
-from redis import StrictRedis
 
 from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
+from redis import StrictRedis
+
 from d3a_api_client import APIClientInterface
-from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
-
-from d3a_api_client.utils import log_bid_offer_confirmation, log_market_progression, \
-    execute_function_util
-
-from d3a_api_client.enums import Commands
 
 
 class RedisAPIException(Exception):
@@ -37,7 +31,6 @@ class RedisClient(APIClientInterface):
         super().__init__(area_id, client_id, autoregister, redis_url)
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
-        # TODO: Replace area_id (which is a area name slug now) with "area_uuid"
         self.area_id = area_id
         self.client_id = client_id
         self.device_uuid = None
@@ -50,17 +43,12 @@ class RedisClient(APIClientInterface):
 
     def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
-            self._response_topics[c]: self._generate_command_response_callback(c)
-            for c in Commands if c in self._response_topics
+            f"{self.area_id}/response/register_participant": self._on_register,
+            f"{self.area_id}/response/unregister_participant": self._on_unregister,
         }
 
-        channel_subs[f'{self.area_id}/response/register_participant'] = self._on_register
-        channel_subs[f'{self.area_id}/response/unregister_participant'] = self._on_unregister
-        channel_subs[f'{self._channel_prefix}/events/market'] = self._on_market_cycle
-        channel_subs[f'{self._channel_prefix}/events/tick'] = self._on_tick
-        channel_subs[f'{self._channel_prefix}/events/trade'] = self._on_trade
-        channel_subs[f'{self._channel_prefix}/events/finish'] = self._on_finish
-        channel_subs[f'{self._channel_prefix}/*'] = self._on_event_or_response
+        if b'aggregator_response' in self.pubsub.patterns:
+            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
 
         self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
@@ -106,35 +94,6 @@ class RedisClient(APIClientInterface):
     def _channel_prefix(self):
         return f"{self.area_id}/{self.client_id}"
 
-    @property
-    def _command_topics(self):
-        return {
-            Commands.OFFER: f'{self._channel_prefix}/offer',
-            Commands.UPDATE_OFFER: f'{self._channel_prefix}/update_offer',
-            Commands.BID: f'{self._channel_prefix}/bid',
-            Commands.UPDATE_BID: f'{self._channel_prefix}/update_bid',
-            Commands.DELETE_OFFER: f'{self._channel_prefix}/delete_offer',
-            Commands.DELETE_BID: f'{self._channel_prefix}/delete_bid',
-            Commands.LIST_OFFERS: f'{self._channel_prefix}/list_offers',
-            Commands.LIST_BIDS: f'{self._channel_prefix}/list_bids',
-            Commands.DEVICE_INFO: f'{self._channel_prefix}/device_info'
-        }
-
-    @property
-    def _response_topics(self):
-        response_prefix = self._channel_prefix + "/response"
-        return {
-            Commands.OFFER: f'{response_prefix}/offer',
-            Commands.UPDATE_OFFER: f'{response_prefix}/update_offer',
-            Commands.BID: f'{response_prefix}/bid',
-            Commands.UPDATE_BID: f'{response_prefix}/update_bid',
-            Commands.DELETE_OFFER: f'{response_prefix}/delete_offer',
-            Commands.DELETE_BID: f'{response_prefix}/delete_bid',
-            Commands.LIST_OFFERS: f'{response_prefix}/list_offers',
-            Commands.LIST_BIDS: f'{response_prefix}/list_bids',
-            Commands.DEVICE_INFO: f'{response_prefix}/device_info',
-        }
-
     def _wait_and_consume_command_response(self, command_type, transaction_id):
         def check_if_command_response_received():
             return any(command == command_type and
@@ -165,85 +124,6 @@ class RedisClient(APIClientInterface):
 
         return _command_received
 
-    def _publish_and_wait(self, command_type, data):
-        data.update({"transaction_id": str(uuid.uuid4())})
-        self.redis_db.publish(self._command_topics[command_type], json.dumps(data))
-        return self._wait_and_consume_command_response(command_type, data["transaction_id"])
-
-    @registered_connection
-    def offer_energy(self, energy: float, price: float, replace_existing: bool = True):
-        logging.debug(f"Client tries to place an offer for {energy} kWh at {price} cents.")
-
-        response = self._publish_and_wait(
-            Commands.OFFER,
-            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
-        log_bid_offer_confirmation(response)
-
-        return response
-
-    @registered_connection
-    def offer_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
-        logging.debug(f"Client tries to place an offer for {energy} kWh at {rate} cents/kWh.")
-
-        response = self._publish_and_wait(
-            Commands.OFFER,
-            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
-        log_bid_offer_confirmation(response)
-
-        return response
-
-    def bid_energy(self, energy: float, price: float, replace_existing: bool = True):
-        logging.debug(f"{self.area_id}Client tries to place a bid for {energy} kWh at {price} cents.")
-
-        response = self._publish_and_wait(
-            Commands.BID,
-            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
-        log_bid_offer_confirmation(response)
-
-        return response
-
-    @registered_connection
-    def bid_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
-        logging.debug(f"Client tries to place a bid for {energy} kWh at {rate} cents/kWh.")
-
-        response = self._publish_and_wait(
-            Commands.BID,
-            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
-        log_bid_offer_confirmation(response)
-
-        return response
-
-    @registered_connection
-    def delete_offer(self, offer_id=None):
-        if offer_id is None:
-            logging.debug(f"Client tries to delete all offers.")
-        else:
-            logging.debug(f"Client tries to delete offer {offer_id}.")
-        return self._publish_and_wait(Commands.DELETE_OFFER, {"offer": offer_id})
-
-    @registered_connection
-    def delete_bid(self, bid_id=None):
-        if bid_id is None:
-            logging.debug(f"Client tries to delete all bids.")
-        else:
-            logging.debug(f"Client tries to delete bid {bid_id}.")
-        return self._publish_and_wait(Commands.DELETE_BID, {"bid": bid_id})
-
-    @registered_connection
-    def list_offers(self):
-        logging.debug(f"Client tries to read its posted offers.")
-        return self._publish_and_wait(Commands.LIST_OFFERS, {})
-
-    @registered_connection
-    def list_bids(self):
-        logging.debug(f"Client tries to read its posted bids.")
-        return self._publish_and_wait(Commands.LIST_BIDS, {})
-
-    @registered_connection
-    def device_info(self):
-        logging.debug(f"Client tries to read the device information.")
-        return self._publish_and_wait(Commands.DEVICE_INFO, {})
-
     def _on_register(self, msg):
         message = json.loads(msg["data"])
         self._check_buffer_message_matching_command_and_id(message)
@@ -267,43 +147,6 @@ class RedisClient(APIClientInterface):
             raise RedisAPIException(f'Failed to unregister from market {self.area_id}.'
                                     f'Deactivating connection.')
 
-    def _on_market_cycle(self, msg):
-        message = json.loads(msg["data"])
-        function = lambda: self.on_market_cycle(message)
-        self.executor.submit(execute_function_util, function=function,
-                             function_name="on_market_cycle")
-
-    def _on_event_or_response(self, log_msg):
-        message = json.loads(log_msg["data"])
-        log_msg = copy(message)
-        if 'grid_tree' in log_msg:
-            log_msg['grid_tree'] = '{...}'
-        logging.info(f"A new message was received. Message information: {log_msg}")
-        log_market_progression(message)
-        function = lambda: self.on_event_or_response(message)
-        self.executor.submit(execute_function_util, function=function,
-                             function_name="on_event_or_response")
-
-    def _on_tick(self, msg):
-        message = json.loads(msg["data"])
-        function = lambda: self.on_tick(message)
-        self.executor.submit(execute_function_util, function=function,
-                             function_name="on_tick")
-
-    def _on_trade(self, msg):
-        message = json.loads(msg["data"])
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
-                     f"at {round(message.get('trade_price'), 2)} cents -->")
-        function = lambda: self.on_trade(message)
-        self.executor.submit(execute_function_util, function=function,
-                             function_name="on_trade")
-
-    def _on_finish(self, msg):
-        message = json.loads(msg["data"])
-        function = lambda: self.on_finish(message)
-        self.executor.submit(execute_function_util, function=function,
-                             function_name="on_finish")
-
     def _check_buffer_message_matching_command_and_id(self, message):
         if key_in_dict_and_not_none(message, "transaction_id"):
             transaction_id = message["transaction_id"]
@@ -314,22 +157,4 @@ class RedisClient(APIClientInterface):
         else:
             raise RedisAPIException(
                 "The answer message does not contain a valid 'transaction_id' member.")
-
-    def on_register(self, registration_info):
-        pass
-
-    def on_market_cycle(self, market_info):
-        pass
-
-    def on_tick(self, tick_info):
-        pass
-
-    def on_trade(self, trade_info):
-        pass
-
-    def on_finish(self, finish_info):
-        pass
-
-    def on_event_or_response(self, message):
-        pass
 
