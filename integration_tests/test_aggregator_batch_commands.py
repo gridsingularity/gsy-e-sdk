@@ -13,7 +13,6 @@ class BatchAggregator(RedisAggregator):
         self.grid_fees_market_cycle_next_market = {}
         self.grid_fees_tick_last_market = {}
         self.initial_grid_fees_market_cycle = {}
-        self.dso_market_stats = {}
         super().__init__(*args, **kwargs)
         self.errors = 0
         self.status = "running"
