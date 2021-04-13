@@ -85,8 +85,7 @@ class Aggregator(RestDeviceClient):
     def get_configuration_registry(self) -> Dict:
         """Return the graph representation of the configuration's grid and its assets/devices.
 
-        If the aggregator is connected to the configuration, its name and the registration status
-        relative to each asset will be shown.
+        For each asset, the status of the aggregator's registration will be shown.
         """
         config_registry = blocking_get_request(
             f"{self.configuration_prefix}registry", {}, self.jwt_token)
