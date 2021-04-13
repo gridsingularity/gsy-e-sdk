@@ -1,6 +1,6 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import List
+from typing import Dict
 
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
@@ -81,14 +81,17 @@ class Aggregator(RestDeviceClient):
             list_of_aggregators = []
         return list_of_aggregators
 
-    @logging_decorator("connected-assets")
-    def get_connected_assets(self) -> List:
-        """Retrieve the list of all assets that are connected to the aggregator."""
-        connected_assets = blocking_get_request(
-            f"{self.aggregator_prefix}aggregators/{self.aggregator_uuid}/connected-assets",
-            {}, self.jwt_token)
+    @logging_decorator("registry")
+    def get_configuration_registry(self) -> Dict:
+        """Return the graph representation of the configuration's grid and its assets/devices.
 
-        return connected_assets
+        If the aggregator is connected to the configuration, its name and the registration status
+        relative to each asset will be shown.
+        """
+        config_registry = blocking_get_request(
+            f"{self.configuration_prefix}registry", {}, self.jwt_token)
+
+        return config_registry
 
     @property
     def _url_prefix(self):

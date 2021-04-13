@@ -140,6 +140,10 @@ def get_aggregator_prefix(domain_name, simulation_id=None):
     return f"{domain_name}/external-connection/aggregator-api/{simulation_id}/"
 
 
+def get_configuration_prefix(domain_name, simulation_id=None):
+    return f"{domain_name}/external-connection/configurations/{simulation_id}/"
+
+
 def blocking_get_request(endpoint, data, jwt_token):
     data["transaction_id"] = str(uuid.uuid4())
     resp = requests.get(

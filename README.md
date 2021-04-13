@@ -226,9 +226,9 @@ device.unselect_aggregator(aggregator.aggregator_uuid)
     list_aggregators()
     ```
   
-- Return all the devices and areas connected to the aggregator: 
+- Return the representation of all the devices and areas connected to the aggregator's configuration: 
     ```python
-    get_connected_assets()
+    get_configuration_registry()
     ```
   
 - Delete the current aggregator:
