@@ -187,7 +187,7 @@ class BatchAggregator(RedisAggregator):
                     assert set(market_stats_requests_responses[0]["market_stats"].keys()) == {
                         "min_trade_rate", "max_trade_rate", "avg_trade_rate", "median_trade_rate",
                         "total_traded_energy_kWh", "market_bill", "market_fee_revenue",
-                        "area_throughput", "self-sufficiency", "self_consumption"}
+                        "area_throughput", "self_sufficiency", "self_consumption"}
 
             self.require_grid_fees(self.grid_fees_market_cycle_next_market, "current_market_fee")
 
