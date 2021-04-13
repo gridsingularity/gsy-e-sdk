@@ -13,6 +13,7 @@ class BatchAggregator(RedisAggregator):
         self.grid_fees_market_cycle_next_market = {}
         self.grid_fees_tick_last_market = {}
         self.initial_grid_fees_market_cycle = {}
+        self.dso_market_stats = {}
         super().__init__(*args, **kwargs)
         self.errors = 0
         self.status = "running"
@@ -180,6 +181,14 @@ class BatchAggregator(RedisAggregator):
                            [offer['id'] for offer in issued_offers[-2:]]
 
                     self._has_tested_offers = True
+
+                market_stats_requests_responses = self._filter_commands_from_responses(
+                    transaction['responses'], 'dso_market_stats')
+                if market_stats_requests_responses:
+                    assert set(market_stats_requests_responses[0]["market_stats"].keys()) == {
+                        "min_trade_rate", "max_trade_rate", "avg_trade_rate", "median_trade_rate",
+                        "total_traded_energy_kWh", "market_bill", "market_fee_revenue",
+                        "area_throughput", "self-sufficiency", "self_consumption"}
 
             self.require_grid_fees(self.grid_fees_market_cycle_next_market, "current_market_fee")
 
