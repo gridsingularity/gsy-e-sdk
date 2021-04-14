@@ -86,7 +86,7 @@ class RedisMarketClient:
         channel_subs = {
             f"{self._channel_prefix}/response/{command_name}":
                 self._generate_command_response_callback(command_name)
-            for command_name in ['grid_fees', 'dso_market_stats']}
+            for command_name in ["grid_fees", "dso_market_stats"]}
         channel_subs.update({
             f'{self._channel_prefix}/response/register_participant': self._on_register,
             f'{self._channel_prefix}/response/unregister_participant': self._on_unregister,
