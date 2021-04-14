@@ -131,5 +131,5 @@ dmypy.json
 .idea/
 
 .docker/
-.dump.rdb
 dump.rdb
+*.DS_Store

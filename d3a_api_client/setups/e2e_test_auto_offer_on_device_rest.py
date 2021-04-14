@@ -21,6 +21,7 @@ parser.add_argument("--websockets_domain_name", type=str, help="websocket_name",
 args = parser.parse_args()
 connected_devices = []
 
+
 class AutoOfferBidOnMarket(RestDeviceClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
