@@ -55,21 +55,25 @@ In order to get help, please run:
 ```
 d3a-api-client run --help
 ```
-Following is the more in depth explanation of individual flags supported,
-- `base-setup-path` --> Set the base path where user's client script resides, otherwise `d3a_api_client/setups` is taken as default for user's client scripts. User can provide either an absolute or a relative file path.
+The following parameters can be set via the CLI:
+- `base-setup-path` --> Path where user's client script resides, otherwise `d3a_api_client/setups` is used.
 - `setup` --> Name of user's API client module/script.
-- `username` --> Username of agent authorized to communicate with respective collaboration/CN.
+- `username` --> Username of agent authorized to communicate with respective collaboration or Canary Network (CN).
 - `password` --> Password of respective agent
-- `domain-name` --> D3A domain name
-- `web-socket` --> D3A websocket URI
-- `simulation-config-path` --> Path to the JSON file that contains the user's collaboration/CN information. This file can be downloaded from the "Registry" page on the D3A website. 
-- `run-on-redis` --> This flag targets the local testing of the API client, where no user authentication is required. A locally running redis server and d3a simulation are needed here.
+- `domain-name` --> D3A domain URL
+- `web-socket` --> D3A websocket URL
+- `simulation-id` --> UUID of the collaboration or Canary Network (CN)
+- `simulation-config-path` --> Path to the JSON file that contains the user's collaboration or CN information. 
+  This file can be downloaded from the "Registry" page on the D3A website. 
+  `simulation-id`, `domain-name`, and `web-socket` CLI-settings will be overwritten by the settings in the file
+- `run-on-redis` --> This flag can be set for local testing of the API client, where no user authentication is required. 
+  For that, a locally running redis server and d3a simulation are needed.
 
 #### Examples
 - For local testing of the API client:
-```
-d3a-api-client --log-level ERROR run --setup test_redis_aggregator --run-on-redis
-```
+  ```
+  d3a-api-client --log-level ERROR run --setup test_redis_aggregator --run-on-redis
+  ```
 - For testing your api client script on remote server hosting d3a's collaboration/CNs.
     - If user's client script resides on `d3a_api_client/setups`
     ```
@@ -314,4 +318,17 @@ the following command
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):
 ```
 device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
+```
+
+In case the user wants to send device measurements without using the API client, the raw REST API 
+can be used instead:
+```
+# Authentication is done via JWT token, therefore the user needs to authenticate first to 
+# retrieve the token
+POST https://d3aweb-dev.gridsingularity.com/api-token-auth/ 
+Form Body {username: <your_username>, password: "your_password"}
+# Send the JWT token via the Authorization HTTP header when sending the measurement data 
+# (add "Authorization: JWT <your_token>" to the HTTP headers)
+POST https://d3aweb-dev.gridsingularity.com/external-connection/api/<Canary Network UUID>/<Device UUID>/set_energy_forecast/
+Form Body: {energy_Wh: <energy_value_for_device>}
 ```

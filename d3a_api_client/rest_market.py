@@ -5,18 +5,18 @@ from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketT
 from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
     logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util, log_market_progression
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import DOMAIN_NAME_FROM_ENV, WEBSOCKET_DOMAIN_NAME_FROM_ENV, \
-    get_simulation_config
+from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
+    simulation_id_from_env
 
 
 class RestMarketClient(RestCommunicationMixin):
 
-    def __init__(self, area_id, simulation_id=None, domain_name=None,
-                 websockets_domain_name=None):
-
+    def __init__(self, area_id, simulation_id=None, domain_name=None, websockets_domain_name=None):
         self.device_id = area_id
-        self.simulation_id, self.domain_name, websockets_domain_name = \
-            get_simulation_config(simulation_id, domain_name, websockets_domain_name)
+        self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
+        self.domain_name = domain_name if domain_name else domain_name_from_env()
+        self.websockets_domain_name = websockets_domain_name \
+            if websockets_domain_name else websocket_domain_name_from_env()
         self.jwt_token = retrieve_jwt_key_from_server(domain_name)
         self._create_jwt_refresh_timer(domain_name)
         self.dispatcher = WebsocketMessageReceiver(self)

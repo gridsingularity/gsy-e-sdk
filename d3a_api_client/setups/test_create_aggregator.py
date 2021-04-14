@@ -1,12 +1,11 @@
 import logging
-from time import sleep
-
 from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
+from time import sleep
 
 from d3a_api_client.aggregator import Aggregator
 from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.utils import (
-    get_area_uuid_from_area_name_and_collaboration_id, get_simulation_config)
+from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
+from d3a_api_client.utils import get_sim_id_and_domain_names
 
 
 class TestAggregator(Aggregator):
@@ -29,15 +28,17 @@ class TestAggregator(Aggregator):
             return
 
         for device_event in market_info['content']:
+            if not device_event.get('device_info'):
+                continue
             if key_in_dict_and_not_none_and_greater_than_zero(
-                    device_event, 'available_energy_kWh'):
+                    device_event['device_info'], 'available_energy_kWh'):
                 self.add_to_batch_commands.\
                     offer_energy(device_event['area_uuid'], price=1,
                                  energy=device_event['device_info']['available_energy_kWh'] / 2)
                 self.add_to_batch_commands.list_offers(device_event['area_uuid'])
 
             if key_in_dict_and_not_none_and_greater_than_zero(
-                    device_event, 'energy_requirement_kWh'):
+                    device_event['device_info'], 'energy_requirement_kWh'):
                 self.add_to_batch_commands.\
                     bid_energy(device_event['area_uuid'], price=30,
                                energy=device_event['device_info']['energy_requirement_kWh'] / 2)
@@ -56,8 +57,7 @@ class TestAggregator(Aggregator):
         self.is_finished = True
 
 
-simulation_id, domain_name, websocket_domain_name = get_simulation_config()
-
+simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
 
 aggr = TestAggregator(
     aggregator_name='test_aggr',
@@ -95,8 +95,7 @@ pv1 = RestDeviceClient(
 load1.select_aggregator(aggr.aggregator_uuid)
 pv1.select_aggregator(aggr.aggregator_uuid)
 
-area_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    simulation_id, "House", domain_name)
+area_uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, "House", domain_name)
 
 while not aggr.is_finished:
     sleep(0.5)
