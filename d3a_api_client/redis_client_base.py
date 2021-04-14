@@ -26,13 +26,12 @@ def registered_connection(f):
 
 
 class RedisClient(APIClientInterface):
-    def __init__(self, area_id, client_id, autoregister=True, redis_url='redis://localhost:6379',
+    def __init__(self, area_id, autoregister=True, redis_url='redis://localhost:6379',
                  pubsub_thread=None):
-        super().__init__(area_id, client_id, autoregister, redis_url)
+        super().__init__(area_id, autoregister, redis_url)
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         self.area_id = area_id
-        self.client_id = client_id
         self.device_uuid = None
         self.is_active = False
         self._blocking_command_responses = {}
@@ -41,24 +40,23 @@ class RedisClient(APIClientInterface):
         if autoregister:
             self.register(is_blocking=True)
 
-    def _subscribe_to_response_channels(self, pubsub_thread=None):
-        channel_subs = {
+    @property
+    def channel_subs(self):
+        return {
             f"{self.area_id}/response/register_participant": self._on_register,
             f"{self.area_id}/response/unregister_participant": self._on_unregister,
         }
 
-        if b'aggregator_response' in self.pubsub.patterns:
-            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
-
-        self.pubsub.psubscribe(**channel_subs)
+    def _subscribe_to_response_channels(self, pubsub_thread=None):
+        self.pubsub.psubscribe(**self.channel_subs)
         if pubsub_thread is None:
             self.pubsub.run_in_thread(daemon=True)
 
     def register(self, is_blocking=False):
-        logging.info(f"Trying to register to {self.area_id} as client {self.client_id}")
+        logging.info(f"Trying to register to {self.area_id}")
         if self.is_active:
             raise RedisAPIException(f'API is already registered to the market.')
-        data = {"name": self.client_id, "transaction_id": str(uuid.uuid4())}
+        data = {"name": self.area_id, "transaction_id": str(uuid.uuid4())}
         self._blocking_command_responses["register"] = data
         self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
 

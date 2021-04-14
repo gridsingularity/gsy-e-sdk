@@ -1,0 +1,125 @@
+import logging
+
+import json
+import traceback
+
+from d3a_api_client.redis_aggregator import RedisAggregator
+from d3a_api_client.redis_device import RedisDeviceClient
+
+
+class EssAggregator(RedisAggregator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.errors = 0
+        self.status = "running"
+        self._setup()
+        self._has_tested_bids = False
+        self._has_tested_offers = False
+
+    def _setup(self):
+        storage = RedisDeviceClient("storage")
+        storage.select_aggregator(self.aggregator_uuid)
+
+    def on_market_cycle(self, market_info):
+        logging.info(f"market_info: {market_info}")
+        try:
+
+            for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+                if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+                    continue
+                asset_info = area_dict["asset_info"]
+                if self._can_place_bid(asset_info):
+                    bid_energy = asset_info["energy_to_buy"]
+                    bid_price = 31 * bid_energy
+                    self.add_to_batch_commands.bid_energy(
+                        area_uuid=area_uuid,
+                        price=bid_price,
+                        energy=bid_energy,
+                        replace_existing=False
+                    )
+
+                if self._can_place_offer(asset_info):
+                    offer_energy = asset_info["energy_to_sell"]
+                    offer_price = 10 * offer_energy
+                    self.add_to_batch_commands.offer_energy(
+                        area_uuid=area_uuid,
+                        price=offer_price,
+                        energy=offer_energy,
+                        replace_existing=False
+                    )
+
+            if self.commands_buffer_length:
+                transaction = self.execute_batch_commands()
+                if transaction is None:
+                    self.errors += 1
+                else:
+                    for response in transaction["responses"].values():
+                        for command_dict in response:
+                            if command_dict["status"] == "error":
+                                self.errors += 1
+                logging.info(f"Batch command placed on the new market")
+
+                # Make assertions about the bids, if they happened during this slot
+                bid_requests = self._filter_commands_from_responses(
+                    transaction["responses"], "bid")
+
+                if bid_requests:
+                    assert len(bid_requests) == 1
+                    bid_response = bid_requests[0]
+                    bid = json.loads(bid_response["bid"])
+                    assert bid_response["status"] == "ready"
+                    assert bid["buyer_origin"] == bid["buyer"] == "storage"
+                    assert bid["buyer_origin_id"] == bid["buyer_id"] == bid_response["area_uuid"]
+                    assert bid["price"] == bid_price
+                    assert bid["energy"] == bid_energy
+                    self._has_tested_bids = True
+
+                # Make assertions about the offers, if they happened during this slot
+                offer_requests = self._filter_commands_from_responses(
+                    transaction["responses"], "offer")
+                if offer_requests:
+                    assert len(offer_requests) == 1
+                    offer_response = offer_requests[0]
+                    offer = json.loads(offer_response["offer"])
+                    assert offer["seller_origin"] == offer["seller"] == "storage"
+                    assert offer["seller_origin_id"] == offer["seller_id"] == \
+                           offer_response["area_uuid"]
+                    assert offer["price"] == offer_price
+                    assert offer["energy"] == offer_energy
+
+                    self._has_tested_offers = True
+
+        except Exception as ex:
+            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
+            self.errors += 1
+
+    @staticmethod
+    def _filter_commands_from_responses(responses, command_name):
+        filtered_commands = []
+        for area_uuid, response in responses.items():
+            for command_dict in response:
+                if command_dict["command"] == command_name:
+                    filtered_commands.append(command_dict)
+        return filtered_commands
+
+    @staticmethod
+    def _can_place_bid(asset_info):
+        return (
+            "energy_to_buy" in asset_info and
+            asset_info["energy_to_buy"] > 0.0)
+
+    @staticmethod
+    def _can_place_offer(asset_info):
+        return (
+            "energy_to_sell" in asset_info and
+            asset_info["energy_to_sell"] > 0.0)
+
+    def on_finish(self, finish_info):
+        # Make sure that all test cases have been run
+        if self._has_tested_bids is False or self._has_tested_offers is False:
+            logging.error(
+                "Not all test cases have been covered. This will be reported as failure.")
+            self.errors += 1
+
+        self.status = "finished"
+

@@ -9,13 +9,12 @@ class APIClientInterface(ABC):
     """
 
     @abstractmethod
-    def __init__(self, market_id, client_id, *args, **kwargs):
+    def __init__(self, area_id, *args, **kwargs):
         """
         On the constructor of the interface, it is obligatory for the user to provide
         the ID of the market that wants to access, and also to provide his client identifier
         so that D3A can authenticate the connected user.
-        :param market_id: Identifier of the market to be connected to
-        :param client_id: Identifier of the client
+        :param area_id: Identifier of the market to be connected to
         :param kwargs:
         """
         pass

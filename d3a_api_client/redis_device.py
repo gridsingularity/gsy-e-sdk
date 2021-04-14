@@ -14,7 +14,7 @@ class RedisDeviceClient(RedisClient):
         self.device_id = device_id
         self._transaction_id_buffer = []
         self._subscribed_aggregator_response_cb = None
-        super().__init__(device_id, None, autoregister, redis_url, pubsub_thread)
+        super().__init__(device_id, autoregister, redis_url, pubsub_thread)
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
@@ -29,6 +29,11 @@ class RedisDeviceClient(RedisClient):
         self._check_buffer_message_matching_command_and_id(message)
         logging.info(f"Client was unregistered from the device: {message}")
         self.is_active = False
+
+    def _subscribe_to_response_channels(self, pubsub_thread=None):
+        if b'aggregator_response' in self.pubsub.patterns:
+            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
+        super()._subscribe_to_response_channels()
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:
