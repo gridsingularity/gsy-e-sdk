@@ -2,22 +2,20 @@ import ast
 import json
 import logging
 import os
-import requests
 import traceback
 import uuid
 from functools import wraps
 
-from tabulate import tabulate
-from sgqlc.endpoint.http import HTTPEndpoint
-
-from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+import requests
 from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
+from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
     RepeatingTimer
+from sgqlc.endpoint.http import HTTPEndpoint
+from tabulate import tabulate
 
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     CUSTOMER_WEBSOCKET_DOMAIN_NAME
-
 
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)

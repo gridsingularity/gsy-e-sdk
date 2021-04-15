@@ -151,7 +151,8 @@ class Aggregator(RestDeviceClient):
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
 
     def get_uuid_from_area_name(self, name):
-        return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)
+        if self.area_name_uuid_mapping:
+            return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)
 
     @buffer_grid_tree_info
     def _on_market_cycle(self, message):

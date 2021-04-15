@@ -1,9 +1,10 @@
 import logging
 from time import sleep
+
 from d3a_api_client.aggregator import Aggregator
+from d3a_api_client.rest_market import RestMarketClient
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id, \
     get_sim_id_and_domain_names
-from d3a_api_client.rest_market import RestMarketClient
 
 
 class TestAggregator(Aggregator):
@@ -44,34 +45,18 @@ class TestAggregator(Aggregator):
         self.is_finished = True
 
 
+aggr = TestAggregator(aggregator_name="test_aggregator")
+
 simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
 
-aggr = TestAggregator(
-    simulation_id=simulation_id,
-    domain_name=domain_name,
-    aggregator_name="test_aggregator",
-    websockets_domain_name=websockets_domain_name
-)
-
-market_args = {
-    "simulation_id": simulation_id,
-    "domain_name": domain_name,
-    "websockets_domain_name": websockets_domain_name
-}
-
 house_1_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    market_args["simulation_id"], "House 1", market_args["domain_name"])
-market_args["area_id"] = house_1_uuid
-house_1 = RestMarketClient(
-    **market_args
-)
+    simulation_id, "House 1", domain_name)
+house_1 = RestMarketClient(house_1_uuid)
 
 house_2_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    market_args["simulation_id"], "House 2", market_args["domain_name"])
-market_args["area_id"] = house_2_uuid
-house_2 = RestMarketClient(
-    **market_args
-)
+    simulation_id, "House 2", domain_name)
+house_2 = RestMarketClient(house_2_uuid)
+
 house_1.select_aggregator(aggr.aggregator_uuid)
 house_2.select_aggregator(aggr.aggregator_uuid)
 

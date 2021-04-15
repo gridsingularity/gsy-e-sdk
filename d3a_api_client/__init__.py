@@ -41,3 +41,13 @@ class APIClientInterface(ABC):
         """
         pass
 
+    def on_event_or_response(self, message):
+        """
+       Method that is meant to be overridden, to allow custom user actions when any event or response is
+        received by the client.
+       A user of the class should be able to override this method via subclassing. This method will
+       be called in the background when an event or response is received.
+       :param message: Information about the event or response that was reported
+       :return: None
+        """
+        pass
