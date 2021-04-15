@@ -12,15 +12,15 @@ from time import sleep
 from d3a_api_client.redis_market import RedisMarketClient
 from pendulum import from_format
 from d3a_interface.constants_limits import DATE_TIME_FORMAT, TIME_FORMAT
-from d3a_interface.utils import key_in_dict_and_not_none
 from d3a_api_client.types import aggregator_client_type
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 from d3a_api_client.rest_market import RestMarketClient
 import os
+
 current_dir = os.path.dirname(__file__)
 
 # List of market the Grid Operators connect to
-market_names = ["Grid", "Community"]                          # TODO list the market names as they are in the collaboration
+market_names = ["Grid", "Community"]      # TODO list the market names as they are in the collaboration
 
 # Name of your aggregator
 oracle_name = "dso"
@@ -78,6 +78,7 @@ class Oracle(aggregator_client_type):
         self.median_trade_rate={}
         self.total_traded_energy_kWh={}
         self.self_sufficiency={}
+        self.self_consumption={}
         self.import_kWh={}
         self.export_kWh={}
         self.balance={}
@@ -96,16 +97,17 @@ class Oracle(aggregator_client_type):
                 self.last_market_fee[area_dict["area_name"]] = area_dict["last_market_fee"]
                 self.current_market_fee[area_dict["area_name"]] = area_dict["current_market_fee"]
 
-        for market_event in self.dso_stats_response["responses"]:
+        for uuid, market_event in self.dso_stats_response["responses"].items():
             # Store data from market info into variables - these variables are updated in a way that always just store the current/most updated values
-            self.min_trade_rate[market_event[0]['name']] = next(iter(market_event[0]["market_stats"].values()))["min_trade_rate"]
-            self.avg_trade_rate[market_event[0]['name']] = next(iter(market_event[0]["market_stats"].values()))["avg_trade_rate"]
-            self.max_trade_rate[market_event[0]['name']] = next(iter(market_event[0]["market_stats"].values()))["max_trade_rate"]
-            self.median_trade_rate[market_event[0]['name']] = next(iter(market_event[0]["market_stats"].values()))["median_trade_rate"]
-            self.total_traded_energy_kWh[market_event[0]['name']] = next(iter(market_event[0]["market_stats"].values()))["total_traded_energy_kWh"]
-            self.self_sufficiency[market_event[0]['name']] = 0
-            self.import_kWh[market_event[0]['name']] = next(iter(market_event[0]["market_stats"].values()))['area_throughput']['import']
-            self.export_kWh[market_event[0]['name']] = next(iter(market_event[0]["market_stats"].values()))['area_throughput']['export']
+            self.min_trade_rate[market_event[0]['name']] = market_event[0]["market_stats"]["min_trade_rate"]
+            self.avg_trade_rate[market_event[0]['name']] = market_event[0]["market_stats"]["avg_trade_rate"]
+            self.max_trade_rate[market_event[0]['name']] = market_event[0]["market_stats"]["max_trade_rate"]
+            self.median_trade_rate[market_event[0]['name']] = market_event[0]["market_stats"]["median_trade_rate"]
+            self.total_traded_energy_kWh[market_event[0]['name']] = market_event[0]["market_stats"]["total_traded_energy_kWh"]
+            self.self_sufficiency[market_event[0]['name']] = market_event[0]["market_stats"]["self_sufficiency"]
+            self.self_consumption[market_event[0]['name']] = market_event[0]["market_stats"]["self_consumption"]
+            self.import_kWh[market_event[0]['name']] = market_event[0]["market_stats"]['area_throughput']['import']
+            self.export_kWh[market_event[0]['name']] = market_event[0]["market_stats"]['area_throughput']['export']
             try:
                 self.balance[market_event[0]['name']] = self.import_kWh[market_event[0]['name']]-self.export_kWh[market_event[0]['name']]
             except:
@@ -141,18 +143,20 @@ class Oracle(aggregator_client_type):
         for i in range(len(market_names)):
             keys_list = list(self.total_traded_energy_kWh.keys())
             ss_values_list = list(self.self_sufficiency.values())
+            sc_values_list = list(self.self_consumption.values())
             energy_imp_values_list = list(self.import_kWh.values())
             energy_exp_values_list = list(self.export_kWh.values())
             last_fee_values_list = list(self.last_market_fee.values())
             # Print None values as 0
             ss_values_list = [0 if x is None else x for x in ss_values_list]
+            sc_values_list = [0 if x is None else x for x in sc_values_list]
             energy_imp_values_list = [0 if x is None else x for x in energy_imp_values_list]
             energy_exp_values_list = [0 if x is None else x for x in energy_exp_values_list]
             last_fee_values_list = [0 if x is None else x for x in last_fee_values_list]
 
-            last_market_table2.append([keys_list[i], ss_values_list[i], energy_imp_values_list[i], energy_exp_values_list[i], last_fee_values_list[i]])
+            last_market_table2.append([keys_list[i], ss_values_list[i], sc_values_list[i], energy_imp_values_list[i], energy_exp_values_list[i], last_fee_values_list[i]])
 
-        last_market_headers2 = ["Markets", "Self sufficiency [%]", "Energy import [kWh]", "Energy export [kWh]", "Last fee [€cts/Kwh]"]
+        last_market_headers2 = ["Markets", "Self sufficiency [%]", "Self consumption [%]", "Energy import [kWh]", "Energy export [kWh]", "Last fee [€cts/Kwh]"]
         print(tabulate(last_market_table2, last_market_headers2, tablefmt="fancy_grid"))
 
 
