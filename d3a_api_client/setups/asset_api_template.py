@@ -9,8 +9,7 @@ from time import sleep
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.types import aggregator_client_type
-from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
-import json
+from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id, get_aggregator_prefix
 import logging
 logger = logging.getLogger()
 logger.disabled = False
@@ -22,6 +21,7 @@ print(current_dir)
 ################################################
 
 # TODO update each of the below according to the assets the API will manage
+automatic = True
 
 oracle_name = 'oracle'
 
@@ -250,6 +250,38 @@ class Oracle(aggregator_client_type):
 ################################################
 # REGISTER FOR DEVICES AND MARKETS
 ################################################
+def get_assets_list(indict: dict) -> dict:
+    """
+    wrapper for _flatten_info_dict
+    """
+    if indict == {}:
+        return {}
+    outdict = {"Area": [], "Load": [], "PV": [], "Storage": []}
+    _get_assets_list(indict, outdict)
+    return outdict
+
+
+def _get_assets_list(indict: dict, outdict: dict):
+    """
+    Flattens market_info/tick_info information trees
+    outdict will hold references to all area subdicts of indict
+    """
+    for area_name, area_dict in indict.items():
+        # print(indict.items())
+        if area_name == "name":
+            name = area_dict
+        if area_name == "type":
+            type = area_dict
+        if area_name == "registered" and area_dict:
+            outdict[type].append(name)
+
+        # print(i)
+        if 'children' in area_name:
+            for area in indict[area_name]:
+                # if 'children' in area:
+                # print(area)
+                _get_assets_list(area, outdict)
+
 
 aggr = Oracle(aggregator_name=oracle_name)
 
@@ -258,18 +290,15 @@ if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
     device_args = {"autoregister": True, "pubsub_thread": aggr.pubsub}
 else:
     DeviceClient = RestDeviceClient
-    if os.environ['JSON_FILE_PATH'] is not None:
-        with open(os.environ['JSON_FILE_PATH']) as json_file:
-            simulation_info = json.load(json_file)
-            simulation_id = simulation_info['uuid']
-            domain_name = simulation_info['domain_name']
-            websockets_domain_name = simulation_info['web_socket_domain_name']
-    else:
-        simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
-        domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
-        websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
-
+    simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
+    domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
+    websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
     device_args = {"autoregister": False, "start_websocket": False}
+    if automatic:
+        registry = aggr.get_configuration_registry()
+        load_names = get_assets_list(registry)["Load"]
+        pv_names = get_assets_list(registry)["PV"]
+        storage_names = get_assets_list(registry)["Storage"]
 
 
 def register_device_list(device_names, device_args, device_uuid_map):
