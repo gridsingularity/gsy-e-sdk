@@ -123,7 +123,8 @@ To disconnect/unregistering, the following command is available:
 device_client.unregister()
 ```
 
-#### Available device commands:
+#### Available device commands
+
 - Send an energy offer with price in cents:
     ```device_client.offer_energy(<energy>, <price_cents>)```
 - Send an energy offer with energy rate in cents/kWh:
@@ -171,9 +172,12 @@ device_client.unregister()
 ---
 
 ### Aggregator Connection
+
 Aggregators are clients that control multiple devices and/or markets and can send out batch 
 commands in order to react to an event simultaneously for each owned device.
-#### How to create an Aggregator:
+
+#### How to create an Aggregator
+
 - `REST`
     ```
     aggregator = Aggregator(
@@ -187,18 +191,22 @@ commands in order to react to an event simultaneously for each owned device.
     ``` 
     aggregator = AutoAggregator(<aggregator_name>)
     ```
-### How to list your aggregators
-To list your aggregators, its configuration id and the registered devices, you should :
+
+#### How to list your aggregators
+
+To list your aggregators, its configuration id and the registered devices, you should:
 ```python
 from d3a_api_client.utils import get_aggregators_list
 my_aggregators = get_aggregators_list(domain_name="Domain Name")
 ```
-The returned value is a list of aggregators and its connected devices
+The returned value is a list of aggregators and their connected devices
 ```python
 [{'configUuid': 'f7330248-9a72-4979-8477-dfbcff0c46a0', 'name': 'My aggregator',
  'devicesList': [{"deviceUuid":"My_device_uuid"},{"deviceUuid":"My_device_uuid 2"}]}]
 ```
+
 #### How to select and unselect an Aggregator
+
 The device or market can select the Aggregator 
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):
 ```
@@ -209,8 +217,28 @@ The device or market can unselect the Aggregator:
 device.unselect_aggregator(aggregator.aggregator_uuid)
 ```
 
+#### Available Aggregator's methods
+
+`Aggregator` instances provide methods that can simplify specific operations. Below we list some of the most commonly used:
+
+- Return all the aggregators connected to the aggregator's simulation: 
+    ```python
+    list_aggregators()
+    ```
+  
+- Return the representation of all the devices and areas connected to the aggregator's configuration: 
+    ```python
+    get_configuration_registry()
+    ```
+  
+- Delete the current aggregator:
+    ```python
+    delete_aggregator()
+    ```
+
 #### How to send batch commands
-Commands to all or individual connected devices or markets can be send in one batch.
+
+Commands to all or individual connected devices or markets can be sent in one batch.
 All device or market specific functions can be sent via commands that are
 accumulated and added to buffer.
 For example, to add the following call to the buffer 
@@ -232,7 +260,7 @@ Finally, the batch commands are sent to the D3A via the following command:
 aggregator.execute_batch_command()
 ```
 
-#### Available batch commands:
+#### Available batch commands
 
 The following commands can be issued as batch commands (refer to [How to send batch commands](#how-to-send-batch-commands) for more information):
 

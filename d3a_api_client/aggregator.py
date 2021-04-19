@@ -1,14 +1,15 @@
 import logging
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Dict
 
 from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.utils import logging_decorator, blocking_get_request, \
-    blocking_post_request, domain_name_from_env, websocket_domain_name_from_env, \
-    simulation_id_from_env
-from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
-from concurrent.futures.thread import ThreadPoolExecutor
-from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
+from d3a_api_client.rest_device import RestDeviceClient
+from d3a_api_client.utils import (
+    logging_decorator, blocking_get_request, blocking_post_request, domain_name_from_env,
+    websocket_domain_name_from_env, simulation_id_from_env)
+from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 
 
 class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
@@ -71,7 +72,7 @@ class Aggregator(RestDeviceClient):
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
-    @logging_decorator('create_aggregator')
+    @logging_decorator("list-aggregators")
     def list_aggregators(self):
         list_of_aggregators = blocking_get_request(f'{self.aggregator_prefix}list-aggregators/',
                                                    {}, self.jwt_token)
@@ -80,16 +81,27 @@ class Aggregator(RestDeviceClient):
             list_of_aggregators = []
         return list_of_aggregators
 
+    @logging_decorator("registry")
+    def get_configuration_registry(self) -> Dict:
+        """Return the graph representation of the configuration's grid and its assets/devices.
+
+        For each asset, the status of the aggregator's registration will be shown.
+        """
+        config_registry = blocking_get_request(
+            f"{self.configuration_prefix}registry", {}, self.jwt_token)
+
+        return config_registry
+
     @property
     def _url_prefix(self):
         return f'{self.domain_name}/external-connection/aggregator-api/{self.simulation_id}'
 
-    @logging_decorator('create_aggregator')
+    @logging_decorator("create-aggregator")
     def _create_aggregator(self):
         return blocking_post_request(f'{self.aggregator_prefix}create-aggregator/',
                                      {"name": self.aggregator_name}, self.jwt_token)
 
-    @logging_decorator('create_aggregator')
+    @logging_decorator("delete-aggregator")
     def delete_aggregator(self):
         return blocking_post_request(f'{self.aggregator_prefix}delete-aggregator/',
                                      {"aggregator_uuid": self.aggregator_uuid}, self.jwt_token)
