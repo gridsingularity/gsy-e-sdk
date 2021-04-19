@@ -9,37 +9,25 @@ from time import sleep
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.types import aggregator_client_type
-from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
-import json
+from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id, get_aggregator_prefix
 import logging
-from tabulate import tabulate
 logger = logging.getLogger()
 logger.disabled = False
 
+current_dir = os.path.dirname(__file__)
+print(current_dir)
 ################################################
 # CONFIGURATIONS
 ################################################
 
-
-# Designate devices and markets to manage
-# TODO update each of the below according to your team's device assignments
+# TODO update each of the below according to the assets the API will manage
+automatic = True
 
 oracle_name = 'oracle'
 
-load_names = ['Load 1', 'Load 2']
-pv_names = ['PV 1', 'PV 2']
-storage_names = ['Storage 1','Storage 2']
-
-# load_names = []
-# pv_names = ['CHP 22']
-# storage_names = []
-
-# load_names = ['Load 1','Load 2','Load 3','Load 4','Load 5','Load 6','Load 7','Load 8','Load 10','Load 11','Load 12',
-#               'Load 13','Load 14','Load 15','Load 16','Load 17','Load 18','Load 19','Load 20','Load 21','Load 22','Load 23','Load 24','Load 25']
-# pv_names = ['PV 1','PV 2','PV 3','PV 4','PV 5','PV 7','PV 8','PV 9','PV 10','PV 11','PV 12','PV 13','PV 14','PV 16','PV 17','PV 18',
-#             'PV 19','PV 20','PV 23','PV 24','PV 25','CHP 6','CHP 13','CHP 15','CHP 21','CHP 22']
-# storage_names = ['Storage 1','Storage 2','Storage 3','Storage 4','Storage 5','Storage 7','Storage 8','Storage 10','Storage 11','Storage 12','Storage 14','Storage 16','Storage 17','Storage 18',
-#                  'Storage 19','Storage 20','Storage 23','Storage 24','Storage 25']
+load_names = ['Load 1 L13', 'Load 2 L21', 'Load 3 L17']
+pv_names = ['PV 1 (4kW)', 'PV 3 (5kW)']
+storage_names = ['Tesla Powerwall 3']
 
 # set market parameters
 ticks = 10  # leave as is
@@ -53,11 +41,8 @@ class Oracle(aggregator_client_type):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_finished = False
-        # initialise grid fee variables
-        self.grid_fee = 0.
-        self.grid_fee_Grid = 4.
-        self.grid_fee_Community = 4.
-        self.asset_strategy = {}
+        # initialise variables
+        self.asset_strategy = {}  # dictionary containing information and pricing strategy for each asset
         self.load_energy_requirements = {}
         self.generation_energy_available = {}
         self.storage_soc = {}
@@ -66,7 +51,6 @@ class Oracle(aggregator_client_type):
     # TRIGGERS EACH MARKET CYCLE
     ################################################
     def on_market_cycle(self, market_info):
-        print("on_market_cycle")
         """
         Places a bid or an offer whenever a new market is created. The amount of energy
         for the bid/offer depends on the available energy of the PV, the required
@@ -74,7 +58,6 @@ class Oracle(aggregator_client_type):
         :param market_info: Incoming message containing the newly-created market info
         :return: None
         """
-
         # termination conditions (leave as is)
         if self.is_finished is True:
             return
@@ -82,25 +65,17 @@ class Oracle(aggregator_client_type):
         ################################################
         # GET MARKET AND ENERGY FEATURES
         ################################################
-
-        # extract market stats and energy through aggregator
-        stats_slot = []  # track areas already extracted
-        market_stats = []
-
         FiT_rate = market_info["feed_in_tariff_rate"]
         Market_Maker_rate = market_info["market_maker_rate"]
-        print("Market maker rate : ", Market_Maker_rate)
-
         Med_price = (Market_Maker_rate - FiT_rate) / 2 + FiT_rate
 
-
+        print("Market maker rate: ", Market_Maker_rate)
+        print("Feed-in Tariff: ", FiT_rate)
 
         # TODO do something with the arrays if needed:
-        #   - area_uuids
-        #   - market_stats
         #   - load_energy_requirements
         #   - pv_energy_availabilities
-        #   - battery_charges
+        #   - battery_soc
 
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
@@ -110,10 +85,10 @@ class Oracle(aggregator_client_type):
             if "available_energy_kWh" in area_dict["asset_info"]:
                 self.generation_energy_available[area_uuid] = area_dict["asset_info"]["available_energy_kWh"]
             if "used_storage" in area_dict["asset_info"]:
-                self.storage_soc[area_uuid] = area_dict["asset_info"]["used_storage"] / area_dict["asset_info"]["free_storage"]
+                self.storage_soc[area_uuid] = area_dict["asset_info"]["used_storage"] / (area_dict["asset_info"]["used_storage"] + area_dict["asset_info"]["free_storage"])
 
-        print(self.load_energy_requirements)
-        print(self.generation_energy_available)
+        # print(self.load_energy_requirements)
+        # print(self.generation_energy_available)
         print(self.storage_soc)
 
 
@@ -122,10 +97,9 @@ class Oracle(aggregator_client_type):
         ################################################
         # TODO configure bidding / offer strategy for each tick
         # a dictionary is created to store values for each assets such as the grid fee to the market maker, the buy and sell price strategies,...
-        # current strategy is a simple ramp between 2 thresholds: Feed-in Tariff and Market Maker.
-        # each asset's strategy include the total grid fees to be able to buy from the Market Maker or sell to the Feed-in Tariff
-        # buy and sell strategies are stored in array of length 10, which are posted in ticks 1 through 10
-        # the default is that each device type you control has the same strategy
+        # current strategy is a simple ramp between 2 thresholds: Feed-in Tariff and Market Maker including grid fees.
+        # buy and sell strategies are stored in array of length 10, which are posted in ticks 0 through 9
+        # the default is that each device type you control has the same strategy, adapted with the grid fees
 
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
@@ -171,9 +145,10 @@ class Oracle(aggregator_client_type):
                 self.asset_strategy[area_uuid]["sell_rates"] = batt_sell_strategy
 
     ################################################
-    # SET INITIAL BIDS AND OFFERS FOR MARKET SLOT
+    # POST INITIAL BIDS AND OFFERS FOR MARKET SLOT
     ################################################
-    # takes the first element in each devices strategy
+    # takes the first element in each asset strategy to post the first bids and offers
+    # all bids and offers are aggregated in a single batch and then executed
     # TODO how would you self-balance your managed energy assets?
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
@@ -217,7 +192,6 @@ class Oracle(aggregator_client_type):
         # TODO manipulate tick strategy if required
         self.asset_strategy = self.asset_strategy
 
-
         ################################################
         # UPDATE/REPLACE BIDS AND OFFERS EACH TICK (if needed)
         ################################################
@@ -230,16 +204,16 @@ class Oracle(aggregator_client_type):
                 "energy_requirement_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["buy_rates"][i]
                 energy = area_dict["asset_info"]["energy_requirement_kWh"]
-                self.add_to_batch_commands.bid_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
+                # self.add_to_batch_commands.bid_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
+                self.add_to_batch_commands.update_bid(area_uuid=area_uuid, price=rate*energy, energy=energy)
 
             # Generation strategy
             if "available_energy_kWh" in area_dict["asset_info"] and area_dict["asset_info"][
                 "available_energy_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["sell_rates"][i]
                 energy = area_dict["asset_info"]["available_energy_kWh"]
-                self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
-                # self.add_to_batch_commands.update_offer(area_uuid=area_uuid, price=rate*energy, energy=energy)
-
+                # self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
+                self.add_to_batch_commands.update_offer(area_uuid=area_uuid, price=rate*energy, energy=energy)
 
             # Battery strategy
             if "energy_to_buy" in area_dict["asset_info"]:
@@ -248,39 +222,24 @@ class Oracle(aggregator_client_type):
                 # Battery buy strategy
                 if buy_energy > 0.0:
                     buy_rate = self.asset_strategy[area_uuid]["buy_rates"][i]
-                    self.add_to_batch_commands.bid_energy_rate(area_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
+                    # self.add_to_batch_commands.bid_energy_rate(area_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
+                    self.add_to_batch_commands.update_bid(area_uuid=area_uuid, price=buy_rate*buy_energy, energy=buy_energy)
+
                 # Battery sell strategy
                 if sell_energy > 0.0:
                     sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
-                    self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=sell_rate,
-                                                                 energy=sell_energy)
+                    # self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=sell_rate, energy=sell_energy)
+                    self.add_to_batch_commands.update_offer(area_uuid=area_uuid, price=sell_rate*sell_energy, energy=sell_energy)
 
         response_tick = self.execute_batch_commands()
-        #print(response_tick)
-
-    ################################################
-    # TRIGGERS EACH TRADE
-    ################################################
-    def on_trade(self, trade_info):
-        # # print trade info on trade event
-        # for trade in trade_info['trade_list']:
-        #     trade_price = trade['trade_price']
-        #     trade_energy = trade['traded_energy']
-        #     buyer = trade['buyer']
-        #     seller = trade['seller']
-        #     trade_price_per_kWh = trade_price / trade_energy
-        #     if buyer != 'anonymous':
-        #         print(f'<-- {buyer} BOUGHT {round(trade_energy, 4)} kWh 'f'at {round(trade_price_per_kWh, 2)}/kWh')
-        #     if seller != 'anonymous':
-        #         print(f'--> {seller} SOLD {round(trade_energy, 4)} kWh 'f'at {round(trade_price_per_kWh, 2)}/kWh')
-        pass
 
     ################################################
     # TRIGGERS EACH COMMAND RESPONSE AND EVENT
     ################################################
     def on_event_or_response(self, message):
-        print("message",message)
+        # print("message",message)
         pass
+
     ################################################
     # SIMULATION TERMINATION CONDITION
     ################################################
@@ -291,6 +250,38 @@ class Oracle(aggregator_client_type):
 ################################################
 # REGISTER FOR DEVICES AND MARKETS
 ################################################
+def get_assets_list(indict: dict) -> dict:
+    """
+    wrapper for _flatten_info_dict
+    """
+    if indict == {}:
+        return {}
+    outdict = {"Area": [], "Load": [], "PV": [], "Storage": []}
+    _get_assets_list(indict, outdict)
+    return outdict
+
+
+def _get_assets_list(indict: dict, outdict: dict):
+    """
+    Flattens market_info/tick_info information trees
+    outdict will hold references to all area subdicts of indict
+    """
+    for area_name, area_dict in indict.items():
+        # print(indict.items())
+        if area_name == "name":
+            name = area_dict
+        if area_name == "type":
+            type = area_dict
+        if area_name == "registered" and area_dict:
+            outdict[type].append(name)
+
+        # print(i)
+        if 'children' in area_name:
+            for area in indict[area_name]:
+                # if 'children' in area:
+                # print(area)
+                _get_assets_list(area, outdict)
+
 
 aggr = Oracle(aggregator_name=oracle_name)
 
@@ -299,18 +290,15 @@ if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
     device_args = {"autoregister": True, "pubsub_thread": aggr.pubsub}
 else:
     DeviceClient = RestDeviceClient
-    if os.environ['JSON_FILE_PATH'] is not None:
-        with open(os.environ['JSON_FILE_PATH']) as json_file:
-            simulation_info = json.load(json_file)
-            simulation_id = simulation_info['uuid']
-            domain_name = simulation_info['domain_name']
-            websockets_domain_name = simulation_info['web_socket_domain_name']
-    else:
-        simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
-        domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
-        websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
-
+    simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
+    domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
+    websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
     device_args = {"autoregister": False, "start_websocket": False}
+    if automatic:
+        registry = aggr.get_configuration_registry()
+        load_names = get_assets_list(registry)["Load"]
+        pv_names = get_assets_list(registry)["PV"]
+        storage_names = get_assets_list(registry)["Storage"]
 
 
 def register_device_list(device_names, device_args, device_uuid_map):
