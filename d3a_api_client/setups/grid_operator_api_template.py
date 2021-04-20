@@ -32,7 +32,7 @@ moving_average_peak = True  # Perform a moving average of the last #look_back pt
 look_back = 4               # Number of past markets slots to apply the moving average (for the Aziiz tariff only)
 
 if TimeOfUse:
-    market_prices = pd.read_excel(os.path.join(current_dir, "ToU.xlsx"))        # TODO upload an Excel/CSV file with prices of every market at each time slot (based on given template)
+    market_prices = pd.read_excel(os.path.join(current_dir, "resources/ToU.xlsx"))        # TODO upload an Excel/CSV file with prices of every market at each time slot (based on given template)
     hour = 0
     minutes = 0
     planned_fee = {}                                                        # Dictionary containing the ToU strategy previously uploaded
@@ -46,7 +46,7 @@ if TimeOfUse:
             hour = hour + 1
 
 if Aziiz:
-    market_prices = pd.read_excel(os.path.join(current_dir, "Aziiz.xlsx"))      # TODO upload an Excel/CSV file with thresholds and fees of every market (based on given template)
+    market_prices = pd.ExcelFile(os.path.join(current_dir, "resources/Aziiz.xlsx"))      # TODO upload an Excel/CSV file with thresholds and fees of every market (based on given template)
 
 slot_length = 15  # leave as is
 
