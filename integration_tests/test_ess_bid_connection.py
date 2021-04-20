@@ -1,9 +1,11 @@
 """
 Test file for the device client. Depends on d3a test setup file strategy_tests.external_ess_bids
 """
-import json
 import traceback
+
+import json
 import logging
+
 from d3a_api_client.types import device_client_type
 
 
@@ -35,7 +37,7 @@ class AutoBidOnESSDevice(device_client_type):
 
             self.last_market_info = market_info
 
-        except AssertionError as e:
+        except Exception as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
             raise e

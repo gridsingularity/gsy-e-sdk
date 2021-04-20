@@ -1,12 +1,12 @@
 import logging
+from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
 from time import sleep
 
 from d3a_api_client.aggregator import Aggregator
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.rest_market import RestMarketClient
-from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id, \
-    get_sim_id_and_domain_names
-from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
+from d3a_api_client.utils import (
+    get_area_uuid_from_area_name_and_collaboration_id, get_sim_id_and_domain_names)
 
 
 class TestAggregator(Aggregator):
@@ -81,8 +81,7 @@ pv1 = RestDeviceClient(
 load1.select_aggregator(aggr.aggregator_uuid)
 pv1.select_aggregator(aggr.aggregator_uuid)
 
-house_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    simulation_id, "House", domain_name)
+house_uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, "House", domain_name)
 rest_market = RestMarketClient(simulation_id, house_uuid, domain_name, websockets_domain_name)
 rest_market.select_aggregator(aggr.aggregator_uuid)
 

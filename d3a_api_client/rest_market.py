@@ -42,12 +42,6 @@ class RestMarketClient(RestCommunicationMixin):
                                           "device_uuid": self.device_id}, self.jwt_token)
         self.active_aggregator = None
 
-    @logging_decorator('market_stats')
-    def last_market_stats(self):
-        transaction_id, posted = self._get_request('market-stats', {})
-        if posted:
-            return self.dispatcher.wait_for_command_response('market_stats', transaction_id)
-
     @logging_decorator('grid_fees')
     def grid_fees(self, fee_cents_per_kWh):
         transaction_id, get_sent = self._post_request('grid-fee', {"fee_const": fee_cents_per_kWh})
