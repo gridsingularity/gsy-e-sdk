@@ -80,5 +80,6 @@ house_uuid = get_area_uuid_from_area_name_and_collaboration_id(
     simulation_id, "House", domain_name)
 house_market = RestMarketClient(house_uuid)
 house_market.select_aggregator(aggr.aggregator_uuid)
+
 while not aggr.is_finished:
     sleep(0.5)

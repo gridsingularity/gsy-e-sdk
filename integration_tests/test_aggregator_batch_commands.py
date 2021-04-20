@@ -39,7 +39,6 @@ class BatchAggregator(RedisAggregator):
                     self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
                                                          fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
                     self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
-                    self.add_to_batch_commands.last_market_stats(self.redis_market.area_uuid)
                 if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                     continue
                 asset_info = area_dict["asset_info"]

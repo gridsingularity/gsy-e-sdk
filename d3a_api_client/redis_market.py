@@ -9,6 +9,7 @@ class RedisMarketClient(RedisClientBase):
     def __init__(self, area_id, redis_url='redis://localhost:6379', autoregister=True):
         super().__init__(area_id, autoregister, redis_url)
 
+
     def register(self, is_blocking=True):
         super().register(is_blocking)
 
