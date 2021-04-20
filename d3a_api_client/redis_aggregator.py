@@ -200,8 +200,7 @@ class RedisAggregator:
 
     def _on_event_or_response(self, message):
         log_msg = copy(message)
-        if 'grid_tree' in log_msg:
-            log_msg['grid_tree'] = '{...}'
+        log_msg.pop("grid_tree", None)
         logging.debug(f"A new message was received. Message information: {log_msg}")
         log_market_progression(message)
         self.executor.submit(execute_function_util,

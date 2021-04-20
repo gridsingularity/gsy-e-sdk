@@ -276,8 +276,7 @@ class RedisClient(APIClientInterface):
     def _on_event_or_response(self, log_msg):
         message = json.loads(log_msg["data"])
         log_msg = copy(message)
-        if 'grid_tree' in log_msg:
-            log_msg['grid_tree'] = '{...}'
+        log_msg.pop("grid_tree", None)
         logging.info(f"A new message was received. Message information: {log_msg}")
         log_market_progression(message)
         function = lambda: self.on_event_or_response(message)
