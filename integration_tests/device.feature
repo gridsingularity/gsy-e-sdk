@@ -16,7 +16,7 @@ Scenario: API client can connect successfully to a PV device and perform all ope
 
 Scenario: Aggregator can connect to ESS and place bids and offers
    Given redis container is started
-   And d3a is started using setup strategy_tests.external_ess (-t 60s -s 60m -d 4h --slot-length-realtime 2s)
+   And d3a is started using setup strategy_tests.external_ess_offers (-t 60s -s 60m -d 4h --slot-length-realtime 2s)
    When the external client is started with test_aggregator_ess
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
