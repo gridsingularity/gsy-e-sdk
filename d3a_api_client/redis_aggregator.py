@@ -3,14 +3,19 @@ import uuid
 import json
 from threading import Lock
 from redis import StrictRedis
+from copy import copy
+
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking
 
 from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.constants import MAX_WORKER_THREADS, \
+    MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
 from d3a_api_client.utils import execute_function_util, log_market_progression
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
+from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
 
 
 class RedisAPIException(Exception):
@@ -37,6 +42,9 @@ class RedisAggregator:
         self._subscribe_to_response_channels()
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.lock = Lock()
+        self.latest_grid_tree = {}
+        self.latest_grid_tree_flat = {}
+        self.area_name_uuid_mapping = {}
 
     def _connect_to_simulation(self, is_blocking=True):
         if self.aggregator_uuid is None:
@@ -168,26 +176,6 @@ class RedisAggregator:
         """
         return self._client_command_buffer.buffer_length
 
-    def batch_command(self, batch_command_dict, is_blocking=True):
-        # TODO: Remove this as this is kept atm for the backward compatibility
-        self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
-        transaction_id = str(uuid.uuid4())
-        batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
-                           "aggregator_uuid": self.aggregator_uuid,
-                           "batch_commands": batch_command_dict}
-        batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
-        self.redis_db.publish(batch_channel, json.dumps(batched_command))
-        self._transaction_id_buffer.append(transaction_id)
-
-        if is_blocking:
-            try:
-                wait_until_timeout_blocking(
-                    lambda: not self._check_transaction_id_cached_out(transaction_id)
-                )
-                return self._transaction_id_response_buffer.get(transaction_id, None)
-            except AssertionError:
-                raise RedisAPIException(f'API registration process timed out.')
-
     def execute_batch_commands(self, is_blocking=True):
         if not self.commands_buffer_length:
             return
@@ -211,49 +199,55 @@ class RedisAggregator:
                 raise RedisAPIException(f'API registration process timed out.')
 
     def _on_event_or_response(self, message):
-        logging.info(f"A new message was received. Message information: {message}")
+        log_msg = copy(message)
+        log_msg.pop("grid_tree", None)
+        logging.debug(f"A new message was received. Message information: {log_msg}")
         log_market_progression(message)
-        function = lambda: self.on_event_or_response(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util,
+                             function=lambda: self.on_event_or_response(message),
                              function_name="on_event_or_response")
 
     def calculate_grid_fee(self, start_market_or_device_name: str,
                            target_market_or_device_name: str = None,
-                           fee_type: str = "next_market_fee"):
+                           fee_type: str = "current_market_fee"):
         return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
                                                             target_market_or_device_name, fee_type)
 
+    def get_uuid_from_area_name(self, name):
+        return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)
+
+    @buffer_grid_tree_info
     def _on_market_cycle(self, message):
-        self.grid_fee_calculation.handle_grid_stats(message)
-        function = lambda: self.on_market_cycle(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.area_name_uuid_mapping = \
+            create_area_name_uuid_mapping_from_tree_info(self.latest_grid_tree_flat)
+        self.grid_fee_calculation.handle_grid_stats(self.latest_grid_tree)
+        self.executor.submit(execute_function_util, function=lambda: self.on_market_cycle(message),
                              function_name="on_market_cycle")
 
+    @buffer_grid_tree_info
     def _on_tick(self, message):
-        function = lambda: self.on_tick(message)
-        self.executor.submit(execute_function_util, function=function,
+        slot_completion_int = get_slot_completion_percentage_int_from_message(message)
+        if slot_completion_int is not None and slot_completion_int < \
+                MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE:
+            return
+        self.executor.submit(execute_function_util, function=lambda: self.on_tick(message),
                              function_name="on_tick")
 
     @staticmethod
     def _log_trade_info(message):
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)} cents -->")
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
+                     f"at {round(message.get('trade_price'), 2)} cents -->")
 
+    @buffer_grid_tree_info
     def _on_trade(self, message):
-        if "content" not in message:
-            # Device message
-            self._log_trade_info(message)
-        else:
-            # Aggregator message
-            for individual_trade in message["content"]:
-                self._log_trade_info(individual_trade)
-        function = lambda: self.on_trade(message)
-        self.executor.submit(execute_function_util, function=function,
+        # Aggregator message
+        for individual_trade in message["trade_list"]:
+            self._log_trade_info(individual_trade)
+        self.executor.submit(execute_function_util, function=lambda: self.on_trade(message),
                              function_name="on_trade")
 
     def _on_finish(self, message):
-        function = lambda: self.on_finish(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util, function=lambda: self.on_finish(message),
                              function_name="on_finish")
 
     def on_market_cycle(self, market_info):

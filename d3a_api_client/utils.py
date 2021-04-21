@@ -12,10 +12,12 @@ from sgqlc.endpoint.http import HTTPEndpoint
 
 from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
-    CUSTOMER_WEBSOCKET_DOMAIN_NAME
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
     RepeatingTimer
+
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+    CUSTOMER_WEBSOCKET_DOMAIN_NAME
+
 
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
@@ -258,13 +260,26 @@ def log_market_progression(message):
             return
         headers = ["event", ]
         table_data = [event, ]
-        data_dict = message.get("content")[0] if "content" in message.keys() else message
-        if "slot_completion" in data_dict:
-            headers.append("slot_completion")
-            table_data.append(data_dict.get("slot_completion"))
+        data_dict = message.get("content") if "content" in message.keys() else message
+
+        # TODO: "start_time" key will be deprecated
+        #  once the non-aggregator connection is deprecated
         if "start_time" in data_dict:
             headers.extend(["start_time", "duration_min", ])
             table_data.extend([data_dict.get("start_time"), data_dict.get("duration_min")])
+
+        if "slot_completion" in data_dict:
+            headers.append("slot_completion")
+            table_data.append(data_dict.get("slot_completion"))
+
+        if event == "market" and "market_slot" in data_dict:
+            headers.extend(["market_slot"])
+            table_data.extend([data_dict.get("market_slot")])
+
+        if event == "tick":
+            slot_completion_int = get_slot_completion_percentage_int_from_message(message)
+            if slot_completion_int is not None and slot_completion_int < 10:
+                return
 
         logging.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
     except Exception as e:
@@ -285,6 +300,62 @@ def log_bid_offer_confirmation(message):
         logging.error(f"Logging bid/offer info failed.{e}")
 
 
+def flatten_info_dict(indict: dict) -> dict:
+    """
+    wrapper for _flatten_info_dict
+    """
+    if indict == {}:
+        return {}
+    outdict = {}
+    _flatten_info_dict(indict, outdict)
+    return outdict
+
+
+def _flatten_info_dict(indict: dict, outdict: dict):
+    """
+    Flattens market_info/tick_info information trees
+    outdict will hold references to all area subdicts of indict
+    """
+    for area_name, area_dict in indict.items():
+        outdict[area_name] = area_dict
+        if 'children' in area_dict:
+            _flatten_info_dict(indict[area_name]['children'], outdict)
+
+
+def get_uuid_from_area_name_in_tree_dict(area_name_uuid_mapping, name):
+    if name not in area_name_uuid_mapping:
+        raise ValueError(f"Could not find {name} in tree")
+    if len(area_name_uuid_mapping[name]) == 1:
+        return area_name_uuid_mapping[name][0]
+    else:
+        ValueError(f"There are multiple areas named {name} in the tree")
+
+
+def buffer_grid_tree_info(f):
+    @wraps(f)
+    def wrapper(self, message):
+        self.latest_grid_tree = message["grid_tree"]
+        self.latest_grid_tree_flat = flatten_info_dict(self.latest_grid_tree)
+        f(self, message)
+    return wrapper
+
+
+def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) -> dict:
+    area_name_uuid_mapping = {}
+    for area_uuid, area_dict in latest_grid_tree_flat.items():
+        if "area_name" in area_dict:
+            if area_uuid in area_name_uuid_mapping:
+                area_name_uuid_mapping[area_dict["area_name"]].append(area_uuid)
+            else:
+                area_name_uuid_mapping[area_dict["area_name"]] = [area_uuid]
+    return area_name_uuid_mapping
+
+
+def get_slot_completion_percentage_int_from_message(message):
+    if "slot_completion" in message:
+        return int(message["slot_completion"].split("%")[0])
+
+
 def read_simulation_config_file(config_file_path):
     if config_file_path:
         with open(config_file_path) as json_file:
@@ -297,3 +368,4 @@ def read_simulation_config_file(config_file_path):
 
 def get_sim_id_and_domain_names():
     return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()
+

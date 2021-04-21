@@ -20,6 +20,7 @@ class AutoGridFeeUpdateOnMarket(market_client_type):
         self.current_time = None
         self.updated_fee = None
         self.list_dso_stats = None
+        self.wait_script = True
 
     def on_market_cycle(self, market_info):
 
@@ -37,10 +38,11 @@ class AutoGridFeeUpdateOnMarket(market_client_type):
             assert set(self.list_dso_stats.keys()) == \
                    {'name', 'command', 'area_uuid', 'status', 'transaction_id', 'market_stats'}
 
-        except AssertionError as e:
+        except Exception as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
             raise e
 
     def on_finish(self, finish_info):
+        self.wait_script = False
         self.status = "finished"

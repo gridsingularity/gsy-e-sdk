@@ -62,7 +62,7 @@ class AutoOfferOnPVDevice(device_client_type):
 
             self.market_info = market_info
 
-        except AssertionError as e:
+        except Exception as e:
             logging.error(f"Raised exception: {e}. Traceback: {traceback.format_exc()}")
             self.errors += 1
             raise e

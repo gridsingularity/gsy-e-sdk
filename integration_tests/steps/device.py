@@ -95,7 +95,7 @@ def step_impl(context):
     # placing bids and offers on every market cycle.
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
-    while context.device.errors == 0 and context.device.status != "finished" and counter < 900:
+    while context.device.errors == 0 and context.device.status != "finished" and counter < 300:
         sleep(3)
         counter += 3
 

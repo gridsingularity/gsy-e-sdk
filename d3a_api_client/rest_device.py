@@ -176,39 +176,40 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def _on_event_or_response(self, message):
         logging.debug(f"A new message was received. Message information: {message}")
         log_market_progression(message)
-        function = lambda: self.on_event_or_response(message)
-        self.callback_thread.submit(execute_function_util, function=function,
+        self.callback_thread.submit(execute_function_util,
+                                    function=lambda: self.on_event_or_response(message),
                                     function_name="on_event_or_response")
 
     def _on_market_cycle(self, message):
-        function = lambda: self.on_market_cycle(message)
-        self.callback_thread.submit(execute_function_util, function=function,
+        self.callback_thread.submit(execute_function_util,
+                                    function=lambda: self.on_market_cycle(message),
                                     function_name="on_market_cycle")
 
     def _on_tick(self, message):
-        function = lambda: self.on_tick(message)
-        self.callback_thread.submit(execute_function_util, function=function,
+        self.callback_thread.submit(execute_function_util,
+                                    function=lambda: self.on_tick(message),
                                     function_name="on_tick")
     @staticmethod
     def _log_trade_info(message):
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('energy'), 4)} kWh "
-                     f"at {round(message.get('price'), 2)} cents -->")
+        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
+                     f"at {round(message.get('trade_price'), 2)} cents -->")
 
     def _on_trade(self, message):
-        if "content" not in message:
+        if "trade_list" in message:
+            # Aggregator message
+            for individual_trade in message["trade_list"]:
+                self._log_trade_info(individual_trade)
+        else:
             # Device message
             self._log_trade_info(message)
-        else:
-            # Aggregator message
-            for individual_trade in message["content"]:
-                self._log_trade_info(individual_trade)
-        function = lambda: self.on_trade(message)
-        self.callback_thread.submit(execute_function_util, function=function,
+
+        self.callback_thread.submit(execute_function_util,
+                                    function=lambda: self.on_trade(message),
                                     function_name="on_trade")
 
     def _on_finish(self, message):
-        function = lambda: self.on_finish(message)
-        self.callback_thread.submit(execute_function_util, function=function,
+        self.callback_thread.submit(execute_function_util,
+                                    function=lambda: self.on_finish(message),
                                     function_name="on_finish")
 
     def on_market_cycle(self, market_info):

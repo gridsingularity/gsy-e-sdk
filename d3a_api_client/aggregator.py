@@ -4,8 +4,11 @@ from typing import Dict
 
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.constants import MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.rest_device import RestDeviceClient
+from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
 from d3a_api_client.utils import (
     logging_decorator, blocking_get_request, blocking_post_request, domain_name_from_env,
     websocket_domain_name_from_env, simulation_id_from_env)
@@ -53,6 +56,9 @@ class Aggregator(RestDeviceClient):
         self.aggregator_uuid = None
         self._client_command_buffer = ClientCommandBuffer()
         self._connect_to_simulation()
+        self.latest_grid_tree = {}
+        self.latest_grid_tree_flat = {}
+        self.area_name_uuid_mapping = {}
 
     def _connect_to_simulation(self):
         user_aggrs = self.list_aggregators()
@@ -130,14 +136,6 @@ class Aggregator(RestDeviceClient):
         """
         return self._client_command_buffer
 
-    def batch_command(self, batch_command_dict):
-        # TODO: Remove this as this is kept atm for the backward compatibility
-        self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
-        transaction_id, posted = self._post_request(
-            'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
-        if posted:
-            return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
-
     @property
     def commands_buffer_length(self):
         """
@@ -156,12 +154,30 @@ class Aggregator(RestDeviceClient):
             self._client_command_buffer.clear()
             return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
 
+    def get_uuid_from_area_name(self, name):
+        return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)
+
+    @buffer_grid_tree_info
     def _on_market_cycle(self, message):
-        self.grid_fee_calculation.handle_grid_stats(message)
+        self.area_name_uuid_mapping = \
+            create_area_name_uuid_mapping_from_tree_info(self.latest_grid_tree_flat)
+        self.grid_fee_calculation.handle_grid_stats(self.latest_grid_tree)
         super()._on_market_cycle(message)
+
+    @buffer_grid_tree_info
+    def _on_tick(self, message):
+        slot_completion_int = get_slot_completion_percentage_int_from_message(message)
+        if slot_completion_int is not None and slot_completion_int < \
+                MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE:
+            return
+        super()._on_tick(message)
+
+    @buffer_grid_tree_info
+    def _on_trade(self, message):
+        super()._on_trade(message)
 
     def calculate_grid_fee(self, start_market_or_device_name: str,
                            target_market_or_device_name: str = None,
-                           fee_type: str = "next_market_fee"):
+                           fee_type: str = "current_market_fee"):
         return self.grid_fee_calculation.calculate_grid_fee(start_market_or_device_name,
                                                             target_market_or_device_name, fee_type)
