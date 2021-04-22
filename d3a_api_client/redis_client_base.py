@@ -144,8 +144,8 @@ class RedisClientBase(APIClientInterface):
                 "device_uuid": self.area_uuid,
                 "type": "SELECT",
                 "transaction_id": transaction_id}
-        self.redis_db.publish("aggregator", json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
+        self.redis_db.publish("aggregator", json.dumps(data))
 
         if is_blocking:
             try:
