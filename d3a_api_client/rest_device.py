@@ -3,12 +3,11 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
-    simulation_id_from_env
-from d3a_api_client.utils import execute_function_util, \
-    log_market_progression
-from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, blocking_post_request, get_aggregator_prefix
+from d3a_api_client.utils import (
+    retrieve_jwt_key_from_server, RestCommunicationMixin,
+    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util,
+    log_market_progression, domain_name_from_env, websocket_domain_name_from_env,
+    simulation_id_from_env, get_configuration_prefix)
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 
 REGISTER_COMMAND_TIMEOUT = 15 * 60
@@ -28,6 +27,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
         self._create_jwt_refresh_timer(sim_api_domain_name)
         self.aggregator_prefix = get_aggregator_prefix(self.domain_name, self.simulation_id)
+        self.configuration_prefix = get_configuration_prefix(self.domain_name, self.simulation_id)
         self.active_aggregator = None
         if start_websocket or autoregister:
             self.start_websocket_connection()
