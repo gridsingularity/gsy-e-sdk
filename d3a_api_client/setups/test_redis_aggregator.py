@@ -54,13 +54,10 @@ class AutoAggregator(RedisAggregator):
 aggregator = AutoAggregator(aggregator_name="test_aggr")
 
 load = RedisDeviceClient('load', autoregister=True)
+load.select_aggregator(aggregator.aggregator_uuid)
+
 pv = RedisDeviceClient('pv', autoregister=True)
-
-selected = load.select_aggregator(aggregator.aggregator_uuid)
-logging.info(f"SELECTED: {selected}")
-
-selected = pv.select_aggregator(aggregator.aggregator_uuid)
-logging.info(f"SELECTED: {selected}")
+pv.select_aggregator(aggregator.aggregator_uuid)
 
 redis_market = RedisMarketClient('house-2')
 redis_market.select_aggregator(aggregator.aggregator_uuid)

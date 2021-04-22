@@ -20,7 +20,7 @@ class APIClientInterface(ABC):
         pass
 
     @abstractmethod
-    def register(self):
+    def register(self, is_blocking):
         """
         Registers the client to a D3A endpoint. According to the client might be part of
         the constructor, to allow the client to automatically register when creating

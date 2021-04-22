@@ -113,7 +113,7 @@ class RedisAggregator:
 
         transaction_id = str(uuid.uuid4())
         data = {"name": self.aggregator_name, "type": "CREATE", "transaction_id": transaction_id}
-        self.redis_db.publish(f'aggregator', json.dumps(data))
+        self.redis_db.publish("aggregator", json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
 
         if is_blocking:
@@ -133,7 +133,7 @@ class RedisAggregator:
                 "aggregator_uuid": self.aggregator_uuid,
                 "type": "DELETE",
                 "transaction_id": transaction_id}
-        self.redis_db.publish(f'aggregator', json.dumps(data))
+        self.redis_db.publish("aggregator", json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
 
         if is_blocking:

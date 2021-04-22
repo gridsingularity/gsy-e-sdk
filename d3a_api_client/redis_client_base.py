@@ -35,24 +35,26 @@ class RedisClientBase(APIClientInterface):
         if autoregister:
             self.register(is_blocking=True)
 
-    @property
-    def _channel_prefix(self):
-        return f"{self.area_slug}"
-
-    @property
-    def channel_subs(self):
-        return {
-            f'{self._channel_prefix}/response/register_participant': self._on_register,
-            f'{self._channel_prefix}/response/unregister_participant': self._on_unregister,
-            f'{self._channel_prefix}/*': self._on_event_or_response
-        }
-
     def _subscribe_to_response_channels(self, pubsub_thread=None):
-        self.pubsub.psubscribe(**self.channel_subs)
+        channel_subs = {
+            f"{self.area_slug}/response/register_participant": self._on_register,
+            f"{self.area_slug}/response/unregister_participant": self._on_unregister,
+            f"{self.area_slug}/*": self._on_event_or_response}
+
         if b'aggregator_response' in self.pubsub.patterns:
             self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
+        channel_subs["aggregator_response"] = self._aggregator_response_callback
+
+        self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
             self.pubsub.run_in_thread(daemon=True)
+
+    def _aggregator_response_callback(self, message):
+        if self._subscribed_aggregator_response_cb is not None:
+            self._subscribed_aggregator_response_cb(message)
+        data = json.loads(message['data'])
+        if data['transaction_id'] in self._transaction_id_buffer:
+            self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
 
     def _check_buffer_message_matching_command_and_id(self, message):
         if key_in_dict_and_not_none(message, "transaction_id"):
@@ -66,7 +68,7 @@ class RedisClientBase(APIClientInterface):
                 "The answer message does not contain a valid 'transaction_id' member.")
 
     def _check_transaction_id_cached_out(self, transaction_id):
-        return transaction_id in self._transaction_id_buffer
+        return transaction_id not in self._transaction_id_buffer
 
     def register(self, is_blocking=True):
         logging.info(f"Trying to register to {self.area_id}")
@@ -86,7 +88,7 @@ class RedisClientBase(APIClientInterface):
                     f'has been completed.')
 
     def unregister(self, is_blocking=True):
-        logging.info(f"Trying to unregister from {self.area_id} as client {self.client_id}")
+        logging.info(f"Trying to unregister from {self.area_id}")
 
         if not self.is_active:
             raise RedisAPIException(f'API is already unregistered from the market.')
@@ -109,7 +111,7 @@ class RedisClientBase(APIClientInterface):
         self._check_buffer_message_matching_command_and_id(message)
         self.area_uuid = message["device_uuid"]
 
-        logging.info(f"Client was registered to market: {message}")
+        logging.info(f"{self.area_id} was registered")
         self.is_active = True
 
         def executor_function():
@@ -132,17 +134,17 @@ class RedisClientBase(APIClientInterface):
                              function_name="on_event_or_response")
 
     def select_aggregator(self, aggregator_uuid, is_blocking=True):
-
         if not self.area_uuid:
-            assert False
-        logging.info(f"Market: {self.area_slug} is trying to select aggregator {aggregator_uuid}")
+            raise RedisAPIException("The device/market has not ben registered yet, "
+                                    "can not select an aggregator")
+        logging.info(f"{self.area_slug} is trying to select aggregator {aggregator_uuid}")
 
         transaction_id = str(uuid.uuid4())
         data = {"aggregator_uuid": aggregator_uuid,
                 "device_uuid": self.area_uuid,
                 "type": "SELECT",
                 "transaction_id": transaction_id}
-        self.redis_db.publish(f'aggregator', json.dumps(data))
+        self.redis_db.publish("aggregator", json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
 
         if is_blocking:
@@ -150,8 +152,7 @@ class RedisClientBase(APIClientInterface):
                 wait_until_timeout_blocking(
                     lambda: self._check_transaction_id_cached_out(transaction_id)
                 )
-                logging.info(f"MARKET: {self.area_slug} has selected "
-                                f"AGGREGATOR: {aggregator_uuid}")
+                logging.info(f"{self.area_slug} has selected AGGREGATOR: {aggregator_uuid}")
                 return transaction_id
             except AssertionError:
                 raise RedisAPIException(f'API has timed out.')
