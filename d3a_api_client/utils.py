@@ -32,7 +32,7 @@ def websocket_domain_name_from_env():
 
 
 def simulation_id_from_env():
-    return os.environ.get("API_CLIENT_SIMULATION_ID", None)
+    return os.environ.get("API_CLIENT_SIMULATION_ID", "")
 
 
 class AreaNotFoundException(Exception):
@@ -293,9 +293,10 @@ def log_bid_offer_confirmation(message):
             data_dict = json.loads(message.get(event))
             energy = data_dict.get("energy")
             price = data_dict.get("price")
+            rate = price / energy
             trader = data_dict.get("seller" if event=="offer" else "buyer")
             logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
-                         f"{round(energy, 2)} kWh at {price} cts/kWh")
+                         f"{round(energy, 2)} kWh at {rate} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
 
@@ -312,14 +313,15 @@ def log_deleted_bid_offer_confirmation(message, command_type, bid_offer_id):
 
 
 def log_trade_info(message):
+    rate = round(message.get('trade_price'), 2) / round(message.get('traded_energy'), 4)
     if message.get("buyer") == "anonymous":
         logging.info(
             f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 4)} kWh "
-            f"at {round(message.get('trade_price'), 2)} cents/kWh -->")
+            f"at {rate} cents/kWh -->")
     else:
         logging.info(
             f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
-            f"at {round(message.get('trade_price'), 2)} cents/kWh -->")
+            f"at {rate} cents/kWh -->")
 
 
 def flatten_info_dict(indict: dict) -> dict:
