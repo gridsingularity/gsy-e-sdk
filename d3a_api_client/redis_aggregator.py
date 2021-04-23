@@ -1,22 +1,23 @@
+import json
 import logging
 import uuid
-import json
-from threading import Lock
-from redis import StrictRedis
-from copy import copy
-
 from concurrent.futures.thread import ThreadPoolExecutor
+from copy import copy
+from threading import Lock
 
 from d3a_interface.utils import wait_until_timeout_blocking
+from redis import StrictRedis
 
 from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.constants import MAX_WORKER_THREADS, \
-    MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
-from d3a_api_client.utils import execute_function_util, log_market_progression, log_trade_info, \
-    log_bid_offer_confirmation
+from d3a_api_client.constants import (
+    MAX_WORKER_THREADS, MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE)
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
-from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
-    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
+from d3a_api_client.utils import (
+    execute_function_util, log_market_progression, log_trade_info,
+    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation)
+from d3a_api_client.utils import (
+    get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message)
 
 
 class RedisAPIException(Exception):
@@ -83,6 +84,7 @@ class RedisAggregator:
         for asset_uuid, responses in data["responses"].items():
             for command_response in responses:
                 log_bid_offer_confirmation(command_response)
+                log_deleted_bid_offer_confirmation(command_response)
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:

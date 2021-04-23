@@ -287,22 +287,28 @@ def log_market_progression(message):
 
 def log_bid_offer_confirmation(message):
     try:
-        if message.get("status") == "ready" and message.get("command") in ["bid", "offer"]:
-            event = message.get("command")
+        event = message.get("command")
+        if message.get("status") == "ready" and event in ["bid", "offer",
+                                                          "update_bid",
+                                                          "update_offer"]:
             data_dict = json.loads(message.get(event))
             energy = data_dict.get("energy")
             price = data_dict.get("price")
             rate = price / energy
-            trader = data_dict.get("seller" if event=="offer" else "buyer")
-            logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
+            trader = data_dict.get("seller" if event in ["offer", "update_offer"] else "buyer")
+            logging.info(f"{trader} {'OFFERED' if event in ['offer', 'update_offer'] else 'BID'} "
                          f"{round(energy, 2)} kWh at {rate} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
 
 
-def log_deleted_bid_offer_confirmation(message, command_type, bid_offer_id):
+def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None):
     try:
-        if message.get("status") == "ready":
+        if message.get("status") == "ready" and message.get("command") in ["bid_delete",
+                                                                           "offer_delete"]:
+            if command_type is None:
+                # For the aggregator response, command type is not explicitly provided
+                command_type = "bid" if "bid" in message.get("command") else "offer"
             if bid_offer_id is not None:
                 logging.info(f"<-- All {command_type}s are successfully deleted-->")
             else:

@@ -7,9 +7,11 @@ from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.constants import MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
-    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message, \
-    log_bid_offer_confirmation
+from d3a_api_client.utils import (
+    get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
+    create_area_name_uuid_mapping_from_tree_info,
+    get_slot_completion_percentage_int_from_message,
+    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation)
 from d3a_api_client.utils import (
     logging_decorator, blocking_get_request, blocking_post_request, domain_name_from_env,
     websocket_domain_name_from_env, simulation_id_from_env)
@@ -157,6 +159,7 @@ class Aggregator(RestDeviceClient):
             for asset_uuid, responses in response["responses"].items():
                 for command_response in responses:
                     log_bid_offer_confirmation(command_response)
+                    log_deleted_bid_offer_confirmation(command_response)
             return response
 
     def get_uuid_from_area_name(self, name):
