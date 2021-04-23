@@ -8,7 +8,8 @@ from d3a_api_client.constants import MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
-    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message, \
+    log_bid_offer_confirmation
 from d3a_api_client.utils import (
     logging_decorator, blocking_get_request, blocking_post_request, domain_name_from_env,
     websocket_domain_name_from_env, simulation_id_from_env)
@@ -152,7 +153,11 @@ class Aggregator(RestDeviceClient):
             'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
         if posted:
             self._client_command_buffer.clear()
-            return self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
+            response = self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
+            for asset_uuid, responses in response["responses"].items():
+                for command_response in responses:
+                    log_bid_offer_confirmation(command_response)
+            return response
 
     def get_uuid_from_area_name(self, name):
         return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)

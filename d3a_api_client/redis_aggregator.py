@@ -12,7 +12,8 @@ from d3a_interface.utils import wait_until_timeout_blocking
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS, \
     MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
-from d3a_api_client.utils import execute_function_util, log_market_progression, log_trade_info
+from d3a_api_client.utils import execute_function_util, log_market_progression, log_trade_info, \
+    log_bid_offer_confirmation
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
     create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
@@ -79,6 +80,9 @@ class RedisAggregator:
             self.on_batch_response(data['responses'])
 
         self.executor.submit(executor_function)
+        for asset_uuid, responses in data["responses"].items():
+            for command_response in responses:
+                log_bid_offer_confirmation(command_response)
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:
