@@ -16,8 +16,7 @@ from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_
     RepeatingTimer
 
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
-    CUSTOMER_WEBSOCKET_DOMAIN_NAME
-
+    CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
 
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
@@ -32,7 +31,7 @@ def websocket_domain_name_from_env():
 
 
 def simulation_id_from_env():
-    return os.environ.get("API_CLIENT_SIMULATION_ID", "")
+    return os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
 
 
 class AreaNotFoundException(Exception):
