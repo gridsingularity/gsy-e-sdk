@@ -294,7 +294,7 @@ def log_bid_offer_confirmation(message):
             price = data_dict.get("price")
             rate = price / energy
             trader = data_dict.get("seller" if event=="offer" else "buyer")
-            logging.error(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
+            logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
                          f"{round(energy, 2)} kWh at {rate} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
