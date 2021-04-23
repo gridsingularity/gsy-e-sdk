@@ -300,6 +300,28 @@ def log_bid_offer_confirmation(message):
         logging.error(f"Logging bid/offer info failed.{e}")
 
 
+def log_deleted_bid_offer_confirmation(message, command_type, bid_offer_id):
+    try:
+        if message.get("status") == "ready":
+            if bid_offer_id is not None:
+                logging.info(f"<-- All {command_type}s are successfully deleted-->")
+            else:
+                logging.info(f"<-- {command_type} {bid_offer_id} is successfully deleted-->")
+    except Exception as e:
+        logging.error(f"Logging bid/offer deletion confirmation failed.{e}")
+
+
+def log_trade_info(message):
+    if message.get("buyer") == "anonymous":
+        logging.info(
+            f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 4)} kWh "
+            f"at {round(message.get('trade_price'), 2)} cents/kWh -->")
+    else:
+        logging.info(
+            f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
+            f"at {round(message.get('trade_price'), 2)} cents/kWh -->")
+
+
 def flatten_info_dict(indict: dict) -> dict:
     """
     wrapper for _flatten_info_dict
