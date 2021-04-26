@@ -2,23 +2,17 @@ import json
 import logging
 import traceback
 
-from d3a_api_client.redis_aggregator import RedisAggregator
+from integration_tests.test_aggregator_base import TestAggregatorBase
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
 
 
-class BatchAggregator(RedisAggregator):
+class BatchAggregator(TestAggregatorBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.errors = 0
-        self.status = "running"
-        self._setup()
-        self.is_active = True
         self.updated_house2_grid_fee_cents_kwh = 5
         self.updated_offer_bid_price = 60
         self.events_or_responses = set()
-        self._has_tested_bids = False
-        self._has_tested_offers = False
 
     def _setup(self):
         load = RedisDeviceClient('load')
@@ -168,39 +162,6 @@ class BatchAggregator(RedisAggregator):
         except Exception as ex:
             logging.error(f'Raised exception: {ex}. Traceback: {traceback.format_exc()}')
             self.errors += 1
-
-    @staticmethod
-    def _filter_commands_from_responses(responses, command_name):
-        filtered_commands = []
-        for area_uuid, response in responses.items():
-            for command_dict in response:
-                if command_dict["command"] == command_name:
-                    filtered_commands.append(command_dict)
-        return filtered_commands
-
-    @staticmethod
-    def _can_place_bid(asset_info):
-        return (
-            'energy_requirement_kWh' in asset_info and
-            asset_info['energy_requirement_kWh'] > 0.0)
-
-    @staticmethod
-    def _can_place_offer(asset_info):
-        return (
-            'available_energy_kWh' in asset_info and
-            asset_info['available_energy_kWh'] > 0.0)
-
-    def on_tick(self, tick_info):
-        pass
-
-    def on_finish(self, finish_info):
-        # Make sure that all test cases have been run
-        if self._has_tested_bids is False or self._has_tested_offers is False:
-            logging.error(
-                'Not all test cases have been covered. This will be reported as failure.')
-            self.errors += 1
-
-        self.status = 'finished'
 
     def on_event_or_response(self, message):
         if "event" in message:
