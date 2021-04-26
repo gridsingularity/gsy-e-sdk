@@ -48,6 +48,7 @@ class TestAggregator(Aggregator):
                     energy = area_dict["asset_info"]["energy_requirement_kWh"] / 2
                     self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
                                                           energy=energy)
+
         response = self.execute_batch_commands()
         logging.info(f"Batch command placed on the new market: {response}")
 
