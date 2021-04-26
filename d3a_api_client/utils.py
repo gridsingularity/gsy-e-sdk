@@ -16,8 +16,7 @@ from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_
     RepeatingTimer
 
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
-    CUSTOMER_WEBSOCKET_DOMAIN_NAME
-
+    CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
 
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
@@ -32,7 +31,7 @@ def websocket_domain_name_from_env():
 
 
 def simulation_id_from_env():
-    return os.environ.get("API_CLIENT_SIMULATION_ID", None)
+    return os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
 
 
 class AreaNotFoundException(Exception):
@@ -98,6 +97,8 @@ def retrieve_jwt_key_from_server(domain_name):
         logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
                       f"Response body: {resp.text}")
         return
+
+    validate_client_up_to_date(resp)
     return json.loads(resp.text)["token"]
 
 
@@ -369,3 +370,12 @@ def read_simulation_config_file(config_file_path):
 def get_sim_id_and_domain_names():
     return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()
 
+
+def validate_client_up_to_date(response):
+    if "Api-Version" in response.headers:
+        remote_version = response.headers.get("Api-Version")
+        from d3a_api_client import __version__
+        if __version__ < remote_version:
+            logging.warning(
+                f"Your version of the client {__version__} is outdated, kindly upgrade to "
+                f"version {remote_version} to make use of our latest features")
