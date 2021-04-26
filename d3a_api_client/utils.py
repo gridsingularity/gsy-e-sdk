@@ -288,9 +288,10 @@ def log_market_progression(message):
 def log_bid_offer_confirmation(message):
     try:
         event = message.get("command")
-        if message.get("status") == "ready" and event in ["bid", "offer",
-                                                          "update_bid",
-                                                          "update_offer"]:
+        if message.get("status") == "ready" and message.get("command") in ["bid", "offer",
+                                                                           "update_bid",
+                                                                           "update_offer"]:
+            event = "bid" if "bid" in message.get("command") else "offer"
             data_dict = json.loads(message.get(event))
             energy = data_dict.get("energy")
             price = data_dict.get("price")
@@ -302,17 +303,20 @@ def log_bid_offer_confirmation(message):
         logging.error(f"Logging bid/offer info failed.{e}")
 
 
-def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None):
+def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None,
+                                       asset_uuid=None):
     try:
         if message.get("status") == "ready" and message.get("command") in ["bid_delete",
                                                                            "offer_delete"]:
             if command_type is None:
                 # For the aggregator response, command type is not explicitly provided
                 command_type = "bid" if "bid" in message.get("command") else "offer"
-            if bid_offer_id is not None:
-                logging.info(f"<-- All {command_type}s are successfully deleted-->")
+            if bid_offer_id is None:
+                logging.info(
+                    f"<-- All {command_type}s of {asset_uuid} are successfully deleted-->")
             else:
-                logging.info(f"<-- {command_type} {bid_offer_id} is successfully deleted-->")
+                logging.info(
+                    f"<-- {command_type} {bid_offer_id} is successfully deleted-->")
     except Exception as e:
         logging.error(f"Logging bid/offer deletion confirmation failed.{e}")
 

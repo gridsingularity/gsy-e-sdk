@@ -84,7 +84,7 @@ class RedisAggregator:
         for asset_uuid, responses in data["responses"].items():
             for command_response in responses:
                 log_bid_offer_confirmation(command_response)
-                log_deleted_bid_offer_confirmation(command_response)
+                log_deleted_bid_offer_confirmation(command_response, asset_uuid=asset_uuid)
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:

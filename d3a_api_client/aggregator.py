@@ -159,7 +159,7 @@ class Aggregator(RestDeviceClient):
             for asset_uuid, responses in response["responses"].items():
                 for command_response in responses:
                     log_bid_offer_confirmation(command_response)
-                    log_deleted_bid_offer_confirmation(command_response)
+                    log_deleted_bid_offer_confirmation(command_response, asset_uuid=asset_uuid)
             return response
 
     def get_uuid_from_area_name(self, name):

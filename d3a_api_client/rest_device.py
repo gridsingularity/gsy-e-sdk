@@ -106,7 +106,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             return response
 
     @logging_decorator('update_offer')
-    def offer_energy(self, energy, price):
+    def update_offer(self, energy, price):
         transaction_id, posted = self._post_request('update_offer', {"energy": energy, "price": price})
         if posted:
             response = self.dispatcher.wait_for_command_response('update_offer', transaction_id)
