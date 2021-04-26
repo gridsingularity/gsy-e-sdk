@@ -304,7 +304,7 @@ def log_bid_offer_confirmation(message):
 
 
 def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None,
-                                       asset_uuid=None):
+                                       asset_name=None):
     try:
         if message.get("status") == "ready" and message.get("command") in ["bid_delete",
                                                                            "offer_delete"]:
@@ -313,7 +313,7 @@ def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=
                 command_type = "bid" if "bid" in message.get("command") else "offer"
             if bid_offer_id is None:
                 logging.info(
-                    f"<-- All {command_type}s of {asset_uuid} are successfully deleted-->")
+                    f"<-- All {command_type}s of {asset_name} are successfully deleted-->")
             else:
                 logging.info(
                     f"<-- {command_type} {bid_offer_id} is successfully deleted-->")
