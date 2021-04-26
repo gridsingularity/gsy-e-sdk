@@ -77,16 +77,13 @@ class RedisAggregator:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
             self._transaction_id_response_buffer[data['transaction_id']] = data
 
-        def executor_function():
-            self.on_batch_response(data['responses'])
-
-        self.executor.submit(executor_function)
         for asset_uuid, responses in data["responses"].items():
             for command_response in responses:
                 log_bid_offer_confirmation(command_response)
                 log_deleted_bid_offer_confirmation(
                     command_response,
                     asset_name=get_name_from_area_name_uuid_mapping(self.area_name_uuid_mapping, asset_uuid))
+        self.on_event_or_response(data)
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:
@@ -263,9 +260,6 @@ class RedisAggregator:
         pass
 
     def on_finish(self, finish_info):
-        pass
-
-    def on_batch_response(self, message):
         pass
 
     def on_event_or_response(self, message):

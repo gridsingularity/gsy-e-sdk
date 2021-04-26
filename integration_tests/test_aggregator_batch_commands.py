@@ -20,7 +20,7 @@ class BatchAggregator(RedisAggregator):
         self.is_active = True
         self.updated_house2_grid_fee_cents_kwh = 5
         self.updated_offer_bid_price = 60
-
+        self.events_or_responses = set()
         self._has_tested_bids = False
         self._has_tested_offers = False
 
@@ -226,3 +226,9 @@ class BatchAggregator(RedisAggregator):
             self.errors += 1
 
         self.status = 'finished'
+
+    def on_event_or_response(self, message):
+        if "event" in message:
+            self.events_or_responses.add(message["event"])
+        if "command" in message:
+            self.events_or_responses.add(message["command"])
