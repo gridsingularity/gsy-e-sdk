@@ -11,7 +11,7 @@ from d3a_api_client.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
     create_area_name_uuid_mapping_from_tree_info,
     get_slot_completion_percentage_int_from_message,
-    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation)
+    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation, get_name_from_area_name_uuid_mapping)
 from d3a_api_client.utils import (
     logging_decorator, blocking_get_request, blocking_post_request, domain_name_from_env,
     websocket_domain_name_from_env, simulation_id_from_env)
@@ -160,7 +160,9 @@ class Aggregator(RestDeviceClient):
                 for command_response in responses:
                     log_bid_offer_confirmation(command_response)
                     log_deleted_bid_offer_confirmation(
-                        command_response, asset_name=self.get_name_from_area_uuid(asset_uuid))
+                        command_response,
+                        asset_name=get_name_from_area_name_uuid_mapping(self.area_name_uuid_mapping,
+                                                                        asset_uuid))
             return response
 
     def get_uuid_from_area_name(self, name):

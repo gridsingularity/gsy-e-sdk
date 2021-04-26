@@ -402,3 +402,9 @@ def read_simulation_config_file(config_file_path):
 def get_sim_id_and_domain_names():
     return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()
 
+
+def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
+    for area_name, area_uuids in area_name_uuid_mapping.items():
+        for area_uuid in area_uuids:
+            if area_uuid == asset_uuid:
+                return area_name

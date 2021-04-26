@@ -14,7 +14,7 @@ from d3a_api_client.constants import (
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.utils import (
     execute_function_util, log_market_progression, log_trade_info,
-    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation)
+    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation, get_name_from_area_name_uuid_mapping)
 from d3a_api_client.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
     create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message)
@@ -86,7 +86,7 @@ class RedisAggregator:
                 log_bid_offer_confirmation(command_response)
                 log_deleted_bid_offer_confirmation(
                     command_response,
-                    asset_name=self.get_name_from_area_uuid(asset_uuid))
+                    asset_name=get_name_from_area_name_uuid_mapping(self.area_name_uuid_mapping, asset_uuid))
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:
@@ -223,12 +223,6 @@ class RedisAggregator:
 
     def get_uuid_from_area_name(self, name):
         return get_uuid_from_area_name_in_tree_dict(self.area_name_uuid_mapping, name)
-
-    def get_name_from_area_uuid(self, asset_uuid):
-        for area_name, area_uuids in self.area_name_uuid_mapping.items():
-            for area_uuid in area_uuids:
-                if area_uuid == asset_uuid:
-                    return area_name
 
     @buffer_grid_tree_info
     def _on_market_cycle(self, message):
