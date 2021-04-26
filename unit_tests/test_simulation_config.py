@@ -32,7 +32,7 @@ class TestSimulationInfo(unittest.TestCase):
 
     def test_get_sim_id_and_domain_names_returns_the_defaults(self):
         simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
-        assert simulation_id is None
+        assert simulation_id == ""
         assert domain_name == DEFAULT_DOMAIN_NAME
         assert websockets_domain_name == DEFAULT_WEBSOCKET_DOMAIN
 
