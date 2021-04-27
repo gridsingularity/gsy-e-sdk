@@ -1,8 +1,8 @@
 # flake8: noqa
-
 """
 Template file for markets management through the d3a API client
 """
+
 from tabulate import tabulate
 import pandas as pd
 from datetime import time
@@ -264,7 +264,8 @@ class Oracle(aggregator_client_type):
 ################################################
 def get_assets_name(indict: dict) -> dict:
     """
-    wrapper for _get_assets_list
+    This function is used to parse the grid tree and returned all registered assets
+    wrapper for _get_assets_name
     """
     if indict == {}:
         return {}
@@ -301,7 +302,6 @@ else:
     simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
     domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
     websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
-
     market_args = {"simulation_id": simulation_id,
                    "domain_name": domain_name, "websockets_domain_name": websockets_domain_name}
 
@@ -319,9 +319,7 @@ for i in market_names:
     if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
         market_registered = RedisMarketClient(i)
     else:
-        # Creating a connection to a market
-        market_uuid = get_area_uuid_from_area_name_and_collaboration_id(market_args["simulation_id"], i,
-                                                                        market_args["domain_name"])
+        market_uuid = get_area_uuid_from_area_name_and_collaboration_id(market_args["simulation_id"], i, market_args["domain_name"])
         market_args["area_id"] = market_uuid
         market_registered = RestMarketClient(**market_args)
     selected = market_registered.select_aggregator(aggr.aggregator_uuid)

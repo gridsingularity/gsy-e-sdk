@@ -2,6 +2,7 @@
 """
 Template file for a trading strategy through the d3a API client
 """
+
 import os
 from time import sleep
 from d3a_api_client.redis_device import RedisDeviceClient
@@ -16,22 +17,22 @@ print(current_dir)
 # CONFIGURATIONS
 ################################################
 
-# TODO update each of the below according to the assets the API will manage.
-automatic_connection = True
+# TODO update each of the below according to the assets the API will manage
+automatic = True
+
 oracle_name = 'oracle'
 
 load_names = ['Load 1 L13', 'Load 2 L21', 'Load 3 L17']
 pv_names = ['PV 1 (4kW)', 'PV 3 (5kW)']
 storage_names = ['Tesla Powerwall 3']
 
-
 # set market parameters
 ticks = 10  # leave as is
-
 
 ################################################
 # ORACLE STRUCTURE
 ################################################
+
 class Oracle(aggregator_client_type):
 
     def __init__(self, *args, **kwargs):
@@ -136,8 +137,8 @@ class Oracle(aggregator_client_type):
                 batt_buy_strategy = []
                 batt_sell_strategy = []
                 for i in range(0, ticks):
-                    batt_buy_strategy.append(round(FiT_rate + (Med_price - FiT_rate) * (i / ticks), 3))
-                    batt_sell_strategy.append(round(Market_Maker_rate - (Market_Maker_rate - Med_price) * (i / ticks), 3))
+                    batt_buy_strategy.append(round(FiT_rate - self.asset_strategy[area_uuid]["fee_to_market_maker"] + (Med_price - (FiT_rate-self.asset_strategy[area_uuid]["fee_to_market_maker"])) * (i / ticks), 3))
+                    batt_sell_strategy.append(round(Market_Maker_rate+self.asset_strategy[area_uuid]["fee_to_market_maker"] - (Market_Maker_rate+self.asset_strategy[area_uuid]["fee_to_market_maker"] - Med_price) * (i / ticks), 3))
                 self.asset_strategy[area_uuid]["buy_rates"] = batt_buy_strategy
                 self.asset_strategy[area_uuid]["sell_rates"] = batt_sell_strategy
 
@@ -180,6 +181,11 @@ class Oracle(aggregator_client_type):
     ################################################
     # TRIGGERS EACH TICK
     ################################################
+    """
+    Places a bid or an offer 10% of the market slot progression. The amount of energy
+    for the bid/offer depends on the available energy of the PV, the required
+    energy of the load, or the amount of energy in the battery and the energy already traded.
+    """
     def on_tick(self, tick_info):
         i = int(float(tick_info['slot_completion'].strip('%')) / ticks)  # tick num for index
 
@@ -195,36 +201,33 @@ class Oracle(aggregator_client_type):
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
-
             # Load Strategy
-            if "energy_requirement_kWh" in area_dict["asset_info"] and area_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
+            if "energy_requirement_kWh" in area_dict["asset_info"] and area_dict["asset_info"][
+                "energy_requirement_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["buy_rates"][i]
                 energy = area_dict["asset_info"]["energy_requirement_kWh"]
-                # self.add_to_batch_commands.bid_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
                 self.add_to_batch_commands.update_bid(area_uuid=area_uuid, price=rate*energy, energy=energy)
 
             # Generation strategy
-            if "available_energy_kWh" in area_dict["asset_info"] and area_dict["asset_info"]["available_energy_kWh"] > 0.0:
+            if "available_energy_kWh" in area_dict["asset_info"] and area_dict["asset_info"][
+                "available_energy_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["sell_rates"][i]
                 energy = area_dict["asset_info"]["available_energy_kWh"]
-                # self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=rate, energy=energy)
                 self.add_to_batch_commands.update_offer(area_uuid=area_uuid, price=rate*energy, energy=energy)
 
             # Battery strategy
             if "energy_to_buy" in area_dict["asset_info"]:
-                buy_energy = area_dict["asset_info"]["energy_to_buy"]
-                sell_energy = area_dict["asset_info"]["energy_to_sell"]
+                buy_energy = area_dict["asset_info"]["energy_to_buy"] + area_dict["asset_info"]["energy_active_in_offers"]
+                sell_energy = area_dict["asset_info"]["energy_to_sell"] + area_dict["asset_info"]["energy_active_in_bids"]
 
                 # Battery buy strategy
                 if buy_energy > 0.0:
                     buy_rate = self.asset_strategy[area_uuid]["buy_rates"][i]
-                    # self.add_to_batch_commands.bid_energy_rate(area_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
                     self.add_to_batch_commands.update_bid(area_uuid=area_uuid, price=buy_rate*buy_energy, energy=buy_energy)
 
                 # Battery sell strategy
                 if sell_energy > 0.0:
                     sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
-                    # self.add_to_batch_commands.offer_energy_rate(area_uuid=area_uuid, rate=sell_rate, energy=sell_energy)
                     self.add_to_batch_commands.update_offer(area_uuid=area_uuid, price=sell_rate*sell_energy, energy=sell_energy)
 
         response_tick = self.execute_batch_commands()
@@ -249,7 +252,8 @@ class Oracle(aggregator_client_type):
 ################################################
 def get_assets_name(indict: dict) -> dict:
     """
-    wrapper for _get_assets_list
+    This function is used to parse the grid tree and returned all registered assets
+    wrapper for _get_assets_name
     """
     if indict == {}:
         return {}
@@ -261,7 +265,7 @@ def get_assets_name(indict: dict) -> dict:
 def _get_assets_name(indict: dict, outdict: dict):
     """
     Parse the collaboration / Canary Network registry
-    Returns a list of the Market, Load, PV and Storage nodes the user is registered to
+    Returns a list of the Market, Load, PV and Storage names the user is registered to
     """
     for key, value in indict.items():
         if key == "name":
@@ -286,7 +290,7 @@ else:
     domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
     websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
     device_args = {"autoregister": False, "start_websocket": False}
-    if automatic_connection:
+    if automatic:
         registry = aggr.get_configuration_registry()
         registered_assets = get_assets_name(registry)
         load_names = registered_assets["Load"]
@@ -316,7 +320,6 @@ device_uuid_map = {}
 device_uuid_map = register_device_list(load_names, device_args, device_uuid_map)
 device_uuid_map = register_device_list(pv_names, device_args, device_uuid_map)
 device_uuid_map = register_device_list(storage_names, device_args, device_uuid_map)
-
 aggr.device_uuid_map = device_uuid_map
 print()
 print('Summary of assets registered:')
