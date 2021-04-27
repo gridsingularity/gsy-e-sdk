@@ -21,10 +21,10 @@ print(current_dir)
 ################################################
 # CONFIGURATIONS
 ################################################
-automatic_connection = True
+automatic = True
 
 # List of market the Grid Operators connect to
-market_names = ["Grid"]  # TODO list the market names as they are in the collaboration
+market_names = ["Grid", "Community"]  # TODO list the market names as they are in the collaboration
 
 # Name of your aggregator
 oracle_name = "dso"
@@ -306,7 +306,7 @@ else:
                    "domain_name": domain_name, "websockets_domain_name": websockets_domain_name}
 
     aggr = Oracle(aggregator_name=oracle_name, **market_args)
-    if automatic_connection:
+    if automatic:
         registry = aggr.get_configuration_registry()
         market_names = get_assets_name(registry)["Area"]
 
