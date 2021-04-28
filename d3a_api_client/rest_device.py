@@ -15,13 +15,13 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
-    def __init__(self, device_id, simulation_id=None, domain_name=None, websockets_domain_name=None,
+    def __init__(self, area_id, simulation_id=None, domain_name=None, websockets_domain_name=None,
                  autoregister=False, start_websocket=True, sim_api_domain_name=None):
         self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
         self.domain_name = domain_name if domain_name else domain_name_from_env()
         self.websockets_domain_name = websockets_domain_name \
             if websockets_domain_name else websocket_domain_name_from_env()
-        self.device_id = device_id
+        self.area_id = area_id
         if sim_api_domain_name is None:
             sim_api_domain_name = self.domain_name
         self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
@@ -38,7 +38,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def start_websocket_connection(self):
         self.dispatcher = WebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(self.simulation_id, self.device_id,
+        self.websocket_thread = WebsocketThread(self.simulation_id, self.area_id,
                                                 self.websockets_domain_name, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()
@@ -66,14 +66,14 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def select_aggregator(self, aggregator_uuid):
         response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
-                                          "device_uuid": self.device_id}, self.jwt_token)
+                                          "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = response["aggregator_uuid"] if response else None
 
     @logging_decorator('unselect-aggregator')
     def unselect_aggregator(self, aggregator_uuid):
         response = blocking_post_request(f'{self.aggregator_prefix}unselect-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
-                                          "device_uuid": self.device_id}, self.jwt_token)
+                                          "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = None
 
     @logging_decorator('set_energy_forecast')
