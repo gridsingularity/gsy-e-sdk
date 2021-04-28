@@ -1,4 +1,5 @@
 from d3a_api_client.redis_client_base import RedisClientBase
+from slugify import slugify
 
 
 class RedisMarketClient(RedisClientBase):
@@ -7,6 +8,10 @@ class RedisMarketClient(RedisClientBase):
     REST case to have two different classes for devices and markets
     """
     def __init__(self, area_id, redis_url='redis://localhost:6379', autoregister=True):
+        # TODO: Homogenize channel names in markets and devices to use either
+        #  slugified or normal area names
+        area_id = slugify(area_id, to_lower=True)
+
         super().__init__(area_id, autoregister, redis_url)
 
 

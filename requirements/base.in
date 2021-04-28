@@ -9,6 +9,7 @@ tox
 fabric3
 behave
 sgqlc
+awesome-slugify
 pytest
 parameterized
 click
