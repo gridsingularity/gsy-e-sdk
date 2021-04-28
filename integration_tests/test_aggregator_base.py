@@ -23,7 +23,6 @@ class TestAggregatorBase(RedisAggregator):
         if self.commands_buffer_length:
             transaction = self.execute_batch_commands()
             if transaction is None:
-                print()
                 self.errors += 1
             else:
                 for response in transaction["responses"].values():

@@ -309,7 +309,7 @@ def register_device_list(device_names, device_args, device_uuid_map):
             device_uuid_map[uuid] = d
         device = DeviceClient(**device_args)
         if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
-            device_uuid_map[device.device_uuid] = device.area_id
+            device_uuid_map[device.device_uuid] = device.device_id
         device.select_aggregator(aggr.aggregator_uuid)
     return device_uuid_map
 

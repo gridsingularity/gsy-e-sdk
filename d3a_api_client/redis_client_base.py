@@ -5,7 +5,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
 from redis import StrictRedis
-from slugify import slugify
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.constants import MAX_WORKER_THREADS
@@ -21,7 +20,6 @@ class RedisClientBase(APIClientInterface):
                  pubsub_thread=None):
         super().__init__(area_id, autoregister, redis_url)
         self.area_uuid = None
-        self.area_slug = slugify(area_id, to_lower=True)
         self.redis_db = StrictRedis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         self.area_id = area_id
@@ -37,9 +35,9 @@ class RedisClientBase(APIClientInterface):
 
     def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
-            f"{self.area_slug}/response/register_participant": self._on_register,
-            f"{self.area_slug}/response/unregister_participant": self._on_unregister,
-            f"{self.area_slug}/*": self._on_event_or_response}
+            f"{self.area_id}/response/register_participant": self._on_register,
+            f"{self.area_id}/response/unregister_participant": self._on_unregister,
+            f"{self.area_id}/*": self._on_event_or_response}
 
         if b'aggregator_response' in self.pubsub.patterns:
             self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
@@ -137,7 +135,7 @@ class RedisClientBase(APIClientInterface):
         if not self.area_uuid:
             raise RedisAPIException("The device/market has not ben registered yet, "
                                     "can not select an aggregator")
-        logging.info(f"{self.area_slug} is trying to select aggregator {aggregator_uuid}")
+        logging.info(f"{self.area_id} is trying to select aggregator {aggregator_uuid}")
 
         transaction_id = str(uuid.uuid4())
         data = {"aggregator_uuid": aggregator_uuid,
@@ -152,7 +150,7 @@ class RedisClientBase(APIClientInterface):
                 wait_until_timeout_blocking(
                     lambda: self._check_transaction_id_cached_out(transaction_id)
                 )
-                logging.info(f"{self.area_slug} has selected AGGREGATOR: {aggregator_uuid}")
+                logging.info(f"{self.area_id} has selected AGGREGATOR: {aggregator_uuid}")
                 return transaction_id
             except AssertionError:
                 raise RedisAPIException(f'API has timed out.')
