@@ -317,7 +317,7 @@ print('Connecting to markets ...')
 
 for i in market_names:
     if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
-        market_registered = RedisMarketClient(i)
+        market_registered = RedisMarketClient(area_id=i)
     else:
         market_uuid = get_area_uuid_from_area_name_and_collaboration_id(market_args["simulation_id"], i, market_args["domain_name"])
         market_args["area_id"] = market_uuid
