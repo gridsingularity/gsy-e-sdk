@@ -55,7 +55,7 @@ class RestCommunicationMixin:
 
     @property
     def _url_prefix(self):
-        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
+        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.area_id}'
 
     def _post_request(self, endpoint_suffix, data):
         endpoint = f"{self._url_prefix}/{endpoint_suffix}/"
