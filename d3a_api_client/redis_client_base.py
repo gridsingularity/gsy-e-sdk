@@ -51,7 +51,7 @@ class RedisClientBase(APIClientInterface):
         if self._subscribed_aggregator_response_cb is not None:
             self._subscribed_aggregator_response_cb(message)
         data = json.loads(message['data'])
-        if data['transaction_id'] in self._transaction_id_buffer:
+        if not self._check_transaction_id_cached_out(data['transaction_id']):
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
 
     def _check_buffer_message_matching_command_and_id(self, message):
