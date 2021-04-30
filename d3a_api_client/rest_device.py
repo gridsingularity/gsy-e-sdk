@@ -7,7 +7,8 @@ from d3a_api_client.utils import (
     retrieve_jwt_key_from_server, RestCommunicationMixin,
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util,
     log_market_progression, domain_name_from_env, websocket_domain_name_from_env,
-    log_bid_offer_confirmation, simulation_id_from_env, get_configuration_prefix)
+    log_bid_offer_confirmation, simulation_id_from_env, get_configuration_prefix, log_trade_info,
+    log_deleted_bid_offer_confirmation)
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 
 REGISTER_COMMAND_TIMEOUT = 15 * 60
@@ -105,7 +106,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             return response
 
     @logging_decorator('update_offer')
-    def offer_energy(self, energy, price):
+    def update_offer(self, energy, price):
         transaction_id, posted = self._post_request('update_offer', {"energy": energy, "price": price})
         if posted:
             response = self.dispatcher.wait_for_command_response('update_offer', transaction_id)
@@ -144,13 +145,17 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def delete_offer(self, offer_id=None):
         transaction_id, posted = self._post_request('delete-offer', {"offer": offer_id})
         if posted:
-            return self.dispatcher.wait_for_command_response('offer_delete', transaction_id)
+            response = self.dispatcher.wait_for_command_response('offer_delete', transaction_id)
+            log_deleted_bid_offer_confirmation(response, "offer", offer_id)
+            return response
 
     @logging_decorator('delete bid')
     def delete_bid(self, bid_id=None):
         transaction_id, posted = self._post_request('delete-bid', {"bid": bid_id})
         if posted:
-            return self.dispatcher.wait_for_command_response('bid_delete', transaction_id)
+            response = self.dispatcher.wait_for_command_response('bid_delete', transaction_id)
+            log_deleted_bid_offer_confirmation(response, "bid", bid_id)
+            return response
 
     @logging_decorator('list offers')
     def list_offers(self):
@@ -189,19 +194,15 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.callback_thread.submit(execute_function_util,
                                     function=lambda: self.on_tick(message),
                                     function_name="on_tick")
-    @staticmethod
-    def _log_trade_info(message):
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
-                     f"at {round(message.get('trade_price'), 2)} cents -->")
 
     def _on_trade(self, message):
         if "trade_list" in message:
             # Aggregator message
             for individual_trade in message["trade_list"]:
-                self._log_trade_info(individual_trade)
+                log_trade_info(individual_trade)
         else:
             # Device message
-            self._log_trade_info(message)
+            log_trade_info(message)
 
         self.callback_thread.submit(execute_function_util,
                                     function=lambda: self.on_trade(message),

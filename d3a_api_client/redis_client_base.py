@@ -12,7 +12,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from d3a_api_client.constants import MAX_WORKER_THREADS
 
 from d3a_api_client.utils import log_bid_offer_confirmation, log_market_progression, \
-    execute_function_util
+    execute_function_util, log_trade_info, log_deleted_bid_offer_confirmation
 
 from d3a_api_client.enums import Commands
 
@@ -219,7 +219,9 @@ class RedisClient(APIClientInterface):
             logging.debug(f"Client tries to delete all offers.")
         else:
             logging.debug(f"Client tries to delete offer {offer_id}.")
-        return self._publish_and_wait(Commands.DELETE_OFFER, {"offer": offer_id})
+        response = self._publish_and_wait(Commands.DELETE_OFFER, {"offer": offer_id})
+        log_deleted_bid_offer_confirmation(response, "offer", offer_id)
+        return response
 
     @registered_connection
     def delete_bid(self, bid_id=None):
@@ -227,7 +229,9 @@ class RedisClient(APIClientInterface):
             logging.debug(f"Client tries to delete all bids.")
         else:
             logging.debug(f"Client tries to delete bid {bid_id}.")
-        return self._publish_and_wait(Commands.DELETE_BID, {"bid": bid_id})
+        response = self._publish_and_wait(Commands.DELETE_BID, {"bid": bid_id})
+        log_deleted_bid_offer_confirmation(response, "bid", bid_id)
+        return response
 
     @registered_connection
     def list_offers(self):
@@ -269,8 +273,7 @@ class RedisClient(APIClientInterface):
 
     def _on_market_cycle(self, msg):
         message = json.loads(msg["data"])
-        function = lambda: self.on_market_cycle(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util, function=lambda: self.on_market_cycle(message),
                              function_name="on_market_cycle")
 
     def _on_event_or_response(self, log_msg):
@@ -279,28 +282,23 @@ class RedisClient(APIClientInterface):
         log_msg.pop("grid_tree", None)
         logging.info(f"A new message was received. Message information: {log_msg}")
         log_market_progression(message)
-        function = lambda: self.on_event_or_response(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util, function=lambda: self.on_event_or_response(message),
                              function_name="on_event_or_response")
 
     def _on_tick(self, msg):
         message = json.loads(msg["data"])
-        function = lambda: self.on_tick(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util, function=lambda: self.on_tick(message),
                              function_name="on_tick")
 
     def _on_trade(self, msg):
         message = json.loads(msg["data"])
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
-                     f"at {round(message.get('trade_price'), 2)} cents -->")
-        function = lambda: self.on_trade(message)
-        self.executor.submit(execute_function_util, function=function,
+        log_trade_info(message)
+        self.executor.submit(execute_function_util, function=lambda: self.on_trade(message),
                              function_name="on_trade")
 
     def _on_finish(self, msg):
         message = json.loads(msg["data"])
-        function = lambda: self.on_finish(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util, function=lambda: self.on_finish(message),
                              function_name="on_finish")
 
     def _check_buffer_message_matching_command_and_id(self, message):
