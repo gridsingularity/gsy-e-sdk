@@ -33,7 +33,7 @@ class BatchAggregator(TestAggregatorBase):
                     self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
                                                          fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
                     self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
-                if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+                if not area_dict.get("asset_info"):
                     continue
                 asset_info = area_dict["asset_info"]
                 if self._can_place_offer(asset_info):

@@ -32,7 +32,7 @@ class TestAggregator(Aggregator):
             logging.info(
                 f"current_market_fee: "
                 f"{self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid)}")
-            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+            if not area_dict.get("asset_info"):
                 if area_uuid == market_uuid:
                     self.add_to_batch_commands.last_market_dso_stats(area_uuid=area_uuid). \
                         grid_fees(area_uuid=area_uuid, fee_cents_kwh=5)

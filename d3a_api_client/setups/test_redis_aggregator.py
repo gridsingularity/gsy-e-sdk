@@ -16,7 +16,7 @@ class AutoAggregator(RedisAggregator):
 
     def on_market_cycle(self, market_info):
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+            if not area_dict.get("asset_info"):
                 if area_uuid == redis_market.area_uuid:
                     self.add_to_batch_commands.last_market_dso_stats(area_uuid=area_uuid). \
                         grid_fees(area_uuid=area_uuid, fee_cents_kwh=5)

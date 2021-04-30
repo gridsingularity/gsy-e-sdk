@@ -20,7 +20,7 @@ class EssAggregator(TestAggregatorBase):
         try:
 
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-                if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+                if not area_dict.get("asset_info"):
                     continue
                 asset_info = area_dict["asset_info"]
                 if self._can_place_bid(asset_info):
