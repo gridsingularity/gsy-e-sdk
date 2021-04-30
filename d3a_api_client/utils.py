@@ -15,6 +15,7 @@ from d3a_interface.api_simulation_config.validators import validate_api_simulati
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
     RepeatingTimer
 
+from d3a_api_client import __version__
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
 
@@ -372,10 +373,11 @@ def get_sim_id_and_domain_names():
 
 
 def validate_client_up_to_date(response):
-    if "Api-Version" in response.headers:
-        remote_version = response.headers.get("Api-Version")
-        from d3a_api_client import __version__
-        if __version__ < remote_version:
-            logging.warning(
-                f"Your version of the client {__version__} is outdated, kindly upgrade to "
-                f"version {remote_version} to make use of our latest features")
+    remote_version = response.headers.get("Api-Version")
+    if not remote_version:
+        return
+
+    if __version__ < remote_version:
+        logging.warning(
+            f"Your version of the client {__version__} is outdated, kindly upgrade to "
+            f"version {remote_version} to make use of our latest features")
