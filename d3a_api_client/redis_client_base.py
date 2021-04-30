@@ -127,8 +127,8 @@ class RedisClientBase(APIClientInterface):
 
     def _on_event_or_response(self, msg):
         message = json.loads(msg["data"])
-        function = lambda: self.on_event_or_response(message)
-        self.executor.submit(execute_function_util, function=function,
+        self.executor.submit(execute_function_util,
+                             function=lambda: self.on_event_or_response(message),
                              function_name="on_event_or_response")
 
     def select_aggregator(self, aggregator_uuid, is_blocking=True):

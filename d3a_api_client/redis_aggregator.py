@@ -1,21 +1,23 @@
+import json
 import logging
 import uuid
-import json
-from threading import Lock
-from redis import StrictRedis
-from copy import copy
-
 from concurrent.futures.thread import ThreadPoolExecutor
+from copy import copy
+from threading import Lock
 
 from d3a_interface.utils import wait_until_timeout_blocking
+from redis import StrictRedis
 
 from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.constants import MAX_WORKER_THREADS, \
-    MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
-from d3a_api_client.utils import execute_function_util, log_market_progression
+from d3a_api_client.constants import (
+    MAX_WORKER_THREADS, MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE)
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
-from d3a_api_client.utils import get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info, \
-    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message
+from d3a_api_client.utils import (
+    execute_function_util, log_market_progression, log_trade_info,
+    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation, get_name_from_area_name_uuid_mapping)
+from d3a_api_client.utils import (
+    get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message)
 
 
 class RedisAPIException(Exception):
@@ -75,6 +77,12 @@ class RedisAggregator:
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
             self._transaction_id_response_buffer[data['transaction_id']] = data
 
+        for asset_uuid, responses in data["responses"].items():
+            for command_response in responses:
+                log_bid_offer_confirmation(command_response)
+                log_deleted_bid_offer_confirmation(
+                    command_response,
+                    asset_name=get_name_from_area_name_uuid_mapping(self.area_name_uuid_mapping, asset_uuid))
         self.on_event_or_response(data)
 
     def _aggregator_response_callback(self, message):
@@ -230,16 +238,11 @@ class RedisAggregator:
         self.executor.submit(execute_function_util, function=lambda: self.on_tick(message),
                              function_name="on_tick")
 
-    @staticmethod
-    def _log_trade_info(message):
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
-                     f"at {round(message.get('trade_price'), 2)} cents -->")
-
     @buffer_grid_tree_info
     def _on_trade(self, message):
         # Aggregator message
         for individual_trade in message["trade_list"]:
-            self._log_trade_info(individual_trade)
+            log_trade_info(individual_trade)
         self.executor.submit(execute_function_util, function=lambda: self.on_trade(message),
                              function_name="on_trade")
 

@@ -15,7 +15,7 @@ from sgqlc.endpoint.http import HTTPEndpoint
 from tabulate import tabulate
 
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
-    CUSTOMER_WEBSOCKET_DOMAIN_NAME
+    CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
 
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
@@ -30,7 +30,7 @@ def websocket_domain_name_from_env():
 
 
 def simulation_id_from_env():
-    return os.environ.get("API_CLIENT_SIMULATION_ID", None)
+    return os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
 
 
 class AreaNotFoundException(Exception):
@@ -286,16 +286,49 @@ def log_market_progression(message):
 
 def log_bid_offer_confirmation(message):
     try:
-        if message.get("status") == "ready":
-            event = message.get("command")
+        if message.get("status") == "ready" and message.get("command") in ["bid", "offer",
+                                                                           "update_bid",
+                                                                           "update_offer"]:
+            event = "bid" if "bid" in message.get("command") else "offer"
             data_dict = json.loads(message.get(event))
             energy = data_dict.get("energy")
             price = data_dict.get("price")
-            trader = data_dict.get("seller" if event=="offer" else "buyer")
-            logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
-                         f"{round(energy, 2)} kWh at {price} cts/kWh")
+            rate = price / energy
+            trader = data_dict.get("seller" if event in ["offer", "update_offer"] else "buyer")
+            logging.info(f"{trader} {'OFFERED' if event in ['offer', 'update_offer'] else 'BID'} "
+                         f"{round(energy, 2)} kWh at {rate} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
+
+
+def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None,
+                                       asset_name=None):
+    try:
+        if message.get("status") == "ready" and message.get("command") in ["bid_delete",
+                                                                           "offer_delete"]:
+            if command_type is None:
+                # For the aggregator response, command type is not explicitly provided
+                command_type = "bid" if "bid" in message.get("command") else "offer"
+            if bid_offer_id is None:
+                logging.info(
+                    f"<-- All {command_type}s of {asset_name} are successfully deleted-->")
+            else:
+                logging.info(
+                    f"<-- {command_type} {bid_offer_id} is successfully deleted-->")
+    except Exception as e:
+        logging.error(f"Logging bid/offer deletion confirmation failed.{e}")
+
+
+def log_trade_info(message):
+    rate = round(message.get('trade_price') / message.get('traded_energy'), 2)
+    if message.get("buyer") == "anonymous":
+        logging.info(
+            f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 2)} kWh "
+            f"at {rate} cents/kWh -->")
+    else:
+        logging.info(
+            f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 2)} kWh "
+            f"at {rate} cents/kWh -->")
 
 
 def flatten_info_dict(indict: dict) -> dict:
@@ -367,3 +400,9 @@ def read_simulation_config_file(config_file_path):
 def get_sim_id_and_domain_names():
     return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()
 
+
+def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
+    for area_name, area_uuids in area_name_uuid_mapping.items():
+        for area_uuid in area_uuids:
+            if area_uuid == asset_uuid:
+                return area_name
