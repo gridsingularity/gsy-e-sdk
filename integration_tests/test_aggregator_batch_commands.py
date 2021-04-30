@@ -1,32 +1,22 @@
-import logging
-
 import json
+import logging
 import traceback
 
-from d3a_api_client.redis_aggregator import RedisAggregator
+from integration_tests.test_aggregator_base import TestAggregatorBase
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
 
 
-class BatchAggregator(RedisAggregator):
+class BatchAggregator(TestAggregatorBase):
     def __init__(self, *args, **kwargs):
-        self.grid_fees_market_cycle_next_market = {}
-        self.grid_fees_tick_last_market = {}
-        self.initial_grid_fees_market_cycle = {}
         super().__init__(*args, **kwargs)
-        self.errors = 0
-        self.status = "running"
-        self._setup()
-        self.is_active = True
         self.updated_house2_grid_fee_cents_kwh = 5
         self.updated_offer_bid_price = 60
         self.events_or_responses = set()
-        self._has_tested_bids = False
-        self._has_tested_offers = False
 
     def _setup(self):
-        load = RedisDeviceClient('load', autoregister=True)
-        pv = RedisDeviceClient('pv', autoregister=True)
+        load = RedisDeviceClient('load')
+        pv = RedisDeviceClient('pv')
 
         load.select_aggregator(self.aggregator_uuid)
         pv.select_aggregator(self.aggregator_uuid)
@@ -34,27 +24,16 @@ class BatchAggregator(RedisAggregator):
         self.redis_market = RedisMarketClient('house-2')
         self.redis_market.select_aggregator(self.aggregator_uuid)
 
-    def require_grid_fees(self, grid_fee_buffer_dict, fee_type):
-        if self.area_name_uuid_mapping:
-            load_uuid = self.get_uuid_from_area_name("load")
-            for target_market in ["Grid", "House 1", "House 2"]:
-                market_uuid = self.get_uuid_from_area_name(target_market)
-                grid_fee_buffer_dict[target_market] = \
-                    self.calculate_grid_fee(load_uuid, market_uuid, fee_type)
-
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
         try:
-            if self.initial_grid_fees_market_cycle == {} and \
-                    self.grid_fee_calculation.latest_grid_stats_tree != {}:
-                self.require_grid_fees(self.initial_grid_fees_market_cycle, "last_market_fee")
 
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():
                 if area_uuid == self.redis_market.area_uuid:
                     self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
                                                          fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
                     self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
-                if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+                if not area_dict.get("asset_info"):
                     continue
                 asset_info = area_dict["asset_info"]
                 if self._can_place_offer(asset_info):
@@ -109,7 +88,7 @@ class BatchAggregator(RedisAggregator):
                 if transaction is None:
                     self.errors += 1
                 else:
-                    for area_uuid, response in transaction["responses"].items():
+                    for response in transaction["responses"].values():
                         for command_dict in response:
                             if command_dict["status"] == "error":
                                 self.errors += 1
@@ -180,52 +159,9 @@ class BatchAggregator(RedisAggregator):
 
                     self._has_tested_offers = True
 
-                market_stats_requests_responses = self._filter_commands_from_responses(
-                    transaction['responses'], 'dso_market_stats')
-                if market_stats_requests_responses:
-                    assert set(market_stats_requests_responses[0]["market_stats"].keys()) == {
-                        "min_trade_rate", "max_trade_rate", "avg_trade_rate", "median_trade_rate",
-                        "total_traded_energy_kWh", "market_bill", "market_fee_revenue",
-                        "area_throughput", "self_sufficiency", "self_consumption"}
-
-            self.require_grid_fees(self.grid_fees_market_cycle_next_market, "current_market_fee")
-
         except Exception as ex:
             logging.error(f'Raised exception: {ex}. Traceback: {traceback.format_exc()}')
             self.errors += 1
-
-    @staticmethod
-    def _filter_commands_from_responses(responses, command_name):
-        filtered_commands = []
-        for area_uuid, response in responses.items():
-            for command_dict in response:
-                if command_dict["command"] == command_name:
-                    filtered_commands.append(command_dict)
-        return filtered_commands
-
-    @staticmethod
-    def _can_place_bid(asset_info):
-        return (
-            'energy_requirement_kWh' in asset_info and
-            asset_info['energy_requirement_kWh'] > 0.0)
-
-    @staticmethod
-    def _can_place_offer(asset_info):
-        return (
-            'available_energy_kWh' in asset_info and
-            asset_info['available_energy_kWh'] > 0.0)
-
-    def on_tick(self, tick_info):
-        self.require_grid_fees(self.grid_fees_tick_last_market, "last_market_fee")
-
-    def on_finish(self, finish_info):
-        # Make sure that all test cases have been run
-        if self._has_tested_bids is False or self._has_tested_offers is False:
-            logging.error(
-                'Not all test cases have been covered. This will be reported as failure.')
-            self.errors += 1
-
-        self.status = 'finished'
 
     def on_event_or_response(self, message):
         if "event" in message:

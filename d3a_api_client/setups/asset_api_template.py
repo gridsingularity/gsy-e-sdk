@@ -298,29 +298,29 @@ else:
         storage_names = registered_assets["Storage"]
 
 
-def register_device_list(device_names, device_args, device_uuid_map):
-    for d in device_names:
+def register_device_list(asset_names, asset_args, asset_uuid_map):
+    for d in asset_names:
         print('Registered device:', d)
         if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
-            device_args['device_id'] = d
+            asset_args['area_id'] = d
         else:
             uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, d, domain_name)
-            device_args['device_id'] = uuid
-            device_uuid_map[uuid] = d
-        device = DeviceClient(**device_args)
+            asset_args['area_id'] = uuid
+            asset_uuid_map[uuid] = d
+        asset = DeviceClient(**asset_args)
         if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
-            device_uuid_map[device.device_uuid] = device.device_id
-        device.select_aggregator(aggr.aggregator_uuid)
-    return device_uuid_map
+            asset_uuid_map[asset.area_uuid] = asset.area_id
+        asset.select_aggregator(aggr.aggregator_uuid)
+    return asset_uuid_map
 
 
 print()
-print('Registering devices ...')
-device_uuid_map = {}
-device_uuid_map = register_device_list(load_names, device_args, device_uuid_map)
-device_uuid_map = register_device_list(pv_names, device_args, device_uuid_map)
-device_uuid_map = register_device_list(storage_names, device_args, device_uuid_map)
-aggr.device_uuid_map = device_uuid_map
+print('Registering assets ...')
+asset_uuid_map = {}
+asset_uuid_map = register_device_list(load_names, device_args, asset_uuid_map)
+asset_uuid_map = register_device_list(pv_names, device_args, asset_uuid_map)
+asset_uuid_map = register_device_list(storage_names, device_args, asset_uuid_map)
+aggr.device_uuid_map = asset_uuid_map
 print()
 print('Summary of assets registered:')
 print()

@@ -1,4 +1,4 @@
-Feature: Aggregator Tests
+Feature: Batch Commands Tests
 
 Scenario: Batch Commands sent successfully
    Given redis container is started
@@ -6,5 +6,3 @@ Scenario: Batch Commands sent successfully
    When the external client is started with test_aggregator_batch_commands
    Then the external client is connecting to the simulation until finished
    And the external client does not report errors
-   And all events and commands where send to on_event_and_response
-

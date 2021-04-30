@@ -12,10 +12,8 @@
     + [Events](#events)
     + [Asset API](#asset-api)
       - [How to create a connection to a Device](#how-to-create-a-connection-to-a-device)
-      - [Available device commands](#available-device-commands-)
     + [Grid Operator API](#grid-operator-api)
       - [How to create a connection to a Market](#how-to-create-a-connection-to-a-market)
-      - [Available market commands](#available-market-commands-)
     + [Aggregator Connection](#aggregator-connection)
       - [How to create an Aggregator](#how-to-create-an-aggregator-)
       - [How to select and unselect an Aggregator](#how-to-select-and-unselect-an-aggregator)
@@ -123,27 +121,6 @@ To disconnect/unregistering, the following command is available:
 device_client.unregister()
 ```
 
-#### Available device commands
-
-- Send an energy offer with price in cents:
-    ```device_client.offer_energy(<energy>, <price_cents>)```
-- Send an energy offer with energy rate in cents/kWh:
-    ```device_client.offer_energy_rate(<energy>, <rate_cents_per_kWh>)```
-- Send an energy bid with price in cents: 
-    ```device_client.bid_energy(<energy>, <price_cents>)```
-- Send an energy bid with energy rate in cents/kWh:
-    ```device_client.bid_energy_rate(<energy>, <rate_cents_per_kWh>)```
-- List all posted offers:
-    ```device_client.list_offers()```
-- Lists all posted bids
-    ```device_client.list_bids()```
-- Delete offer using its id
-    ```device_client.delete_offer(<offer_id>)```
-- Delete bid using its id
-    ```device_client.delete_bid(<bid_id>)```
-- Get device info (returns demanded energy for Load devices and available energy for PVs)
-    ```device_client.device_info()```
-
 ---
 
 ### Grid Operator API
@@ -160,15 +137,6 @@ device_client.unregister()
     ``` 
     market_client = RedisMarketClient(<market_name>, autoregister=True)
     ```
-#### Available market commands:
-- list statistics: 
-    ```
-    market_client.last_market_dso_stats()
-    ```
-- change grid fees: 
-
-    `market_client.grid_fees(<constant_grid_fees_cent_per_kWh>)`
----
 
 ### Aggregator Connection
 
@@ -240,11 +208,7 @@ device.unselect_aggregator(aggregator.aggregator_uuid)
 Commands to all or individual connected devices or markets can be sent in one batch.
 All device or market specific functions can be sent via commands that are
 accumulated and added to buffer.
-For example, to add the following call to the buffer 
-```
-device_client.bid_energy(<energy>, <price_cents>)
-```
-translates to 
+
 ```
 aggregator.add_to_batch_commands.bid_energy(<device_uuid>, <energy>, <price_cents>)
 ```

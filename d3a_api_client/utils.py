@@ -2,18 +2,17 @@ import ast
 import json
 import logging
 import os
-import requests
 import traceback
 import uuid
 from functools import wraps
 
-from tabulate import tabulate
-from sgqlc.endpoint.http import HTTPEndpoint
-
-from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
+import requests
 from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
+from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
 from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
     RepeatingTimer
+from sgqlc.endpoint.http import HTTPEndpoint
+from tabulate import tabulate
 
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
@@ -56,7 +55,7 @@ class RestCommunicationMixin:
 
     @property
     def _url_prefix(self):
-        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.device_id}'
+        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.area_id}'
 
     def _post_request(self, endpoint_suffix, data):
         endpoint = f"{self._url_prefix}/{endpoint_suffix}/"
@@ -287,7 +286,6 @@ def log_market_progression(message):
 
 def log_bid_offer_confirmation(message):
     try:
-        event = message.get("command")
         if message.get("status") == "ready" and message.get("command") in ["bid", "offer",
                                                                            "update_bid",
                                                                            "update_offer"]:
