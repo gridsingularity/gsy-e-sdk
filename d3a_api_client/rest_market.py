@@ -1,45 +1,48 @@
-import logging
-
 from concurrent.futures.thread import ThreadPoolExecutor
-from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
-from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, blocking_post_request, get_aggregator_prefix, execute_function_util, log_market_progression
+
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
     simulation_id_from_env
+from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
+    logging_decorator, blocking_post_request, get_aggregator_prefix
+from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 
 
 class RestMarketClient(RestCommunicationMixin):
 
     def __init__(self, area_id, simulation_id=None, domain_name=None, websockets_domain_name=None):
-        self.device_id = area_id
+        self.area_id = area_id
         self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
         self.domain_name = domain_name if domain_name else domain_name_from_env()
         self.websockets_domain_name = websockets_domain_name \
             if websockets_domain_name else websocket_domain_name_from_env()
-        self.jwt_token = retrieve_jwt_key_from_server(domain_name)
-        self._create_jwt_refresh_timer(domain_name)
+        self.jwt_token = retrieve_jwt_key_from_server(self.domain_name)
+        self._create_jwt_refresh_timer(self.domain_name)
+
+        self.start_websocket_connection()
+        self.aggregator_prefix = get_aggregator_prefix(self.domain_name, self.simulation_id)
+        self.active_aggregator = None
+
+    def start_websocket_connection(self):
         self.dispatcher = WebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(simulation_id, area_id,
-                                                websockets_domain_name, self.domain_name,
+        self.websocket_thread = WebsocketThread(self.simulation_id, self.area_id,
+                                                self.websockets_domain_name, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
-        self.aggregator_prefix = get_aggregator_prefix(domain_name, simulation_id)
-        self.active_aggregator = None
 
     @logging_decorator('select-aggregator')
     def select_aggregator(self, aggregator_uuid):
         response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
-                                          "device_uuid": self.device_id}, self.jwt_token)
+                                          "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = response["aggregator_uuid"] if response else None
 
     @logging_decorator('unselect-aggregator')
     def unselect_aggregator(self, aggregator_uuid):
         response = blocking_post_request(f'{self.aggregator_prefix}unselect-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
-                                          "device_uuid": self.device_id}, self.jwt_token)
+                                          "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = None
 
     @logging_decorator('grid_fees')
@@ -49,38 +52,7 @@ class RestMarketClient(RestCommunicationMixin):
             return self.dispatcher.wait_for_command_response('grid_fees', transaction_id)
 
     @logging_decorator('dso_market_stats')
-    def list_dso_market_stats(self, selected_markets):
-        # TODO: this is kept for the backward compatibility, should be removed
-        return self.last_market_dso_stats()
-
-    @logging_decorator('dso_market_stats')
     def last_market_dso_stats(self):
         transaction_id, posted = self._get_request('dso-market-stats', {})
         if posted:
             return self.dispatcher.wait_for_command_response('dso_market_stats', transaction_id)
-
-    def _on_event_or_response(self, message):
-        logging.info(f"A new message was received. Message information: {message}")
-        log_market_progression(message)
-        function = lambda: self.on_event_or_response(message)
-        self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_event_or_response")
-
-    def _on_market_cycle(self, message):
-        function = lambda: self.on_market_cycle(message)
-        self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_market_cycle")
-
-    def _on_finish(self, message):
-        function = lambda: self.on_finish(message)
-        self.callback_thread.submit(execute_function_util, function=function,
-                                    function_name="on_finish")
-
-    def on_finish(self, finish_info):
-        pass
-
-    def on_market_cycle(self, market_info):
-        pass
-
-    def on_event_or_response(self, message):
-        pass

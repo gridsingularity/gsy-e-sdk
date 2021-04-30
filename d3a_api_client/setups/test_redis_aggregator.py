@@ -1,6 +1,8 @@
 import logging
 from time import sleep
 
+from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
+
 from d3a_api_client.redis_aggregator import RedisAggregator
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
@@ -14,24 +16,26 @@ class AutoAggregator(RedisAggregator):
 
     def on_market_cycle(self, market_info):
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
-                continue
+            if not area_dict.get("asset_info"):
+                if area_uuid == redis_market.area_uuid:
+                    self.add_to_batch_commands.last_market_dso_stats(area_uuid=area_uuid). \
+                        grid_fees(area_uuid=area_uuid, fee_cents_kwh=5)
+            else:
+                logging.info(
+                    f'current_market_maker_rate: {market_info["market_maker_rate"]}')
+                if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
+                                                                  "available_energy_kWh"):
+                    energy = area_dict["asset_info"]["available_energy_kWh"] / 2
+                    self.add_to_batch_commands.offer_energy(area_uuid=area_uuid, price=1,
+                                                            energy=energy)
+                if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
+                                                                  "energy_requirement_kWh"):
+                    energy = area_dict["asset_info"]["energy_requirement_kWh"] / 2
+                    self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
+                                                          energy=energy)
 
-            logging.info(
-                f'current_market_maker_rate: {market_info["market_maker_rate"]}')
-            if "available_energy_kWh" in area_dict["asset_info"] and \
-                    area_dict["asset_info"]["available_energy_kWh"] > 0.0:
-                self.add_to_batch_commands.offer_energy(area_uuid=area_uuid, price=1,
-                                                        energy=area_dict["asset_info"]["available_energy_kWh"] / 2) \
-                    .list_offers(area_uuid=area_uuid)
-            if "energy_requirement_kWh" in area_dict["asset_info"] and \
-                    area_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
-                self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
-                                                      energy=area_dict["asset_info"]["energy_requirement_kWh"] / 2) \
-                    .list_bids(area_uuid=area_uuid)
-
-        response = self.execute_batch_commands()
-        logging.info(f"Batch command placed on the new market: {response}")
+            response = self.execute_batch_commands()
+            logging.info(f"Batch command placed on the new market: {response}")
 
     def on_tick(self, tick_info):
         logging.debug(f"AGGREGATOR_TICK_INFO: {tick_info}")
@@ -47,23 +51,13 @@ class AutoAggregator(RedisAggregator):
         logging.debug(f"AGGREGATORS_BATCH_RESPONSE: {market_stats}")
 
 
-aggregator = AutoAggregator(
-    aggregator_name="test_aggr"
-)
+aggregator = AutoAggregator(aggregator_name="test_aggr")
 
-# aggregator.delete_aggregator(is_blocking=True)
+load = RedisDeviceClient('load', autoregister=True, pubsub_thread=aggregator.pubsub)
+load.select_aggregator(aggregator.aggregator_uuid)
 
-
-# Connects one client to the load device
-load = RedisDeviceClient('load', autoregister=True)
-# Connects a second client to the pv device
-pv = RedisDeviceClient('pv', autoregister=True)
-
-selected = load.select_aggregator(aggregator.aggregator_uuid)
-logging.info(f"SELECTED: {selected}")
-
-selected = pv.select_aggregator(aggregator.aggregator_uuid)
-logging.info(f"SELECTED: {selected}")
+pv = RedisDeviceClient('pv', autoregister=True, pubsub_thread=aggregator.pubsub)
+pv.select_aggregator(aggregator.aggregator_uuid)
 
 redis_market = RedisMarketClient('house-2')
 redis_market.select_aggregator(aggregator.aggregator_uuid)

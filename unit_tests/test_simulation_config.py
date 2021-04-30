@@ -7,7 +7,8 @@ from d3a_api_client.cli import create_simulation_config_path
 import d3a_api_client
 from d3a_api_client.utils import read_simulation_config_file, get_sim_id_and_domain_names
 from unit_tests import FIXTURES_DIR
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN
+from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+    API_CLIENT_SIMULATION_ID
 
 
 class TestSimulationInfo(unittest.TestCase):
@@ -32,7 +33,7 @@ class TestSimulationInfo(unittest.TestCase):
 
     def test_get_sim_id_and_domain_names_returns_the_defaults(self):
         simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
-        assert simulation_id == ""
+        assert simulation_id == API_CLIENT_SIMULATION_ID
         assert domain_name == DEFAULT_DOMAIN_NAME
         assert websockets_domain_name == DEFAULT_WEBSOCKET_DOMAIN
 

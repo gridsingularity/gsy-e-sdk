@@ -7,7 +7,8 @@ from d3a_api_client.utils import (
     retrieve_jwt_key_from_server, RestCommunicationMixin,
     logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util,
     log_market_progression, domain_name_from_env, websocket_domain_name_from_env,
-    log_bid_offer_confirmation, simulation_id_from_env, get_configuration_prefix)
+    log_bid_offer_confirmation, simulation_id_from_env, get_configuration_prefix, log_trade_info,
+    log_deleted_bid_offer_confirmation)
 from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
 
 REGISTER_COMMAND_TIMEOUT = 15 * 60
@@ -15,13 +16,13 @@ REGISTER_COMMAND_TIMEOUT = 15 * 60
 
 class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
-    def __init__(self, device_id, simulation_id=None, domain_name=None, websockets_domain_name=None,
+    def __init__(self, area_id, simulation_id=None, domain_name=None, websockets_domain_name=None,
                  autoregister=False, start_websocket=True, sim_api_domain_name=None):
         self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
         self.domain_name = domain_name if domain_name else domain_name_from_env()
         self.websockets_domain_name = websockets_domain_name \
             if websockets_domain_name else websocket_domain_name_from_env()
-        self.device_id = device_id
+        self.area_id = area_id
         if sim_api_domain_name is None:
             sim_api_domain_name = self.domain_name
         self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
@@ -38,7 +39,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     def start_websocket_connection(self):
         self.dispatcher = WebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(self.simulation_id, self.device_id,
+        self.websocket_thread = WebsocketThread(self.simulation_id, self.area_id,
                                                 self.websockets_domain_name, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()
@@ -66,14 +67,14 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
     def select_aggregator(self, aggregator_uuid):
         response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
-                                          "device_uuid": self.device_id}, self.jwt_token)
+                                          "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = response["aggregator_uuid"] if response else None
 
     @logging_decorator('unselect-aggregator')
     def unselect_aggregator(self, aggregator_uuid):
         response = blocking_post_request(f'{self.aggregator_prefix}unselect-aggregator/',
                                          {"aggregator_uuid": aggregator_uuid,
-                                          "device_uuid": self.device_id}, self.jwt_token)
+                                          "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = None
 
     @logging_decorator('set_energy_forecast')
@@ -82,96 +83,6 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
                                                     {"energy_forecast": pv_energy_forecast_Wh})
         if posted and do_not_wait is False:
             return self.dispatcher.wait_for_command_response('set_energy_forecast', transaction_id)
-
-    @logging_decorator('offer')
-    def offer_energy(self, energy: float, price: float, replace_existing: bool = True):
-        transaction_id, posted = self._post_request(
-            'offer', {'energy': energy, 'price': price, 'replace_existing': replace_existing})
-
-        if posted:
-            response = self.dispatcher.wait_for_command_response('offer', transaction_id)
-            log_bid_offer_confirmation(response)
-            return response
-
-    @logging_decorator('offer')
-    def offer_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
-        transaction_id, posted = self._post_request(
-            'offer', {
-                'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
-
-        if posted:
-            response = self.dispatcher.wait_for_command_response('offer', transaction_id)
-            log_bid_offer_confirmation(response)
-            return response
-
-    @logging_decorator('update_offer')
-    def offer_energy(self, energy, price):
-        transaction_id, posted = self._post_request('update_offer', {"energy": energy, "price": price})
-        if posted:
-            response = self.dispatcher.wait_for_command_response('update_offer', transaction_id)
-            log_bid_offer_confirmation(response)
-            return response
-
-    @logging_decorator('bid')
-    def bid_energy(self, energy: float, price: float, replace_existing: bool = True):
-        transaction_id, posted = self._post_request(
-            'bid', {'energy': energy, 'price': price, 'replace_existing': replace_existing})
-
-        if posted:
-            response = self.dispatcher.wait_for_command_response('bid', transaction_id)
-            log_bid_offer_confirmation(response)
-            return response
-
-    @logging_decorator('bid')
-    def bid_energy_rate(self, energy: float, rate: float, replace_existing: bool = True):
-        transaction_id, posted = self._post_request(
-            'bid', {
-                'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
-
-        if posted:
-            response = self.dispatcher.wait_for_command_response('bid', transaction_id)
-            log_bid_offer_confirmation(response)
-            return response
-
-    @logging_decorator('update_bid')
-    def update_bid(self, energy, price):
-        transaction_id, posted = self._post_request('update_bid', {"energy": energy, "price": price})
-        if posted:
-            response = self.dispatcher.wait_for_command_response('update_bid', transaction_id)
-            return response
-
-    @logging_decorator('delete offer')
-    def delete_offer(self, offer_id=None):
-        transaction_id, posted = self._post_request('delete-offer', {"offer": offer_id})
-        if posted:
-            return self.dispatcher.wait_for_command_response('offer_delete', transaction_id)
-
-    @logging_decorator('delete bid')
-    def delete_bid(self, bid_id=None):
-        transaction_id, posted = self._post_request('delete-bid', {"bid": bid_id})
-        if posted:
-            return self.dispatcher.wait_for_command_response('bid_delete', transaction_id)
-
-    @logging_decorator('list offers')
-    def list_offers(self):
-        transaction_id, get_sent = self._get_request('list-offers', {})
-        if get_sent:
-            return self.dispatcher.wait_for_command_response('list_offers', transaction_id)
-
-    @logging_decorator('list bids')
-    def list_bids(self):
-        transaction_id, get_sent = self._get_request('list-bids', {})
-        if get_sent:
-            return self.dispatcher.wait_for_command_response('list_bids', transaction_id)
-
-    @logging_decorator('device info')
-    def device_info(self):
-        transaction_id, get_sent = self._get_request('device-stats', {})
-        if get_sent:
-            return self.dispatcher.wait_for_command_response('device_info', transaction_id)
-
-    def on_register(self, registration_info):
-        pass
 
     def _on_event_or_response(self, message):
         logging.debug(f"A new message was received. Message information: {message}")
@@ -189,19 +100,10 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.callback_thread.submit(execute_function_util,
                                     function=lambda: self.on_tick(message),
                                     function_name="on_tick")
-    @staticmethod
-    def _log_trade_info(message):
-        logging.info(f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 4)} kWh "
-                     f"at {round(message.get('trade_price'), 2)} cents -->")
 
     def _on_trade(self, message):
-        if "trade_list" in message:
-            # Aggregator message
-            for individual_trade in message["trade_list"]:
-                self._log_trade_info(individual_trade)
-        else:
-            # Device message
-            self._log_trade_info(message)
+        for individual_trade in message["trade_list"]:
+            log_trade_info(individual_trade)
 
         self.callback_thread.submit(execute_function_util,
                                     function=lambda: self.on_trade(message),
