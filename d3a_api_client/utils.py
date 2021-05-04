@@ -405,7 +405,7 @@ def get_sim_id_and_domain_names():
 
 
 def validate_client_up_to_date(response):
-    remote_version = response.headers.get("Api-Version")
+    remote_version = response.headers.get("API-VERSION")
     if not remote_version:
         return
 
