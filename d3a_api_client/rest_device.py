@@ -1,15 +1,17 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 
+from d3a_interface.client_connections.utils import RestCommunicationMixin, \
+    retrieve_jwt_key_from_server, blocking_post_request
+from d3a_interface.client_connections.websocket_connection import WebsocketThread
+
 from d3a_api_client import APIClientInterface
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import (
-    retrieve_jwt_key_from_server, RestCommunicationMixin,
-    logging_decorator, get_aggregator_prefix, blocking_post_request, execute_function_util,
+    logging_decorator, get_aggregator_prefix, execute_function_util,
     log_market_progression, domain_name_from_env, websocket_domain_name_from_env,
-    log_bid_offer_confirmation, simulation_id_from_env, get_configuration_prefix, log_trade_info,
-    log_deleted_bid_offer_confirmation)
-from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
+    simulation_id_from_env, get_configuration_prefix, log_trade_info)
+from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
 
 REGISTER_COMMAND_TIMEOUT = 15 * 60
 
@@ -30,6 +32,8 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.aggregator_prefix = get_aggregator_prefix(self.domain_name, self.simulation_id)
         self.configuration_prefix = get_configuration_prefix(self.domain_name, self.simulation_id)
         self.active_aggregator = None
+        self.endpoint_prefix = f"{self.domain_name}/external-connection/api/" \
+                               f"{self.simulation_id}/{self.area_id}/"
         if start_websocket or autoregister:
             self.start_websocket_connection()
 
@@ -38,16 +42,16 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
             self.register()
 
     def start_websocket_connection(self):
-        self.dispatcher = WebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(self.simulation_id, self.area_id,
-                                                self.websockets_domain_name, self.domain_name,
+        self.dispatcher = DeviceWebsocketMessageReceiver(self)
+        websocket_uri = f"{self.websockets_domain_name}/{self.simulation_id}/{self.area_id}/"
+        self.websocket_thread = WebsocketThread(websocket_uri, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
     @logging_decorator('register')
     def register(self, is_blocking=True):
-        transaction_id, posted = self._post_request('register', {})
+        transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/register", {})
         if posted:
             return_value = self.dispatcher.wait_for_command_response(
                 'register', transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
@@ -56,7 +60,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     @logging_decorator('unregister')
     def unregister(self, is_blocking):
-        transaction_id, posted = self._post_request('unregister', {})
+        transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/unregister", {})
         if posted:
             return_value = self.dispatcher.wait_for_command_response(
                 'unregister', transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
@@ -79,7 +83,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
 
     @logging_decorator('set_energy_forecast')
     def set_energy_forecast(self, pv_energy_forecast_Wh, do_not_wait=False):
-        transaction_id, posted = self._post_request('set_energy_forecast',
+        transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/set_energy_forecast",
                                                     {"energy_forecast": pv_energy_forecast_Wh})
         if posted and do_not_wait is False:
             return self.dispatcher.wait_for_command_response('set_energy_forecast', transaction_id)

@@ -3,8 +3,8 @@ import asyncio
 from time import time
 from sys import platform
 from parameterized import parameterized
-import d3a_api_client.websocket_device
-from d3a_api_client.websocket_device import WebsocketAsyncConnection
+import d3a_interface.client_connections.websocket_connection
+from d3a_interface.client_connections.websocket_connection import WebsocketAsyncConnection
 
 
 class TestWebsocket(unittest.TestCase):
@@ -12,9 +12,9 @@ class TestWebsocket(unittest.TestCase):
     def setUp(self):
         self.coro_backup = WebsocketAsyncConnection._connection_loop_coroutine
         WebsocketAsyncConnection._generate_websocket_connection_headers = lambda x: None
-        d3a_api_client.websocket_device.WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 0
-        d3a_api_client.websocket_device.WEBSOCKET_MAX_CONNECTION_RETRIES = 5
-        d3a_api_client.websocket_device.WEBSOCKET_ERROR_THRESHOLD_SECONDS = 30
+        d3a_interface.client_connections.websocket_connection.WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 0
+        d3a_interface.client_connections.websocket_connection.WEBSOCKET_MAX_CONNECTION_RETRIES = 5
+        d3a_interface.client_connections.websocket_connection.WEBSOCKET_ERROR_THRESHOLD_SECONDS = 30
 
     def tearDown(self):
         WebsocketAsyncConnection._connection_loop_coroutine = self.coro_backup
@@ -25,7 +25,7 @@ class TestWebsocket(unittest.TestCase):
          (7, ),
          (13, )])
     def test_websocket_retries_the_connection_before_failing(self, num_of_retries):
-        d3a_api_client.websocket_device.WEBSOCKET_MAX_CONNECTION_RETRIES = num_of_retries
+        d3a_interface.client_connections.websocket_connection.WEBSOCKET_MAX_CONNECTION_RETRIES = num_of_retries
         coro_execution_counter = 0
 
         async def exception_raising_coroutine(s, _1):
@@ -48,7 +48,7 @@ class TestWebsocket(unittest.TestCase):
         assert coro_execution_counter == num_of_retries + 1
 
     def test_websocket_conforms_to_wait_before_retry_parameter(self):
-        d3a_api_client.websocket_device.WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 0.1
+        d3a_interface.client_connections.websocket_connection.WEBSOCKET_WAIT_BEFORE_RETRY_SECONDS = 0.1
 
         async def exception_raising_coro(s, _1):
             raise Exception("exception!")
@@ -65,7 +65,7 @@ class TestWebsocket(unittest.TestCase):
 
         end_time = time()
 
-        num_of_retries = d3a_api_client.websocket_device.WEBSOCKET_MAX_CONNECTION_RETRIES
+        num_of_retries = d3a_interface.client_connections.websocket_connection.WEBSOCKET_MAX_CONNECTION_RETRIES
         expected_duration = 0.1 * (num_of_retries + 1)
 
         # On MacOS, the precision of asyncio.sleep is far worse than in Linux, which has the result to
@@ -77,7 +77,7 @@ class TestWebsocket(unittest.TestCase):
         assert expected_duration <= end_time - start_time <= expected_duration + tolerance
 
     def test_websocket_restarts_the_retry_count_if_ws_coro_does_not_crash_for_some_time(self):
-        d3a_api_client.websocket_device.WEBSOCKET_ERROR_THRESHOLD_SECONDS = 0.1
+        d3a_interface.client_connections.websocket_connection.WEBSOCKET_ERROR_THRESHOLD_SECONDS = 0.1
         coro_execution_counter = 0
 
         async def exception_after_time_coro(s, _1):

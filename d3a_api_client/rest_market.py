@@ -1,11 +1,14 @@
 from concurrent.futures.thread import ThreadPoolExecutor
 
+from d3a_interface.client_connections.utils import RestCommunicationMixin, blocking_post_request
+from d3a_interface.client_connections.websocket_connection import WebsocketThread
+
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
     simulation_id_from_env
-from d3a_api_client.utils import retrieve_jwt_key_from_server, RestCommunicationMixin, \
-    logging_decorator, blocking_post_request, get_aggregator_prefix
-from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
+from d3a_api_client.utils import (retrieve_jwt_key_from_server,
+                                  logging_decorator, get_aggregator_prefix)
+from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
 
 
 class RestMarketClient(RestCommunicationMixin):
@@ -22,11 +25,12 @@ class RestMarketClient(RestCommunicationMixin):
         self.start_websocket_connection()
         self.aggregator_prefix = get_aggregator_prefix(self.domain_name, self.simulation_id)
         self.active_aggregator = None
+        self.endpoint_prefix = f""
 
     def start_websocket_connection(self):
-        self.dispatcher = WebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(self.simulation_id, self.area_id,
-                                                self.websockets_domain_name, self.domain_name,
+        self.dispatcher = DeviceWebsocketMessageReceiver(self)
+        websocket_uri = f"{self.domain_name}/{self.simulation_id}/{self.area_id}/"
+        self.websocket_thread = WebsocketThread(websocket_uri, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
@@ -47,12 +51,12 @@ class RestMarketClient(RestCommunicationMixin):
 
     @logging_decorator('grid_fees')
     def grid_fees(self, fee_cents_per_kWh):
-        transaction_id, get_sent = self._post_request('grid-fee', {"fee_const": fee_cents_per_kWh})
+        transaction_id, get_sent = self._post_request(f"{self.endpoint_prefix}/grid-fee", {"fee_const": fee_cents_per_kWh})
         if get_sent:
             return self.dispatcher.wait_for_command_response('grid_fees', transaction_id)
 
     @logging_decorator('dso_market_stats')
     def last_market_dso_stats(self):
-        transaction_id, posted = self._get_request('dso-market-stats', {})
+        transaction_id, posted = self._get_request(f"{self.endpoint_prefix}/dso-market-stats", {})
         if posted:
             return self.dispatcher.wait_for_command_response('dso_market_stats', transaction_id)

@@ -42,33 +42,6 @@ class RedisAPIException(Exception):
     pass
 
 
-class RestCommunicationMixin:
-
-    def _create_jwt_refresh_timer(self, sim_api_domain_name):
-        self.jwt_refresh_timer = RepeatingTimer(
-            JWT_TOKEN_EXPIRY_IN_SECS - 30, self._refresh_jwt_token, [sim_api_domain_name]
-        )
-        self.jwt_refresh_timer.daemon = True
-        self.jwt_refresh_timer.start()
-
-    def _refresh_jwt_token(self, domain_name):
-        self.jwt_token = retrieve_jwt_key_from_server(domain_name)
-
-    @property
-    def _url_prefix(self):
-        return f'{self.domain_name}/external-connection/api/{self.simulation_id}/{self.area_id}'
-
-    def _post_request(self, endpoint_suffix, data):
-        endpoint = f"{self._url_prefix}/{endpoint_suffix}/"
-        data["transaction_id"] = str(uuid.uuid4())
-        return data["transaction_id"], post_request(endpoint, data, self.jwt_token)
-
-    def _get_request(self, endpoint_suffix, data):
-        endpoint = f"{self._url_prefix}/{endpoint_suffix}/"
-        data["transaction_id"] = str(uuid.uuid4())
-        return data["transaction_id"], get_request(endpoint, data, self.jwt_token)
-
-
 def execute_graphql_request(domain_name, query, headers=None, url=None, authenticate=True):
     """
     Fires a graphql request to the desired url and returns the response
@@ -102,60 +75,12 @@ def retrieve_jwt_key_from_server(domain_name):
     return json.loads(resp.text)["token"]
 
 
-def post_request(endpoint, data, jwt_token):
-    resp = requests.post(
-        endpoint,
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json",
-                 "Authorization": f"JWT {jwt_token}"})
-    return json.loads(resp.text) if request_response_returns_http_2xx(endpoint, resp) else None
-
-
-def blocking_post_request(endpoint, data, jwt_token):
-    data["transaction_id"] = str(uuid.uuid4())
-    resp = requests.post(
-        endpoint,
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json",
-                 "Authorization": f"JWT {jwt_token}"})
-    return json.loads(resp.text) if request_response_returns_http_2xx(endpoint, resp) else None
-
-
-def get_request(endpoint, data, jwt_token):
-    resp = requests.get(
-        endpoint,
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json",
-                 "Authorization": f"JWT {jwt_token}"})
-    return request_response_returns_http_2xx(endpoint, resp)
-
-
-def request_response_returns_http_2xx(endpoint, resp):
-    if 200 <= resp.status_code <= 299:
-        return True
-    else:
-        logging.error(f"Request to {endpoint} failed with status code {resp.status_code}. "
-                      f"Response body: {resp.text}")
-        return False
-
-
 def get_aggregator_prefix(domain_name, simulation_id=None):
     return f"{domain_name}/external-connection/aggregator-api/{simulation_id}/"
 
 
 def get_configuration_prefix(domain_name, simulation_id=None):
     return f"{domain_name}/external-connection/configurations/{simulation_id}/"
-
-
-def blocking_get_request(endpoint, data, jwt_token):
-    data["transaction_id"] = str(uuid.uuid4())
-    resp = requests.get(
-        endpoint,
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json",
-                 "Authorization": f"JWT {jwt_token}"})
-
-    return resp.json() if request_response_returns_http_2xx(endpoint, resp) else None
 
 
 def get_area_uuid_from_area_name(serialized_scenario, area_name):
