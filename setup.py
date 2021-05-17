@@ -1,5 +1,6 @@
 import os
 from setuptools import setup, find_packages
+from d3a_api_client import __version__
 
 target_branch = os.environ.get('BRANCH', 'master')
 
@@ -19,7 +20,7 @@ with open("README.md", "r") as readme:
     README = readme.read()
 
 # *IMPORTANT*: Don't manually change the version here. Use the 'bumpversion' utility.
-VERSION = '0.12.0'
+VERSION = __version__
 
 setup(
     name="d3a-api-client",

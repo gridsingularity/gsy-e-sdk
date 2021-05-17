@@ -45,10 +45,9 @@ class Aggregator(RestDeviceClient):
     def __init__(self, aggregator_name, simulation_id=None, domain_name=None,
                  websockets_domain_name=None, accept_all_devices=True):
         super().__init__(
-            simulation_id=simulation_id if simulation_id else simulation_id_from_env(),
-            domain_name= domain_name if domain_name else domain_name_from_env(),
-            websockets_domain_name=websockets_domain_name
-            if websockets_domain_name else websocket_domain_name_from_env(),
+            simulation_id=simulation_id,
+            domain_name=domain_name,
+            websockets_domain_name=websockets_domain_name,
             area_id="",
             autoregister=False,
             start_websocket=False)

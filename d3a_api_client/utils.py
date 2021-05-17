@@ -14,6 +14,7 @@ from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_
 from sgqlc.endpoint.http import HTTPEndpoint
 from tabulate import tabulate
 
+from d3a_api_client import __version__
 from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
 
@@ -96,6 +97,8 @@ def retrieve_jwt_key_from_server(domain_name):
         logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
                       f"Response body: {resp.text}")
         return
+
+    validate_client_up_to_date(resp)
     return json.loads(resp.text)["token"]
 
 
@@ -401,8 +404,20 @@ def get_sim_id_and_domain_names():
     return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()
 
 
+def validate_client_up_to_date(response):
+    remote_version = response.headers.get("API-VERSION")
+    if not remote_version:
+        return
+
+    if __version__ < remote_version:
+        logging.warning(
+            f"Your version of the client {__version__} is outdated, kindly upgrade to "
+            f"version {remote_version} to make use of our latest features")
+
+
 def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
     for area_name, area_uuids in area_name_uuid_mapping.items():
         for area_uuid in area_uuids:
             if area_uuid == asset_uuid:
                 return area_name
+
