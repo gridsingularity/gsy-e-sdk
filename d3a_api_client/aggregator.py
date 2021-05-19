@@ -2,6 +2,9 @@ import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Dict
 
+from d3a_interface.client_connections.utils import blocking_post_request, blocking_get_request
+from d3a_interface.client_connections.websocket_connection import WebsocketThread
+
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.constants import MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
@@ -13,13 +16,11 @@ from d3a_api_client.utils import (
     get_slot_completion_percentage_int_from_message,
     log_bid_offer_confirmation, log_deleted_bid_offer_confirmation,
     get_name_from_area_name_uuid_mapping)
-from d3a_api_client.utils import (
-    logging_decorator, blocking_get_request, blocking_post_request, domain_name_from_env,
-    websocket_domain_name_from_env, simulation_id_from_env)
-from d3a_api_client.websocket_device import WebsocketMessageReceiver, WebsocketThread
+from d3a_api_client.utils import logging_decorator
+from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
 
 
-class AggregatorWebsocketMessageReceiver(WebsocketMessageReceiver):
+class AggregatorWebsocketMessageReceiver(DeviceWebsocketMessageReceiver):
     def __init__(self, rest_client):
         super().__init__(rest_client)
 
@@ -75,8 +76,8 @@ class Aggregator(RestDeviceClient):
 
     def start_websocket_connection(self):
         self.dispatcher = AggregatorWebsocketMessageReceiver(self)
-        self.websocket_thread = WebsocketThread(self.simulation_id, f"aggregator/{self.aggregator_uuid}",
-                                                self.websockets_domain_name, self.domain_name,
+        websocket_uri = f"{self.websockets_domain_name}/{self.simulation_id}/aggregator/{self.area_id}/"
+        self.websocket_thread = WebsocketThread(websocket_uri, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
@@ -152,7 +153,7 @@ class Aggregator(RestDeviceClient):
         batch_command_dict = self._client_command_buffer.execute_batch()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id, posted = self._post_request(
-            'batch-commands', {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
+            f"{self.endpoint_prefix}/batch-commands", {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
         if posted:
             self._client_command_buffer.clear()
             response = self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
