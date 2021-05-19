@@ -33,7 +33,7 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.configuration_prefix = get_configuration_prefix(self.domain_name, self.simulation_id)
         self.active_aggregator = None
         self.endpoint_prefix = f"{self.domain_name}/external-connection/api/" \
-                               f"{self.simulation_id}/{self.area_id}/"
+                               f"{self.simulation_id}/{self.area_id}"
         if start_websocket or autoregister:
             self.start_websocket_connection()
 
