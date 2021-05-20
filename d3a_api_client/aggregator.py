@@ -76,7 +76,8 @@ class Aggregator(RestDeviceClient):
 
     def start_websocket_connection(self):
         self.dispatcher = AggregatorWebsocketMessageReceiver(self)
-        websocket_uri = f"{self.websockets_domain_name}/{self.simulation_id}/aggregator/{self.area_id}/"
+        websocket_uri = f"{self.websockets_domain_name}/{self.simulation_id}/aggregator/" \
+                        f"{self.aggregator_uuid}/"
         self.websocket_thread = WebsocketThread(websocket_uri, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()
@@ -153,7 +154,8 @@ class Aggregator(RestDeviceClient):
         batch_command_dict = self._client_command_buffer.execute_batch()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id, posted = self._post_request(
-            f"{self.endpoint_prefix}/batch-commands", {"aggregator_uuid": self.aggregator_uuid, "batch_commands": batch_command_dict})
+            f"{self.endpoint_prefix}/batch-commands", {"aggregator_uuid": self.aggregator_uuid,
+                                                       "batch_commands": batch_command_dict})
         if posted:
             self._client_command_buffer.clear()
             response = self.dispatcher.wait_for_command_response('batch_commands', transaction_id)
