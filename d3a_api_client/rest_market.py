@@ -25,12 +25,14 @@ class RestMarketClient(RestCommunicationMixin):
         self.start_websocket_connection()
         self.aggregator_prefix = get_aggregator_prefix(self.domain_name, self.simulation_id)
         self.active_aggregator = None
-        self.endpoint_prefix = f"{self.domain_name}/external-connection/api/" \
-                               f"{self.simulation_id}/{self.area_id}"
+
+    @property
+    def endpoint_prefix(self):
+        return f"{self.domain_name}/external-connection/api/{self.simulation_id}/{self.area_id}"
 
     def start_websocket_connection(self):
         self.dispatcher = DeviceWebsocketMessageReceiver(self)
-        websocket_uri = f"{self.domain_name}/{self.simulation_id}/{self.area_id}/"
+        websocket_uri = f"{self.websockets_domain_name}/{self.simulation_id}/{self.area_id}/"
         self.websocket_thread = WebsocketThread(websocket_uri, self.domain_name,
                                                 self.dispatcher)
         self.websocket_thread.start()

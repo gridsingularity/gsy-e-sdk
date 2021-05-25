@@ -64,6 +64,10 @@ class Aggregator(RestDeviceClient):
         self.latest_grid_tree_flat = {}
         self.area_name_uuid_mapping = {}
 
+    @property
+    def endpoint_prefix(self):
+        return f"{self.domain_name}/external-connection/aggregator-api/{self.simulation_id}"
+
     def _connect_to_simulation(self):
         user_aggrs = self.list_aggregators()
         for a in user_aggrs:
