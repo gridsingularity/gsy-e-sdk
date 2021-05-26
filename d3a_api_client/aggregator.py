@@ -64,10 +64,6 @@ class Aggregator(RestDeviceClient):
         self.latest_grid_tree_flat = {}
         self.area_name_uuid_mapping = {}
 
-    @property
-    def endpoint_prefix(self):
-        return f"{self.domain_name}/external-connection/aggregator-api/{self.simulation_id}"
-
     def _connect_to_simulation(self):
         user_aggrs = self.list_aggregators()
         for a in user_aggrs:
@@ -158,7 +154,7 @@ class Aggregator(RestDeviceClient):
         batch_command_dict = self._client_command_buffer.execute_batch()
         self._all_uuids_in_selected_device_uuid_list(batch_command_dict.keys())
         transaction_id, posted = self._post_request(
-            f"{self.endpoint_prefix}/batch-commands", {"aggregator_uuid": self.aggregator_uuid,
+            f"{self.aggregator_prefix}batch-commands", {"aggregator_uuid": self.aggregator_uuid,
                                                        "batch_commands": batch_command_dict})
         if posted:
             self._client_command_buffer.clear()
