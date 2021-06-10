@@ -9,7 +9,7 @@ os.environ["API_CLIENT_PASSWORD"] = str(sys.argv[2])
 
 # set simulation parameters
 simulation_id = str(sys.argv[3])
-domain_name = 'https://d3aweb-dev.gridsingularity.com'
+domain_name = 'https://d3aweb.gridsingularity.com'
 
 mapping = get_area_uuid_and_name_mapping_from_simulation_id(
     simulation_id, domain_name
