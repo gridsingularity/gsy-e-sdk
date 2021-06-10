@@ -107,11 +107,11 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
     return area_uuid
 
 
-def get_area_uuid_and_name_mapping_from_simulation_id(collab_id, domain_name):
+def get_area_uuid_and_name_mapping_from_simulation_id(collab_id):
     query = 'query { readConfiguration(uuid: "{' + collab_id + \
             '}") { scenarioData { latest { serialized } } } }'
 
-    data = execute_graphql_request(domain_name=domain_name, query=query)
+    data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
     if key_in_dict_and_not_none(data, 'errors'):
         return ast.literal_eval(data['errors'][0]['message'])
     else:
