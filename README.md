@@ -229,11 +229,11 @@ The following commands can be issued as batch commands (refer to [How to send ba
 
 - Send an energy bid with price in cents: 
     ```python
-    bid_energy(area_uuid, energy, price_cents, replace_existing)
+    bid_energy(area_uuid, energy, price_cents, replace_existing, attributes, requirements)
     ```
 - Send an energy bid with energy rate in cents/kWh:
     ```python
-    bid_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    bid_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
     ```
 - Change grid fees using a percentage value:
     ```python
@@ -269,11 +269,11 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```
 - Send an energy offer with price in cents:
     ```python
-    offer_energy(area_uuid, energy, price_cents, replace_existing)
+    offer_energy(area_uuid, energy, price_cents, replace_existing, attributes, requirements)
     ```
 - Send an energy offer with energy rate in cents/kWh:
     ```python
-    offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
     ```
 - Update an energy offer:
     ```python
@@ -286,6 +286,19 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```
   
 ---
+### Available attributes/requirements
+The offer/bid functions accept attributes (dict attributes of the offer or bid) | requirements (list of requirements dicts that at least 1 of them need to be satisfied in the matching process)
+Currently supported attributes:
+- Offers:
+    - energy_type str: Energy type of the offer
+- Bids: No supported bids' attributes at the moment
+
+Currently supported requirements:
+- Offers:
+    - preferred_trading_partner List[str]: preferable area ids to match with.
+- Bids:
+    - energy_type List[str]: Energy types that the bid prefers to consume.
+    - preferred_trading_partner List[str]: preferable area ids to match with.
 
 ### How to calculate grid fees
 The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
