@@ -26,7 +26,7 @@ class ClientCommandBuffer:
 
     def offer_energy_rate(
             self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True,
-            attributes: dict = None, requirements: List[Dict] = None):
+            attributes: Dict = None, requirements: List[Dict] = None):
 
         return self._add_to_buffer(
             area_uuid,
@@ -39,7 +39,7 @@ class ClientCommandBuffer:
 
     def bid_energy(
             self, area_uuid: str, energy: float, price: float, replace_existing: bool = True,
-            attributes: dict = None, requirements: List[Dict] = None):
+            attributes: Dict = None, requirements: List[Dict] = None):
 
         return self._add_to_buffer(
             area_uuid,
@@ -49,7 +49,7 @@ class ClientCommandBuffer:
 
     def bid_energy_rate(
             self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True,
-            attributes: dict = None, requirements: List[Dict] = None):
+            attributes: Dict = None, requirements: List[Dict] = None):
 
         return self._add_to_buffer(
             area_uuid,

@@ -290,15 +290,15 @@ The following commands can be issued as batch commands (refer to [How to send ba
 The offer/bid functions accept attributes (dict attributes of the offer or bid) | requirements (list of requirements dicts that at least 1 of them need to be satisfied in the matching process)
 Currently supported attributes:
 - Offers:
-    - energy_type str: Energy type of the offer
+    - `energy_type`: Energy type of the offer
 - Bids: No supported bids' attributes at the moment
 
 Currently supported requirements:
 - Offers:
-    - preferred_trading_partner List[str]: preferable area ids to match with.
+    - `preferred_trading_partner`: preferable area ids to match with.
 - Bids:
-    - energy_type List[str]: Energy types that the bid prefers to consume.
-    - preferred_trading_partner List[str]: preferable area ids to match with.
+    - `energy_type`: Energy types that the bid prefers to consume.
+    - `preferred_trading_partner`: preferable area ids to match with.
 
 ### How to calculate grid fees
 The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
