@@ -224,7 +224,7 @@ def log_bid_offer_confirmation(message):
             rate = price / energy
             trader = data_dict.get("seller" if event in ["offer", "update_offer"] else "buyer")
             logging.info(f"{trader} {'OFFERED' if event in ['offer', 'update_offer'] else 'BID'} "
-                         f"{round(energy, 2)} kWh at {rate} cts/kWh")
+                         f"{round(energy, 3)} kWh at {rate} cts/kWh")
     except Exception as e:
         logging.error(f"Logging bid/offer info failed.{e}")
 
@@ -251,11 +251,11 @@ def log_trade_info(message):
     rate = round(message.get('trade_price') / message.get('traded_energy'), 2)
     if message.get("buyer") == "anonymous":
         logging.info(
-            f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 2)} kWh "
+            f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 3)} kWh "
             f"at {rate} cents/kWh -->")
     else:
         logging.info(
-            f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 2)} kWh "
+            f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 3)} kWh "
             f"at {rate} cents/kWh -->")
 
 
