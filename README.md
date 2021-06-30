@@ -295,10 +295,10 @@ Currently supported attributes:
 
 Currently supported requirements:
 - Offers:
-    - `preferred_trading_partner`: preferable area ids to match with.
+    - `trading_partners`: preferable area ids to match with.
 - Bids:
     - `energy_type`: Energy types that the bid prefers to consume.
-    - `preferred_trading_partner`: preferable area ids to match with.
+    - `trading_partners`: preferable area ids to match with.
 
 ### How to calculate grid fees
 The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
