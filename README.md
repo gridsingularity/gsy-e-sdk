@@ -299,6 +299,9 @@ Currently supported requirements:
 - Bids:
     - `energy_type`: Energy types that the bid prefers to consume.
     - `trading_partners`: preferable area ids to match with.
+    - `energy`: Energy that the bid prefers to consume.
+    - `price`: Trade rate that the bid prefers to accept.
+    
 
 ### How to calculate grid fees
 The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
