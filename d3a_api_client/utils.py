@@ -3,14 +3,11 @@ import json
 import logging
 import os
 import traceback
-import uuid
 from functools import wraps
 
 import requests
 from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
-from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
-from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
-    RepeatingTimer
+from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
 from sgqlc.endpoint.http import HTTPEndpoint
 from tabulate import tabulate
 
@@ -344,3 +341,26 @@ def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
             if area_uuid == asset_uuid:
                 return area_name
 
+
+def get_simulation_id_from_config_uuid(domain_name: str, config_uuid: str,
+                                       auth_headers: dict) -> str:
+    """Get simulation_id from configuration by performing graphql query."""
+    query = '''
+        query get_sim_id{
+            readConfiguration(uuid:"''' + config_uuid + '''"){
+                simulationResults
+            }
+        }
+    '''
+    ret_val = execute_graphql_request(domain_name, query, headers=auth_headers)
+    if "errors" in ret_val:
+        raise Exception(f"Error when acquiring the simulation_id {ret_val['errors']}")
+    return ret_val["data"]["readConfiguration"]["simulationResults"]
+
+
+def get_auth_headers_for_requests(domain_name: str) -> dict:
+    """
+    Get authentication header dict that can be reused for all requests with json response content.
+    """
+    jwt_token = retrieve_jwt_key_from_server(domain_name)
+    return {'Authorization': f'JWT {jwt_token}', 'Content-Type': 'application/json'}

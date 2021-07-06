@@ -37,6 +37,7 @@ setup(
     entry_points={
         'console_scripts': [
             'd3a-api-client = d3a_api_client.cli:main',
+            'historical-data-api-client = historical_data_api_client.cli:main',
         ]
     },
     zip_safe=False,
