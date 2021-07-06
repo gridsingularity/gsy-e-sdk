@@ -9,17 +9,13 @@ class Commands(Enum):
     LIST_OFFERS = 5
     LIST_BIDS = 6
     DEVICE_INFO = 7
-    UPDATE_OFFER = 8
-    UPDATE_BID = 9
-    GRID_FEES = 10
-    DSO_MARKET_STATS = 11
+    GRID_FEES = 8
+    DSO_MARKET_STATS = 9
 
 
 command_enum_to_command_name_dict = {
     Commands.OFFER: "offer",
-    Commands.UPDATE_OFFER: "update_offer",
     Commands.BID: "bid",
-    Commands.UPDATE_BID: "update_bid",
     Commands.DELETE_OFFER: "delete_offer",
     Commands.DELETE_BID: "delete_bid",
     Commands.LIST_OFFERS: "list_offers",

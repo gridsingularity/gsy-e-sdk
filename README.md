@@ -275,16 +275,6 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```python
     offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
     ```
-- Update an energy offer:
-    ```python
-    update_offer(area_uuid, energy, price_cents)
-    ```
-    If the user provides both energy and price, the price of the existing open offers is updated according to the new energy rate (price/energy).
-- Update an energy bid:
-    ```python
-    update_bid(area_uuid, energy, price_cents)
-    ```
-  
 ---
 
 ### How to calculate grid fees
