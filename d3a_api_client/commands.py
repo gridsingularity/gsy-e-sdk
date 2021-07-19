@@ -34,8 +34,9 @@ class ClientCommandBuffer:
             {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
              "attributes": attributes, "requirements": requirements})
 
-    def update_offer(self, area_uuid, energy, price):
-        return self._add_to_buffer(area_uuid, Commands.UPDATE_OFFER, {"energy": energy, "price": price})
+    def update_offer(self, *args, **kwargs):
+        logging.warning("update_offer is deprecated,"
+                        " use offer_energy with replace_existing=True instead.")
 
     def bid_energy(
             self, area_uuid: str, energy: float, price: float, replace_existing: bool = True,
@@ -57,8 +58,9 @@ class ClientCommandBuffer:
             {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
              "attributes": attributes, "requirements": requirements})
 
-    def update_bid(self, area_uuid, energy, price):
-        return self._add_to_buffer(area_uuid, Commands.UPDATE_BID, {"energy": energy, "price": price})
+    def update_bid(self, *args, **kwargs):
+        logging.warning("update_bid is deprecated,"
+                        " use bid_energy with replace_existing=True instead.")
 
     def delete_offer(self, area_uuid, offer_id):
         return self._add_to_buffer(area_uuid, Commands.DELETE_OFFER, {"offer_id": offer_id})

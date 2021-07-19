@@ -214,19 +214,17 @@ def log_market_progression(message):
 
 def log_bid_offer_confirmation(message):
     try:
-        if message.get("status") == "ready" and message.get("command") in ["bid", "offer",
-                                                                           "update_bid",
-                                                                           "update_offer"]:
+        if message.get("status") == "ready" and message.get("command") in ["bid", "offer"]:
             event = "bid" if "bid" in message.get("command") else "offer"
             data_dict = json.loads(message.get(event))
             energy = data_dict.get("energy")
             price = data_dict.get("price")
             rate = price / energy
-            trader = data_dict.get("seller" if event in ["offer", "update_offer"] else "buyer")
-            logging.info(f"{trader} {'OFFERED' if event in ['offer', 'update_offer'] else 'BID'} "
-                         f"{round(energy, 2)} kWh at {rate} cts/kWh")
+            trader = data_dict.get("seller" if event == "offer" else "buyer")
+            logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
+                         f"{round(energy, 3)} kWh at {rate} cts/kWh")
     except Exception as e:
-        logging.error(f"Logging bid/offer info failed.{e}")
+        logging.exception("Logging bid/offer info failed.%s", str(e))
 
 
 def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None,
@@ -251,11 +249,11 @@ def log_trade_info(message):
     rate = round(message.get('trade_price') / message.get('traded_energy'), 2)
     if message.get("buyer") == "anonymous":
         logging.info(
-            f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 2)} kWh "
+            f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 3)} kWh "
             f"at {rate} cents/kWh -->")
     else:
         logging.info(
-            f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 2)} kWh "
+            f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 3)} kWh "
             f"at {rate} cents/kWh -->")
 
 

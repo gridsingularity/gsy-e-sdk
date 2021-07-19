@@ -2,10 +2,6 @@ pip==20.3.1
 pip-tools==5.4.0
 paho-mqtt
 websockets
-redis
-requests
-rq
-tox
 fabric3
 behave
 sgqlc
