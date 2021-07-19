@@ -37,7 +37,7 @@ pyparsing==2.4.7          # via packaging
 pytest==6.1.2             # via -r requirements/base.in
 redis==3.5.3              # via -r requirements/base.in, rq
 regex==2020.11.13         # via awesome-slugify
-requests==2.25.0          # via -r requirements/base.in
+requests==2.25.1          # via -r requirements/base.in
 rq==1.7.0                 # via -r requirements/base.in
 sgqlc==11.0               # via -r requirements/base.in
 six==1.15.0               # via bcrypt, behave, fabric3, parse-type, pip-tools, pynacl, tox, virtualenv

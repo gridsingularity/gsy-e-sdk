@@ -3,7 +3,7 @@ pip-tools==5.4.0
 paho-mqtt
 websockets
 redis
-requests
+requests==2.25.1
 rq
 tox
 fabric3
