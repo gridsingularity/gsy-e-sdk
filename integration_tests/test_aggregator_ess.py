@@ -47,9 +47,6 @@ class EssAggregator(TestAggregatorBase):
 
                 transactions = self.send_batch_commands()
                 if transactions:
-                    bid_requests = self._filter_commands_from_responses(
-                        transactions["responses"], "bid")
-
                     # Make assertions about the bids, if they happened during this slot
                     bid_requests = self._filter_commands_from_responses(
                         transactions["responses"], "bid")
