@@ -106,7 +106,7 @@ class Oracle(aggregator_client_type):
 
             self.asset_strategy[area_uuid] = {}
             self.asset_strategy[area_uuid]["asset_name"] = area_dict["area_name"]
-            self.asset_strategy[area_uuid]["fee_to_market_maker"] = self.calculate_grid_fee(area_uuid, self.get_uuid_from_area_name("Market maker and FiT"), "current_market_fee")
+            self.asset_strategy[area_uuid]["fee_to_market_maker"] = self.calculate_grid_fee(area_uuid, self.get_uuid_from_area_name("Market Maker"), "current_market_fee")  # TODO change the string "Market Maker" with the name defined in the grid configuration, if needed
 
             # Load strategy
             if 'energy_requirement_kWh' in area_dict["asset_info"]:
@@ -152,6 +152,7 @@ class Oracle(aggregator_client_type):
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
 
+            # Load strategy
             if "energy_requirement_kWh" in area_dict["asset_info"] and area_dict["asset_info"]["energy_requirement_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["buy_rates"][0]
                 energy = area_dict["asset_info"]["energy_requirement_kWh"]
