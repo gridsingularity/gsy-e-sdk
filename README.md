@@ -276,22 +276,31 @@ The following commands can be issued as batch commands (refer to [How to send ba
     offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
     ```
 ---
-### Available attributes/requirements
-The offer/bid functions accept attributes (dict attributes of the offer or bid) | requirements (list of requirements dicts that at least 1 of them need to be satisfied in the matching process)
-Currently supported attributes:
-- Offers:
-    - `energy_type`: Energy type of the offer
-- Bids: No supported bids' attributes at the moment
+### Attributes and requirements
 
-Currently supported requirements:
+A finer control over the issued bids and offers can be achieved through the `attributes` and `requirements` parameters of the bid and offer methods.
+
+#### `attributes`
+
+A dictionary of attributes that describe the offer or bid. Currently supported attributes:
+
 - Offers:
-    - `trading_partners`: preferable area ids to match with.
+    - `energy_type`: energy type of the offer
+
+- Bids: Not supported at the moment
+
+#### `requirements`
+
+A list of dictionaries containing requirements for the offer or bid. At least one of the provided dictionaries needs to be satisfied in the matching process. Currently supported requirements:
+
+- Offers:
+    - `trading_partners`: IDs of the areas with which the offer has to be matched
+
 - Bids:
-    - `energy_type`: Energy types that the bid prefers to consume.
-    - `trading_partners`: preferable area ids to match with.
-    - `energy`: Energy that the bid prefers to consume.
-    - `price`: Trade rate that the bid prefers to accept.
-    
+    - `energy_type`: energy types that the bid prefers to consume
+    - `trading_partners`: IDs of the areas with which the bid prefers to be matched
+    - `energy`: energy that the bid prefers to consume
+    - `price`: trade rate that the bid prefers to accept
 
 ### How to calculate grid fees
 The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
