@@ -41,17 +41,11 @@ slot_length = 15  # leave as is
 def fee_strategy():
     if TimeOfUse:
         market_prices = pd.read_excel(os.path.join(current_dir,"resources/ToU.xlsx"))  # TODO upload an Excel/CSV file with prices of every market at each time slot (based on given template)
-        hour = 0
-        minutes = 0
-        planned_fee = {}  # Dictionary containing the ToU strategy previously uploaded
-        for i in range(len(market_prices)):  # Fixed number of quarters of an hour in a day
-            for j in market_names:  # Looping through all the markets
-                planned_fee.update({(str(time(hour, minutes))[0:5], j): market_prices[j][i]})
 
-            minutes = minutes + 15
-            if minutes == 60:
-                minutes = 0
-                hour = hour + 1
+        planned_fee = {}                     
+        for i in range(len(market_prices)):  
+            for j in market_names:           
+                planned_fee.update({(str(market_prices["Time"][i])[0:5], j): market_prices[j][i]})
 
     if Aziiz:
         market_prices = pd.ExcelFile(os.path.join(current_dir, "resources/Aziiz.xlsx"))  # TODO upload an Excel/CSV file with thresholds and fees of every market (based on given template)
