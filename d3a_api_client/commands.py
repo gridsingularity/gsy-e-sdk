@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, List
 
 from tabulate import tabulate
 from d3a_api_client.enums import Commands, command_enum_to_command_name
@@ -14,40 +15,48 @@ class ClientCommandBuffer:
         return len(self._commands_buffer)
 
     def offer_energy(
-            self, area_uuid: str, energy: float, price: float, replace_existing: bool = True):
+            self, area_uuid: str, energy: float, price: float, replace_existing: bool = True,
+            attributes: Dict = None, requirements: List[Dict] = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.OFFER,
-            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
+            {"energy": energy, "price": price, "replace_existing": replace_existing,
+             "attributes": attributes, "requirements": requirements})
 
     def offer_energy_rate(
-            self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True):
+            self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True,
+            attributes: Dict = None, requirements: List[Dict] = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.OFFER,
-            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
+            {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
+             "attributes": attributes, "requirements": requirements})
 
     def update_offer(self, *args, **kwargs):
         logging.warning("update_offer is deprecated,"
                         " use offer_energy with replace_existing=True instead.")
 
     def bid_energy(
-            self, area_uuid: str, energy: float, price: float, replace_existing: bool = True):
+            self, area_uuid: str, energy: float, price: float, replace_existing: bool = True,
+            attributes: Dict = None, requirements: List[Dict] = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.BID,
-            {'energy': energy, 'price': price, 'replace_existing': replace_existing})
+            {"energy": energy, "price": price, "replace_existing": replace_existing,
+             "attributes": attributes, "requirements": requirements})
 
     def bid_energy_rate(
-            self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True):
+            self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True,
+            attributes: Dict = None, requirements: List[Dict] = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.BID,
-            {'energy': energy, 'price': rate * energy, 'replace_existing': replace_existing})
+            {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
+             "attributes": attributes, "requirements": requirements})
 
     def update_bid(self, *args, **kwargs):
         logging.warning("update_bid is deprecated,"
@@ -72,16 +81,22 @@ class ClientCommandBuffer:
         return self._add_to_buffer(area_uuid, Commands.DSO_MARKET_STATS, {"data": {}})
 
     def change_grid_fees_percent(self, area_uuid, fee_percent):
-        return self._add_to_buffer(area_uuid, Commands.GRID_FEES, {"data": {"fee_percent": fee_percent}})
+        return self._add_to_buffer(
+            area_uuid,
+            Commands.GRID_FEES,
+            {"data": {"fee_percent": fee_percent}})
 
     def grid_fees(self, area_uuid, fee_cents_kwh):
-        return self._add_to_buffer(area_uuid, Commands.GRID_FEES, {"data": {"fee_const": fee_cents_kwh}})
+        return self._add_to_buffer(
+            area_uuid,
+            Commands.GRID_FEES,
+            {"data": {"fee_const": fee_cents_kwh}})
 
     def _add_to_buffer(self, area_uuid, action, args):
         if area_uuid and action:
             self._commands_buffer.append(
                 {area_uuid: {"type": command_enum_to_command_name(action)
-                            if type(action) == Commands else action, **args, **args}})
+                             if type(action) == Commands else action, **args, **args}})
             logging.debug("Added Command to buffer, updated buffer: ")
             self.log_all_commands()
         return self

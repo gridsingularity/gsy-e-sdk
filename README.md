@@ -229,11 +229,11 @@ The following commands can be issued as batch commands (refer to [How to send ba
 
 - Send an energy bid with price in cents: 
     ```python
-    bid_energy(area_uuid, energy, price_cents, replace_existing)
+    bid_energy(area_uuid, energy, price_cents, replace_existing, attributes, requirements)
     ```
 - Send an energy bid with energy rate in cents/kWh:
     ```python
-    bid_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    bid_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
     ```
 - Change grid fees using a percentage value:
     ```python
@@ -269,13 +269,38 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```
 - Send an energy offer with price in cents:
     ```python
-    offer_energy(area_uuid, energy, price_cents, replace_existing)
+    offer_energy(area_uuid, energy, price_cents, replace_existing, attributes, requirements)
     ```
 - Send an energy offer with energy rate in cents/kWh:
     ```python
-    offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing)
+    offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
     ```
 ---
+### Attributes and requirements
+
+A finer control over the issued bids and offers can be achieved through the `attributes` and `requirements` parameters of the bid and offer methods.
+
+#### `attributes`
+
+A dictionary of attributes that describe the offer or bid. Currently supported attributes:
+
+- Offers:
+    - `energy_type`: energy type of the offer
+
+- Bids: Not supported at the moment
+
+#### `requirements`
+
+A list of dictionaries containing requirements for the offer or bid. At least one of the provided dictionaries needs to be satisfied in the matching process. Currently supported requirements:
+
+- Offers:
+    - `trading_partners`: IDs of the areas with which the offer has to be matched
+
+- Bids:
+    - `energy_type`: energy types that the bid prefers to consume
+    - `trading_partners`: IDs of the areas with which the bid prefers to be matched
+    - `energy`: energy that the bid prefers to consume
+    - `price`: trade rate that the bid prefers to accept
 
 ### How to calculate grid fees
 The `Aggregator` class has a function that calculates the grid fees along path between two assets or 
