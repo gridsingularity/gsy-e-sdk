@@ -22,9 +22,9 @@ automatic = True
 
 oracle_name = 'oracle'
 
-load_names = ['Load 1 L13', 'Load 2 L21', 'Load 3 L17']
-pv_names = ['PV 1 (4kW)', 'PV 3 (5kW)']
-storage_names = ['Tesla Powerwall 3']
+load_names = ['Load 1 L13', 'Load 5 L9', 'Load 6 L24']
+pv_names = []
+storage_names = []
 
 # set market parameters
 ticks = 10  # leave as is
@@ -106,7 +106,7 @@ class Oracle(aggregator_client_type):
 
             self.asset_strategy[area_uuid] = {}
             self.asset_strategy[area_uuid]["asset_name"] = area_dict["area_name"]
-            self.asset_strategy[area_uuid]["fee_to_market_maker"] = self.calculate_grid_fee(area_uuid, self.get_uuid_from_area_name("Market Maker"), "current_market_fee")  # TODO change the string "Market Maker" with the name defined in the grid configuration, if needed
+            self.asset_strategy[area_uuid]["fee_to_market_maker"] = self.calculate_grid_fee(area_uuid, self.get_uuid_from_area_name("Market Marker"), "current_market_fee")  # TODO change the string "Market Maker" with the name defined in the grid configuration, if needed
 
             # Load strategy
             if 'energy_requirement_kWh' in area_dict["asset_info"]:
