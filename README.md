@@ -320,22 +320,42 @@ the corresponding string in the `fee_type` input parameter.
 ### Hardware API
 
 #### Sending Energy Forecast 
+##### With d3a-api-client
 The energy consumption or demand for PV and Load devices can be set for the next market slot via
 the following command 
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):
 ```
-device_client.set_energy_forecast(<pv_energy_forecast_Wh>)
+device_client.set_energy_forecast(<energy_forecast_Wh>)
 ```
+An example how this command could be added into an aggregator script can be found in 
+**d3a_api_client/setups/test_sending_energy_forecast.py** . 
 
+##### Directly via REST endpoint
 In case the user wants to send device measurements without using the API client, the raw REST API 
-can be used instead:
+can be used instead. An additional authentication step has to be performed first.
+
+###### Authentication with JWT
+Authentication is done via JSON web token (JWT). In order to retrieve the JWT, the following POST 
+request has to be performed:
 ```
-# Authentication is done via JWT token, therefore the user needs to authenticate first to 
-# retrieve the token
 POST https://d3aweb-dev.gridsingularity.com/api-token-auth/ 
-Form Body {username: <your_username>, password: "your_password"}
-# Send the JWT token via the Authorization HTTP header when sending the measurement data 
-# (add "Authorization: JWT <your_token>" to the HTTP headers)
+```
+The body of the request needs to contain the following information (JSON string):
+```
+{"username": "<your_username>", "password": "<your_password>"}
+```
+The returned JWT needs to be sent via the Authorization HTTP header when sending the forecast data.
+For that you need to add the following key value pair to the header of every POST command:
+```
+Authorization: JWT <your_token>
+```
+###### Send energy forecast
+The POST to send the energy value is the following 
+(please fill in `<Canary Network UUID>` and `<Device UUID>`):
+```
 POST https://d3aweb-dev.gridsingularity.com/external-connection/api/<Canary Network UUID>/<Device UUID>/set_energy_forecast/
-Form Body: {energy_Wh: <energy_value_for_device>}
+```
+The body of the request needs to contain the following information (JSON string):
+```
+{"energy_Wh": <energy_value_for_device>}
 ```
