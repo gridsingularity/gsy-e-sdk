@@ -15,20 +15,20 @@ class TestAggregator(Aggregator):
         self.current_load_energy_forecast_Wh = 0
 
     def on_market_cycle(self, market_info):
-        """Perform following code on when a new market was started."""
+        """Execute the following code when a new market was started."""
         # set energy forecasts for the next market for load and pv
-        load.set_energy_forecast(self.current_pv_energy_forecast_Wh)
-        pv.set_energy_forecast(self.current_load_energy_forecast_Wh)
+        pv.set_energy_forecast(self.current_pv_energy_forecast_Wh)
+        load.set_energy_forecast(self.current_load_energy_forecast_Wh)
         # increase energy forecasts on each market slot
         self.current_pv_energy_forecast_Wh += 1
         self.current_load_energy_forecast_Wh += 1
 
     def on_tick(self, tick_info):
-        """Perform following code on when a new tick was started."""
+        """Execute the following code when a new tick was started."""
         logging.debug(f"Progress information on the device: {tick_info}")
 
     def on_trade(self, trade_info):
-        """Perform following code on when a trade happened in the current market."""
+        """Execute the following code when a trade happened in the current market."""
         logging.debug(f"Trade info: {trade_info}")
 
 

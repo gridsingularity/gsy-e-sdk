@@ -344,13 +344,14 @@ The body of the request needs to contain the following information (JSON string)
 ```
 {"username": "<your_username>", "password": "<your_password>"}
 ```
-The returned JWT needs to be sent via the Authorization HTTP header when sending the forecast data 
-For that you need to add the following key value pair to the header of the POST command:
+The returned JWT needs to be sent via the Authorization HTTP header when sending the forecast data.
+For that you need to add the following key value pair to the header of every POST command:
 ```
 Authorization: JWT <your_token>
 ```
 ###### Send energy forecast
-The POST  to send the energy value is (please fill in `<Canary Network UUID>` and `<Device UUID>`:
+The POST to send the energy value is the following 
+(please fill in `<Canary Network UUID>` and `<Device UUID>`):
 ```
 POST https://d3aweb-dev.gridsingularity.com/external-connection/api/<Canary Network UUID>/<Device UUID>/set_energy_forecast/
 ```
