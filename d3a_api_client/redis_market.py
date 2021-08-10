@@ -14,7 +14,6 @@ class RedisMarketClient(RedisClientBase):
 
         super().__init__(area_id, autoregister, redis_url)
 
-
     def register(self, is_blocking=True):
         super().register(is_blocking)
 
