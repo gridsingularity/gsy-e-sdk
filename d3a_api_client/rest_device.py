@@ -86,17 +86,17 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.active_aggregator = None
 
     @logging_decorator("set_energy_forecast")
-    def set_energy_forecast(self, energy_forecast_kWh_dict: Dict, do_not_wait=False):
+    def set_energy_forecast(self, energy_forecast_kWh: Dict, do_not_wait=False):
         transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/set_energy_forecast",
-                                                    {"energy_forecast": energy_forecast_kWh_dict})
+                                                    {"energy_forecast": energy_forecast_kWh})
         if posted and do_not_wait is False:
             return self.dispatcher.wait_for_command_response("set_energy_forecast", transaction_id)
     
     @logging_decorator("set_energy_measurement")
-    def set_energy_measurement(self, energy_measurement_kWh_dict: Dict, do_not_wait=False):
+    def set_energy_measurement(self, energy_measurement_kWh: Dict, do_not_wait=False):
         transaction_id, posted = self._post_request(
             f"{self.endpoint_prefix}/set_energy_measurement",
-            {"energy_measurement": energy_measurement_kWh_dict})
+            {"energy_measurement": energy_measurement_kWh})
         if posted and do_not_wait is False:
             return self.dispatcher.wait_for_command_response("set_energy_measurement", 
                                                              transaction_id)
