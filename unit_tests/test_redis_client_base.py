@@ -1,9 +1,12 @@
 import uuid
+from unittest import mock
+
 import pytest
 from redis import StrictRedis
 import d3a_api_client
 from d3a_api_client.redis_client_base import RedisClientBase, RedisAPIException
 from unittest.mock import MagicMock
+from unittest.mock import Mock
 from unittest.mock import patch
 
 area_id = str(uuid.uuid4())
@@ -19,70 +22,100 @@ def redis_client_auto_register():
 
 
 class TestRedisClientBase:
+    @classmethod
+    def setup_class(cls):
+        cls.obj = RedisClientBase(area_id=area_id, autoregister=False)
 
-    def test_constructor_registry_success(self, redis_client_auto_register, pubsub_thread=None):
-        assert redis_client_auto_register.area_id == area_id
-        assert redis_client_auto_register.area_uuid == area_uid
-        assert redis_client_auto_register.is_active == False
-        assert redis_client_auto_register._subscribed_aggregator_response_cb is None
-        assert redis_client_auto_register._subscribe_to_response_channels(pubsub_thread) is None
-        assert redis_client_auto_register._blocking_command_responses == {}
-        assert redis_client_auto_register._transaction_id_buffer == []
+    def test_constructor_registry_success(self, pubsub_thread=None):
+        assert self.obj.area_id == area_id
+        assert self.obj.area_uuid == area_uid
+        assert self.obj.is_active == False
+        assert self.obj._subscribed_aggregator_response_cb is None
+        assert self.obj._subscribe_to_response_channels(pubsub_thread) is None
+        assert self.obj._blocking_command_responses == {}
+        assert self.obj._transaction_id_buffer == []
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._subscribe_to_response_channels')
-    def test_function_subscribe_to_response_channels_sucess(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    def test_function_subscribe_to_response_channels_success(self):
+        RedisClientBase._subscribe_to_response_channels = MagicMock()
+        test = RedisClientBase(area_id=area_id, autoregister=False)
+        test._subscribe_to_response_channels.assert_called()
+        test.pubsub.psubscribe.assert_called()
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._aggregator_response_callback')
-    def test_function_aggregator_response_callback_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_with()
+    def test_function_aggregator_response_callback_success(self):
+        RedisClientBase._aggregator_response_callback = MagicMock()
+        test = RedisClientBase(area_id=area_id, autoregister=False)
+        test._aggregator_response_callback()
+        test._aggregator_response_callback.assert_called_once()
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._check_buffer_message_matching_command_and_id')
-    def test_function_check_buffer_message_matching_command_and_id_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    @pytest.fixture()
+    def register_fixture(self):
+        initial = RedisClientBase.register
+        RedisClientBase.register = MagicMock()
+        test = RedisClientBase(area_id=area_id, autoregister=False)
+        yield test
+        RedisClientBase.register = initial
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._check_transaction_id_cached_out')
-    def test_function_check_transaction_id_cached_out_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    @pytest.fixture()
+    def unregister_fixture(self):
+        initial = RedisClientBase.unregister
+        RedisClientBase.unregister = MagicMock()
+        test = RedisClientBase(area_id=area_id, autoregister=False)
+        yield test
+        RedisClientBase.unregister = initial
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase.register')
-    def test_function_register_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    @pytest.fixture()
+    def on_register_fixture(self):
+        initial = RedisClientBase._on_register
+        RedisClientBase._on_register = MagicMock()
+        test = RedisClientBase(area_id=area_id, autoregister=False)
+        yield test
+        RedisClientBase._on_register = initial
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase.unregister')
-    def test_function_unregister_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    @pytest.fixture()
+    def check_buffer_message_fixture(self):
+        initial = RedisClientBase._check_buffer_message_matching_command_and_id
+        RedisClientBase._check_buffer_message_matching_command_and_id = MagicMock()
+        test = RedisClientBase(area_id=area_id, autoregister=False)
+        yield test
+        RedisClientBase._check_buffer_message_matching_command_and_id = initial
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._on_register')
-    def test_function_on_register_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    @pytest.fixture()
+    def check_transaction_id_cached_out_call_success_fixture(self):
+        initial = RedisClientBase._check_transaction_id_cached_out
+        RedisClientBase._check_transaction_id_cached_out = MagicMock()
+        test = RedisClientBase(area_id=area_id, autoregister=False)
+        yield test
+        RedisClientBase._check_transaction_id_cached_out = initial
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._on_unregister')
-    def test_function_on_unregister_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    def test_function_check_buffer_message_matching_command_and_id_fixture_call_success(self,
+                                                                                        check_buffer_message_fixture):
+        check_buffer_message_fixture._check_buffer_message_matching_command_and_id()
+        check_buffer_message_fixture._check_buffer_message_matching_command_and_id.assert_called_once()
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._on_unregister')
-    def test_function_on_unregister_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    def test_function_register_call_success(self, register_fixture):
+        register_fixture.register()
+        register_fixture.register.assert_called_once()
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase._on_event_or_response')
-    def test_function_on_event_or_response_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    def test_function_unregister_call_success(self, unregister_fixture):
+        unregister_fixture.unregister()
+        unregister_fixture.unregister.assert_called_once()
 
-    @patch('d3a_api_client.redis_client_base.RedisClientBase.select_aggregator')
-    def test_function_select_aggregator_success(self, mock_funct):
-        f = mock_funct()
-        mock_funct.assert_called_once()
+    def test_function_on_register_call_success(self, on_register_fixture):
+        on_register_fixture._on_register()
+        on_register_fixture._on_register.assert_called_once()
+
+    def test_function__check_transaction_id_cached_out_call_success(self,
+                                                                    check_transaction_id_cached_out_call_success_fixture):
+        check_transaction_id_cached_out_call_success_fixture._check_transaction_id_cached_out()
+        check_transaction_id_cached_out_call_success_fixture._check_transaction_id_cached_out.assert_called_once()
+
+    def test_check_buffer_message_matching_command_and_id_throws_exception(self):
+        message = {}
+        with pytest.raises(RedisAPIException,
+                           match='The answer message does not contain a valid '
+                                 '\'transaction_id\' member.') as ex:
+            redis_client_base = RedisClientBase(area_id=area_id, autoregister=False)
+            redis_client_base._check_buffer_message_matching_command_and_id(message)
 
     def test_register_blocking_true_throws_exception(self):
         with pytest.raises(RedisAPIException,
