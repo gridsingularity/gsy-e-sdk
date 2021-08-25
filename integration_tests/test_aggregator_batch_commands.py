@@ -2,27 +2,36 @@ import json
 import logging
 import traceback
 
-from integration_tests.test_aggregator_base import TestAggregatorBase
+from d3a_interface.constants_limits import DATE_TIME_FORMAT
+from pendulum import from_format
+
 from d3a_api_client.redis_device import RedisDeviceClient
 from d3a_api_client.redis_market import RedisMarketClient
+from integration_tests.test_aggregator_base import TestAggregatorBase
 
 
 class BatchAggregator(TestAggregatorBase):
     def __init__(self, *args, **kwargs):
+        self.events_or_responses = set()
         super().__init__(*args, **kwargs)
         self.updated_house2_grid_fee_cents_kwh = 5
         self.updated_offer_bid_price = 60
-        self.events_or_responses = set()
 
     def _setup(self):
-        load = RedisDeviceClient('load')
-        pv = RedisDeviceClient('pv')
+        load = RedisDeviceClient("load")
+        pv = RedisDeviceClient("pv")
+        forecast_load = RedisDeviceClient("forecast-measurement-load")
 
         load.select_aggregator(self.aggregator_uuid)
         pv.select_aggregator(self.aggregator_uuid)
+        forecast_load.select_aggregator(self.aggregator_uuid)
 
-        self.redis_market = RedisMarketClient('house-2')
+        self.redis_market = RedisMarketClient("house-2")
         self.redis_market.select_aggregator(self.aggregator_uuid)
+
+    def _can_place_forecast_measurements(self, area_dict):
+        return ("area_name" in area_dict and
+            area_dict["area_name"] == "forecast-measurement-load")
 
     def on_market_cycle(self, market_info):
         logging.info(f"market_info: {market_info}")
@@ -40,22 +49,22 @@ class BatchAggregator(TestAggregatorBase):
                     self.add_to_batch_commands.offer_energy(
                         area_uuid=area_uuid,
                         price=1.1,
-                        energy=asset_info['available_energy_kWh'] / 4,
+                        energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=False
                     ).offer_energy(
                         area_uuid=area_uuid,
                         price=2.2,
-                        energy=asset_info['available_energy_kWh'] / 4,
+                        energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=False
                     ).offer_energy(
                         area_uuid=area_uuid,
                         price=3.3,
-                        energy=asset_info['available_energy_kWh'] / 4,
+                        energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=True
                     ).offer_energy(
                         area_uuid=area_uuid,
                         price=4.4,
-                        energy=asset_info['available_energy_kWh'] / 4,
+                        energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=False
                     ).list_offers(area_uuid=area_uuid)
 
@@ -63,25 +72,36 @@ class BatchAggregator(TestAggregatorBase):
                     self.add_to_batch_commands.bid_energy(
                         area_uuid=area_uuid,
                         price=27,
-                        energy=asset_info['energy_requirement_kWh'] / 4,
+                        energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=False
                     ).bid_energy(
                         area_uuid=area_uuid,
                         price=28,
-                        energy=asset_info['energy_requirement_kWh'] / 4,
+                        energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=False
                     ).bid_energy(
                         area_uuid=area_uuid,
                         price=29,
-                        energy=asset_info['energy_requirement_kWh'] / 4,
+                        energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=True
                     ).bid_energy(
                         area_uuid=area_uuid,
                         price=30,
-                        energy=asset_info['energy_requirement_kWh'] / 4,
+                        energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=False
                     ).list_bids(
-                        area_uuid=area_uuid)
+                        area_uuid=area_uuid
+                    )
+                if self._can_place_forecast_measurements(area_dict):
+                    next_market_slot_str = (from_format(market_info["market_slot"], DATE_TIME_FORMAT).
+                                            add(minutes=15).format(DATE_TIME_FORMAT))
+                    self.add_to_batch_commands.set_energy_forecast(
+                        area_uuid=area_uuid,
+                        energy_forecast_kWh={next_market_slot_str: 1234.0}
+                    ).set_energy_measurement(
+                        area_uuid=area_uuid,
+                        energy_measurement_kWh={next_market_slot_str: 2345.0}
+                    )
 
             if self.commands_buffer_length:
                 transaction = self.execute_batch_commands()
@@ -96,71 +116,92 @@ class BatchAggregator(TestAggregatorBase):
 
                 # Make assertions about the bids, if they happened during this slot
                 bid_requests = self._filter_commands_from_responses(
-                    transaction['responses'], 'bid')
+                    transaction["responses"], "bid")
                 if bid_requests:
                     # All bids in the batch have been issued
                     assert len(bid_requests) == 4
                     # All bids have been successfully received and processed
-                    assert all(bid.get('status') == 'ready' for bid in bid_requests)
+                    assert all(bid.get("status") == "ready" for bid in bid_requests)
 
                     list_bids_requests = self._filter_commands_from_responses(
-                        transaction['responses'], 'list_bids')
+                        transaction["responses"], "list_bids")
 
                     # The list_bids command has been issued once
                     assert len(list_bids_requests) == 1
 
                     # The bid list only contains two bids (the other two have been deleted)
-                    current_bids = list_bids_requests[0]['bid_list']
+                    current_bids = list_bids_requests[0]["bid_list"]
                     assert len(current_bids) == 2
 
-                    issued_bids = [json.loads(bid_request['bid']) for bid_request in bid_requests]
+                    issued_bids = [json.loads(bid_request["bid"]) for bid_request in bid_requests]
 
                     # The bids have been issued in the correct order
                     assert [
-                               bid['original_bid_price'] for bid in issued_bids
+                               bid["original_bid_price"] for bid in issued_bids
                            ] == [27, 28, 29, 30]
 
                     # The only two bids left are the last ones that have been issued
-                    assert [bid['id'] for bid in current_bids] == \
-                           [bid['id'] for bid in issued_bids[-2:]]
+                    assert [bid["id"] for bid in current_bids] == \
+                           [bid["id"] for bid in issued_bids[-2:]]
 
                     self._has_tested_bids = True
 
+                    #  Forecasts and measurements were posted only for the load device
+                    forecast_requests = self._filter_commands_from_responses(
+                        transaction["responses"], "set_energy_forecast")
+                    if forecast_requests:
+                        assert len(forecast_requests) == 1
+                        assert forecast_requests[0]["status"] == "ready"
+                        assert forecast_requests[0]["command"] == "set_energy_forecast"
+                        assert (
+                            list(forecast_requests[0]["set_energy_forecast"]["energy_forecast"].values())[0]
+                            == 1234.0)
+
+                    measurement_requests = self._filter_commands_from_responses(
+                        transaction["responses"], "set_energy_measurement")
+                    if measurement_requests:
+                        assert len(measurement_requests) == 1
+                        assert measurement_requests[0]["status"] == "ready"
+                        assert measurement_requests[0]["command"] == "set_energy_measurement"
+                        assert (
+                            list(measurement_requests[0]["set_energy_measurement"]["energy_measurement"].values())[0]
+                            == 2345.0)
+
                 # Make assertions about the offers, if they happened during this slot
                 offer_requests = self._filter_commands_from_responses(
-                    transaction['responses'], 'offer')
+                    transaction["responses"], "offer")
                 if offer_requests:
                     # All offers in the batch have been issued
                     assert len(offer_requests) == 4
                     # All offers have been successfully received and processed
-                    assert all(offer.get('status') == 'ready' for offer in offer_requests)
+                    assert all(offer.get("status") == "ready" for offer in offer_requests)
 
                     list_offers_requests = self._filter_commands_from_responses(
-                        transaction['responses'], 'list_offers')
+                        transaction["responses"], "list_offers")
 
                     # The list_offers command has been issued once
                     assert len(list_offers_requests) == 1
 
                     # The offers list only contains two offers (the other two have been deleted)
-                    current_offers = list_offers_requests[0]['offer_list']
+                    current_offers = list_offers_requests[0]["offer_list"]
                     assert len(current_offers) == 2
 
                     issued_offers = [
-                        json.loads(offer_request['offer']) for offer_request in offer_requests]
+                        json.loads(offer_request["offer"]) for offer_request in offer_requests]
 
                     # The offers have been issued in the correct order
                     assert [
-                               offer['original_offer_price'] for offer in issued_offers
+                               offer["original_offer_price"] for offer in issued_offers
                            ] == [1.1, 2.2, 3.3, 4.4]
 
                     # The only two offers left are the last ones that have been issued
-                    assert [offer['id'] for offer in current_offers] == \
-                           [offer['id'] for offer in issued_offers[-2:]]
+                    assert [offer["id"] for offer in current_offers] == \
+                           [offer["id"] for offer in issued_offers[-2:]]
 
                     self._has_tested_offers = True
 
         except Exception as ex:
-            logging.error(f'Raised exception: {ex}. Traceback: {traceback.format_exc()}')
+            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
             self.errors += 1
 
     def on_event_or_response(self, message):
