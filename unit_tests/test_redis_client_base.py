@@ -48,8 +48,8 @@ class TestRedisClientBase:
 
     def test_aggregator_response_callback(self, redis_client_auto_register):
         """Checks whether the transaction id buffer is popping out and returning the empty list."""
-        message = {"data": {"transaction_id": f"{TRANSACTION_ID}"}}
-        message["data"] = json.dumps(message["data"])
+        data = {"transaction_id": TRANSACTION_ID}
+        message = {"data": json.dumps(data)}
         redis_client_auto_register._transaction_id_buffer.append(TRANSACTION_ID)
         redis_client_auto_register._aggregator_response_callback(message)
         assert redis_client_auto_register._transaction_id_buffer == []
@@ -62,7 +62,7 @@ class TestRedisClientBase:
         assert redis_client_auto_register._check_buffer_message_matching_command_and_id(
             message["data"]) is None
 
-    def test_check_buffer_message_matching_command_and_id_throws_exception(self,redis_client_auto_register):
+    def test_check_buffer_message_matching_command_and_id_throws_exception(self, redis_client_auto_register):
         """Checks buffer message matching command and id does
            contain transaction id throws exception."""
         message = {}
@@ -164,7 +164,7 @@ class TestRedisClientBase:
            checking by calling on_unregister function with correct message
            and should not throw an exception."""
         data = {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID,
-                            "response": "success"}
+                "response": "success"}
         message = {"data": json.dumps(data)}
         redis_client_auto_register._blocking_command_responses = {
             "unregister": {"transaction_id": f"{TRANSACTION_ID}"}}
@@ -175,9 +175,9 @@ class TestRedisClientBase:
         with pytest.raises(RedisAPIException,
                            match=f"Failed to unregister from market {AREA_ID}."
                                  "Deactivating connection."):
-            message = {"data": {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID,
-                                "response": "unsuccessful"}}
-            message["data"] = json.dumps(message["data"])
+            data = {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID,
+                    "response": "unsuccessful"}
+            message = {"data": json.dumps(data)}
             redis_client_auto_register._blocking_command_responses = {
                 "unregister": {"transaction_id": f"{TRANSACTION_ID}"}}
             redis_client_auto_register._on_unregister(message)
