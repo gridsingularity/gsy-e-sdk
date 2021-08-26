@@ -153,8 +153,8 @@ class TestRedisClientBase:
         """Assigning the correct arguments to blocking command response and
            checking by calling on_register function with correct message
            and should not throw an exception."""
-        message = {"data": {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID}}
-        message["data"] = json.dumps(message["data"])
+        data = {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID}
+        message = {"data": json.dumps(data)}
         redis_client_auto_register._blocking_command_responses = {
             "register": {"transaction_id": f"{TRANSACTION_ID}"}}
         redis_client_auto_register._on_register(message)
@@ -163,9 +163,9 @@ class TestRedisClientBase:
         """Assigning the correct arguments to blocking command response and
            checking by calling on_unregister function with correct message
            and should not throw an exception."""
-        message = {"data": {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID,
-                            "response": "success"}}
-        message["data"] = json.dumps(message["data"])
+        data = {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID,
+                            "response": "success"}
+        message = {"data": json.dumps(data)}
         redis_client_auto_register._blocking_command_responses = {
             "unregister": {"transaction_id": f"{TRANSACTION_ID}"}}
         redis_client_auto_register._on_unregister(message)
