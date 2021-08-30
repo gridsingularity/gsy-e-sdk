@@ -24,6 +24,7 @@ from d3a_api_client.redis_client_base import RedisClientBase, RedisAPIException
 d3a_api_client.redis_client_base.StrictRedis = MagicMock(spec=StrictRedis)
 AREA_ID = str(uuid.uuid4())
 TRANSACTION_ID = str(uuid.uuid4())
+DEVICE_ID = str(uuid.uuid4())
 
 
 # pylint: disable=protected-access
@@ -37,7 +38,6 @@ class TestRedisClientBase:
     @patch("d3a_api_client.redis_client_base.StrictRedis.pubsub.psubscribe")
     def test_subscribe_to_response_channels(self, pubsub_mock, redis_client_auto_register):
         """Checks whether the pubsub.psubcribe is called with correct arguments."""
-        RedisClientBase._subscribe_to_response_channels = MagicMock()
         redis_client_auto_register._subscribe_to_response_channels()
         redis_client_auto_register.pubsub.psubscribe.assert_called_with(
             **{f"{AREA_ID}/response/register_participant": redis_client_auto_register._on_register,
@@ -56,13 +56,14 @@ class TestRedisClientBase:
 
     def test_check_buffer_message_matching_command_and_id(self, redis_client_auto_register):
         """Checks the buffer message matching the command and id and returns as None."""
-        message = {"data": {"transaction_id": TRANSACTION_ID}}
+        data = {"transaction_id": TRANSACTION_ID}
         redis_client_auto_register._blocking_command_responses = (
-            {"register": {"transaction_id": f"{TRANSACTION_ID}"}})
+            {"register": {"transaction_id": TRANSACTION_ID}})
         assert redis_client_auto_register._check_buffer_message_matching_command_and_id(
-            message["data"]) is None
+            data) is None
 
-    def test_check_buffer_message_matching_command_and_id_throws_exception(self, redis_client_auto_register):
+    def test_check_buffer_message_matching_command_and_id_throws_exception(self,
+                                                                           redis_client_auto_register):
         """Checks buffer message matching command and id does
            contain transaction id throws exception."""
         message = {}
@@ -71,29 +72,32 @@ class TestRedisClientBase:
                                  "'transaction_id' member."):
             redis_client_auto_register._check_buffer_message_matching_command_and_id(message)
 
-    def test_check_buffer_message_matching_command_and_id_throws_another_exception(self, redis_client_auto_register):
+    def test_check_buffer_message_matching_command_and_id_throws_another_exception(self,
+                                                                                   redis_client_auto_register):
         """Checks buffer message matching command and id throws exception."""
-        message = {"data": {"transaction_id": TRANSACTION_ID}}
+        data = {"transaction_id": TRANSACTION_ID}
         with pytest.raises(RedisAPIException,
                            match="There is no matching command response"
                                  " in _blocking_command_responses."):
-            redis_client_auto_register._check_buffer_message_matching_command_and_id(message["data"])
+            redis_client_auto_register._check_buffer_message_matching_command_and_id(data)
 
     def test_register(self, redis_client_auto_register):
-        """Checks whether the redis.db.publish is called with correct arguments
-           and is connected via redis and no d3a is running."""
-        data = {"name": AREA_ID, "transaction_id": AREA_ID}
+        """Checks whether the redis.db.publish is called with correct arguments."""
         redis_client_auto_register.redis_db.publish = MagicMock()
-        redis_client_auto_register.register(is_blocking=False)
+        self.redis_client = redis_client_auto_register
+        self.redis_client.register(is_blocking=False)
+        transaction_id = self.redis_client._blocking_command_responses[
+            "register"]["transaction_id"]
+        data = {"name": AREA_ID, "transaction_id": transaction_id}
         redis_client_auto_register.redis_db.publish.assert_called_once_with(
             f"{AREA_ID}/register_participant", json.dumps(data))
 
-    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking", side_effect=AssertionError)
-    def test_register_blocking_true_throws_exception(self, mock_wait_until_timeout_blocking,
-                                                     redis_client_auto_register):
-        """Checks whether the if is blocking is set to true throws exception
-           with side effect of assertion error,
-           when the user tries to register."""
+    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking",
+           side_effect=AssertionError)
+    def test_register_self_active_false_throws_exception(self,
+                                                         mock_wait_until_timeout_blocking,
+                                                         redis_client_auto_register):
+        """Checks whether if is active is false throws exception."""
         with pytest.raises(RedisAPIException,
                            match="API registration process timed out. "
                                  "Server will continue processing "
@@ -101,11 +105,10 @@ class TestRedisClientBase:
                                  "and will notify you as soon as the "
                                  "registration has been completed."):
             redis_client_auto_register.register(is_blocking=True)
-            mock_wait_until_timeout_blocking.assert_called()
 
-    def test_register_blocking_false_throw_exception(self, redis_client_auto_register):
-        """Checks whether the if is blocking is set to false throws exception
-           that user is already registered"""
+    def test_register_self_active_true_throw_exception(self,
+                                                       redis_client_auto_register):
+        """Checks whether if is active is true throws exception."""
         with pytest.raises(RedisAPIException,
                            match="API is already registered to the market."):
             self.redis_client_base = redis_client_auto_register
@@ -113,18 +116,20 @@ class TestRedisClientBase:
             self.redis_client_base.register(is_blocking=False)
 
     def test_unregister(self, redis_client_auto_register):
-        """Checks whether the redis.db.publish is called with correct arguments
-           and is connected via redis and no d3a is running."""
-        data = {"name": AREA_ID, "transaction_id": AREA_ID}
+        """Checks whether the redis.db.publish is called with correct arguments."""
         self.redis_client = redis_client_auto_register
         self.redis_client.redis_db.publish = MagicMock()
         self.redis_client.is_active = True
         self.redis_client.unregister(is_blocking=False)
+        transaction_id = self.redis_client._blocking_command_responses[
+            "unregister"]["transaction_id"]
+        data = {"name": AREA_ID, "transaction_id": transaction_id}
         self.redis_client.redis_db.publish.assert_called_once_with(
             f"{AREA_ID}/unregister_participant",
             json.dumps(data))
 
-    def test_unregister_blocking_is_active_false_throws_exception(self, redis_client_auto_register):
+    def test_unregister_is_active_false_throws_exception(self,
+                                                         redis_client_auto_register):
         """Checks if is active set to false throws exception when user is already unregistered."""
         with pytest.raises(RedisAPIException,
                            match="API is already unregistered from the market."):
@@ -132,12 +137,12 @@ class TestRedisClientBase:
             self.redis_client.is_active = False
             self.redis_client.unregister(is_blocking=True)
 
-    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking", side_effect=AssertionError)
-    def test_unregister_blocking_is_active_true_throws_exception(self,
-                                                                 mock_wait_until_timeout_blocking,
-                                                                 redis_client_auto_register):
-        """Checks if is active set to true throws exception with side
-          effect of assertion error when user tries to unregister"""
+    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking",
+           side_effect=AssertionError)
+    def test_unregister_is_active_true_throws_exception(self,
+                                                        mock_wait_until_timeout_blocking,
+                                                        redis_client_auto_register):
+        """Checks if is active set to true throws exception."""
         with pytest.raises(RedisAPIException,
                            match="API unregister process timed out. "
                                  "Server will continue processing "
@@ -147,27 +152,26 @@ class TestRedisClientBase:
             self.redis_client = redis_client_auto_register
             self.redis_client.is_active = True
             self.redis_client.unregister(is_blocking=True)
-            mock_wait_until_timeout_blocking.assert_called()
 
     def test_on_register(self, redis_client_auto_register):
         """Assigning the correct arguments to blocking command response and
            checking by calling on_register function with correct message
            and should not throw an exception."""
-        data = {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID}
+        data = {"device_uuid": DEVICE_ID, "transaction_id": TRANSACTION_ID}
         message = {"data": json.dumps(data)}
         redis_client_auto_register._blocking_command_responses = {
-            "register": {"transaction_id": f"{TRANSACTION_ID}"}}
+            "register": {"transaction_id": TRANSACTION_ID}}
         redis_client_auto_register._on_register(message)
 
     def test_on_unregister(self, redis_client_auto_register):
         """Assigning the correct arguments to blocking command response and
            checking by calling on_unregister function with correct message
            and should not throw an exception."""
-        data = {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID,
+        data = {"device_uuid": DEVICE_ID, "transaction_id": TRANSACTION_ID,
                 "response": "success"}
         message = {"data": json.dumps(data)}
         redis_client_auto_register._blocking_command_responses = {
-            "unregister": {"transaction_id": f"{TRANSACTION_ID}"}}
+            "unregister": {"transaction_id": TRANSACTION_ID}}
         redis_client_auto_register._on_unregister(message)
 
     def test_on_unregister_throws_exception(self, redis_client_auto_register):
@@ -175,16 +179,15 @@ class TestRedisClientBase:
         with pytest.raises(RedisAPIException,
                            match=f"Failed to unregister from market {AREA_ID}."
                                  "Deactivating connection."):
-            data = {"device_uuid": TRANSACTION_ID, "transaction_id": TRANSACTION_ID,
+            data = {"device_uuid": DEVICE_ID, "transaction_id": TRANSACTION_ID,
                     "response": "unsuccessful"}
             message = {"data": json.dumps(data)}
             redis_client_auto_register._blocking_command_responses = {
-                "unregister": {"transaction_id": f"{TRANSACTION_ID}"}}
+                "unregister": {"transaction_id": TRANSACTION_ID}}
             redis_client_auto_register._on_unregister(message)
 
     def test_select_aggregator(self, redis_client_auto_register):
-        """Checks if redis_db.publish is called with correct arguments
-           when user tries to select aggregator."""
+        """Checks if redis_db.publish is called with correct arguments to select aggregator."""
         aggregator_uuid = str(uuid.uuid4())
         self.redis_client = redis_client_auto_register
         self.redis_client.redis_db.publish = MagicMock()
@@ -197,8 +200,8 @@ class TestRedisClientBase:
                 "transaction_id": transaction_id}
         self.redis_client.redis_db.publish.assert_called_once_with("aggregator", json.dumps(data))
 
-    def test_select_aggregator_self_area_uuid_none_throws_exception(self,
-                                                                    redis_client_auto_register):
+    def test_select_aggregator_area_uuid_none_throws_exception(self,
+                                                               redis_client_auto_register):
         """Checks when the device is not registered to the aggregator throws exception."""
         aggregator_uuid = str(uuid.uuid4())
         with pytest.raises(RedisAPIException,
@@ -207,12 +210,12 @@ class TestRedisClientBase:
             redis_client_auto_register.select_aggregator(
                 aggregator_uuid=aggregator_uuid, is_blocking=True)
 
-    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking", side_effect=AssertionError)
-    def test_select_aggregator_self_area_uuid_not_none_throws_exception(self,
-                                                                        mock_wait_until_timeout_blocking,
-                                                                        redis_client_auto_register):
-        """Checks when the device is registered aggregator with area_uuid
-           is not none throws exception."""
+    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking",
+           side_effect=AssertionError)
+    def test_select_aggregator_with_area_uuid_throws_exception(self,
+                                                               mock_wait_until_timeout_blocking,
+                                                               redis_client_auto_register):
+        """Checks if registered user has a area uuid throws exception."""
         aggregator_uuid = str(uuid.uuid4())
         with pytest.raises(RedisAPIException,
                            match="API has timed out."):
@@ -220,4 +223,3 @@ class TestRedisClientBase:
             self.redis_client.area_uuid = str(uuid.uuid4())
             redis_client_auto_register.select_aggregator(
                 aggregator_uuid=aggregator_uuid, is_blocking=True)
-            mock_wait_until_timeout_blocking.assert_called()
