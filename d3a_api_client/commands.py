@@ -81,7 +81,7 @@ class ClientCommandBuffer:
     def last_market_dso_stats(self, area_uuid):
         return self._add_to_buffer(area_uuid, Commands.DSO_MARKET_STATS, {"data": {}})
 
-    def set_energy_forecast(self, area_uuid, energy_forecast_kWh: Dict  ):
+    def set_energy_forecast(self, area_uuid, energy_forecast_kWh: Dict):
         return self._add_to_buffer(area_uuid, Commands.FORECAST, {"energy_forecast": energy_forecast_kWh})
 
     def set_energy_measurement(self, area_uuid, energy_measurement_kWh: Dict):
