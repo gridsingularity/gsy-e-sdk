@@ -21,7 +21,6 @@ from redis import StrictRedis
 import d3a_api_client
 from d3a_api_client.redis_client_base import RedisClientBase, RedisAPIException
 
-d3a_api_client.redis_client_base.StrictRedis = MagicMock(spec=StrictRedis)
 AREA_ID = str(uuid.uuid4())
 TRANSACTION_ID = str(uuid.uuid4())
 DEVICE_ID = str(uuid.uuid4())
@@ -34,11 +33,12 @@ class TestRedisClientBase:
     @staticmethod
     @pytest.fixture()
     def redis_client_auto_register():
+        """Create the fixture for redis client base and mocks strict redis."""
+        d3a_api_client.redis_client_base.StrictRedis = MagicMock(spec=StrictRedis)
         return RedisClientBase(area_id=AREA_ID, autoregister=False)
 
     @staticmethod
-    @patch("d3a_api_client.redis_client_base.StrictRedis.pubsub.psubscribe")
-    def test_subscribe_to_response_channels(pubsub_mock, redis_client_auto_register):
+    def test_subscribe_to_response_channels(redis_client_auto_register):
         """Check whether the pubsub.psubcribe is called with correct arguments."""
         redis_client_auto_register._subscribe_to_response_channels()
         redis_client_auto_register.pubsub.psubscribe.assert_called_with(
@@ -69,8 +69,7 @@ class TestRedisClientBase:
     @staticmethod
     def test_check_buffer_message_matching_command_and_id_throws_exception(
             redis_client_auto_register):
-        """Checks if _check_buffer_message_matching_command_and_id throws
-           exception if the message does not contain transaction_id."""
+        """Check exception is raised if the message does not contain transaction_id."""
         message = {}
         with pytest.raises(RedisAPIException,
                            match="The answer message does not contain a valid "
@@ -111,9 +110,10 @@ class TestRedisClientBase:
                                  "and will notify you as soon as the "
                                  "registration has been completed."):
             redis_client_auto_register.register(is_blocking=True)
+        mock_wait_until_timeout_blocking.assert_called()
 
     @staticmethod
-    def test_register_self_active_true_throw_exception(redis_client_auto_register):
+    def test_register_self_active_true_throws_exception(redis_client_auto_register):
         """Check whether if is active is true throws exception."""
         with pytest.raises(RedisAPIException,
                            match="API is already registered to the market."):
@@ -156,6 +156,7 @@ class TestRedisClientBase:
                                  "the unregistration has been completed."):
             redis_client_auto_register.is_active = True
             redis_client_auto_register.unregister(is_blocking=True)
+        mock_wait_until_timeout_blocking.assert_called()
 
     @staticmethod
     def test_on_register(redis_client_auto_register):
@@ -170,7 +171,7 @@ class TestRedisClientBase:
 
     @staticmethod
     def test_on_unregister(redis_client_auto_register):
-        """Check the on_unregister function with correct message that doesn't throw exception."""
+        """Check the on_unregister function with correct message that doesn't throws exception."""
         data = {"device_uuid": DEVICE_ID, "transaction_id": TRANSACTION_ID,
                 "response": "success"}
         message = {"data": json.dumps(data)}
@@ -181,8 +182,7 @@ class TestRedisClientBase:
 
     @staticmethod
     def test_on_unregister_throws_exception(redis_client_auto_register):
-        """Check if exception is raised when response of on_unregister is not
-           successful."""
+        """Check if exception is raised when response of on_unregister is not successful."""
         with pytest.raises(RedisAPIException,
                            match=f"Failed to unregister from market {AREA_ID}."
                                  "Deactivating connection."):
@@ -231,5 +231,5 @@ class TestRedisClientBase:
         with pytest.raises(RedisAPIException,
                            match="API has timed out."):
             redis_client_auto_register.area_uuid = str(uuid.uuid4())
-            redis_client_auto_register.select_aggregator(
-                aggregator_uuid=aggregator_uuid)
+            redis_client_auto_register.select_aggregator(aggregator_uuid=aggregator_uuid)
+        mock_wait_until_timeout_blocking.assert_called()
