@@ -13,11 +13,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import uuid
 import json
+import uuid
 from unittest.mock import MagicMock, patch
+
 import pytest
 from redis import StrictRedis
+
 import d3a_api_client
 from d3a_api_client.redis_client_base import RedisClientBase, RedisAPIException
 
