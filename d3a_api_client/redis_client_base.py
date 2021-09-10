@@ -3,12 +3,12 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_interface.utils import wait_until_timeout_blocking, key_in_dict_and_not_none
+from d3a_interface.utils import (
+    execute_function_util, wait_until_timeout_blocking, key_in_dict_and_not_none)
 from redis import StrictRedis
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import execute_function_util
 
 
 class RedisAPIException(Exception):
