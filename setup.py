@@ -5,7 +5,7 @@ import os
 from setuptools import find_packages, setup
 from d3a_api_client import __version__
 
-TARGET_BRANCH = os.environ.get("TARGET_BRANCH", "master")
+BRANCH = os.environ.get("BRANCH", "master")
 
 
 try:
@@ -13,7 +13,7 @@ try:
         REQUIREMENTS = [r.partition("#")[0] for r in req if not r.startswith("-e")]
         REQUIREMENTS.extend(
             ["d3a-interface @ "
-             f"git+https://github.com/gridsingularity/d3a-interface.git@{TARGET_BRANCH}"])
+             f"git+https://github.com/gridsingularity/d3a-interface.git@{BRANCH}"])
 
 except OSError:
     # Shouldn't happen
