@@ -35,7 +35,7 @@ class TestRedisClientBase:
     @staticmethod
     @pytest.fixture()
     def redis_client_auto_register():
-        """Create the fixture for redis client base and mocks strict redis."""
+        """Create the fixture for redis client base."""
         d3a_api_client.redis_client_base.StrictRedis = MagicMock(spec=StrictRedis)
         return RedisClientBase(area_id=AREA_ID, autoregister=False)
 
@@ -60,11 +60,11 @@ class TestRedisClientBase:
         assert redis_client_auto_register._transaction_id_buffer == []
 
     @staticmethod
-    def test_check_buffer_message_matching_command_and_id(redis_client_auto_register):
+    @patch("uuid.uuid4", return_value="some-transaction-uuid")
+    def test_check_buffer_message_matching_command_and_id(mock_uuid, redis_client_auto_register):
         """Check the buffer message matching the command and id and returns as None."""
-        data = {"transaction_id": TRANSACTION_ID}
-        redis_client_auto_register._blocking_command_responses = (
-            {"register": {"transaction_id": TRANSACTION_ID}})
+        redis_client_auto_register.register(is_blocking=False)
+        data = {"name": AREA_ID, "transaction_id": mock_uuid()}
         assert redis_client_auto_register._check_buffer_message_matching_command_and_id(
             data) is None
 
@@ -79,7 +79,7 @@ class TestRedisClientBase:
             redis_client_auto_register._check_buffer_message_matching_command_and_id(message)
 
     @staticmethod
-    def test_check_buffer_message_matching_command_and_id_throws_another_exception(
+    def test_check_buffer_message_matching_command_and_id_without_command_throws_exception(
             redis_client_auto_register):
         """Check if the buffer message has no matching command response throws an exception."""
         data = {"transaction_id": TRANSACTION_ID}
@@ -89,13 +89,11 @@ class TestRedisClientBase:
             redis_client_auto_register._check_buffer_message_matching_command_and_id(data)
 
     @staticmethod
-    def test_register(redis_client_auto_register):
+    @patch("uuid.uuid4", return_value="some-transaction-uuid")
+    def test_register(mock_uuid, redis_client_auto_register):
         """Check if the redis.db.publish is called with correct arguments."""
-        redis_client_auto_register.redis_db.publish = MagicMock()
         redis_client_auto_register.register(is_blocking=False)
-        transaction_id = redis_client_auto_register._blocking_command_responses[
-            "register"]["transaction_id"]
-        data = {"name": AREA_ID, "transaction_id": transaction_id}
+        data = {"name": AREA_ID, "transaction_id": mock_uuid()}
         redis_client_auto_register.redis_db.publish.assert_called_once_with(
             f"{AREA_ID}/register_participant", json.dumps(data))
 
@@ -123,14 +121,12 @@ class TestRedisClientBase:
             redis_client_auto_register.register(is_blocking=False)
 
     @staticmethod
-    def test_unregister(redis_client_auto_register):
+    @patch("uuid.uuid4", return_value="some-transaction-uuid")
+    def test_unregister(mock_uuid, redis_client_auto_register):
         """Check whether the redis.db.publish is called with correct arguments."""
-        redis_client_auto_register.redis_db.publish = MagicMock()
         redis_client_auto_register.is_active = True
         redis_client_auto_register.unregister(is_blocking=False)
-        transaction_id = redis_client_auto_register._blocking_command_responses[
-            "unregister"]["transaction_id"]
-        data = {"name": AREA_ID, "transaction_id": transaction_id}
+        data = {"name": AREA_ID, "transaction_id": mock_uuid()}
         redis_client_auto_register.redis_db.publish.assert_called_once_with(
             f"{AREA_ID}/unregister_participant",
             json.dumps(data))
@@ -161,40 +157,41 @@ class TestRedisClientBase:
         mock_wait_until_timeout_blocking.assert_called()
 
     @staticmethod
-    def test_on_register(redis_client_auto_register):
+    @patch("uuid.uuid4", return_value="some-transaction-uuid")
+    def test_on_register(mock_uuid, redis_client_auto_register):
         """Check the on_register function with correct message that doesn't throw exception."""
-        data = {"device_uuid": DEVICE_ID, "transaction_id": TRANSACTION_ID}
+        redis_client_auto_register.register(is_blocking=False)
+        data = {"name": AREA_ID, "device_uuid": DEVICE_ID, "transaction_id": mock_uuid()}
         message = {"data": json.dumps(data)}
-        redis_client_auto_register._blocking_command_responses = {
-            "register": {"transaction_id": TRANSACTION_ID}}
         redis_client_auto_register._on_register(message)
         assert redis_client_auto_register.is_active is True
         assert redis_client_auto_register.area_uuid == DEVICE_ID
 
     @staticmethod
-    def test_on_unregister(redis_client_auto_register):
+    @patch("uuid.uuid4", return_value="some-transaction-uuid")
+    def test_on_unregister(mock_uuid, redis_client_auto_register):
         """Check the on_unregister function with correct message that doesn't throws exception."""
-        data = {"device_uuid": DEVICE_ID, "transaction_id": TRANSACTION_ID,
-                "response": "success"}
+        redis_client_auto_register.is_active = True
+        redis_client_auto_register.unregister(is_blocking=False)
+        data = {"name": AREA_ID, "device_id": DEVICE_ID,
+                "transaction_id": mock_uuid(), "response": "success"}
         message = {"data": json.dumps(data)}
-        redis_client_auto_register._blocking_command_responses = {
-            "unregister": {"transaction_id": TRANSACTION_ID}}
         redis_client_auto_register._on_unregister(message)
         assert redis_client_auto_register.is_active is False
 
     @staticmethod
-    def test_on_unregister_throws_exception(redis_client_auto_register):
+    @patch("uuid.uuid4", return_value="some-transaction-uuid")
+    def test_on_unregister_throws_exception(mock_uuid, redis_client_auto_register):
         """Check if exception is raised when response of on_unregister is not successful."""
         with pytest.raises(RedisAPIException,
                            match=f"Failed to unregister from market {AREA_ID}."
                                  "Deactivating connection."):
-            data = {"device_uuid": DEVICE_ID, "transaction_id": TRANSACTION_ID,
-                    "response": "unsuccessful"}
+            redis_client_auto_register.is_active = True
+            redis_client_auto_register.unregister(is_blocking=False)
+            data = {"name": AREA_ID, "device_id": DEVICE_ID,
+                    "transaction_id": mock_uuid(), "response": "unsuccessful"}
             message = {"data": json.dumps(data)}
-            redis_client_auto_register._blocking_command_responses = {
-                "unregister": {"transaction_id": TRANSACTION_ID}}
             redis_client_auto_register._on_unregister(message)
-            assert redis_client_auto_register.is_active is True
 
     @staticmethod
     def test_select_aggregator(redis_client_auto_register):
