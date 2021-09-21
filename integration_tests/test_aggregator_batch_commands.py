@@ -137,7 +137,7 @@ class BatchAggregator(TestAggregatorBase):
 
                     # The bids have been issued in the correct order
                     assert [
-                               bid["original_bid_price"] for bid in issued_bids
+                               bid["original_price"] for bid in issued_bids
                            ] == [27, 28, 29, 30]
 
                     # The only two bids left are the last ones that have been issued
@@ -191,7 +191,7 @@ class BatchAggregator(TestAggregatorBase):
 
                     # The offers have been issued in the correct order
                     assert [
-                               offer["original_offer_price"] for offer in issued_offers
+                               offer["original_price"] for offer in issued_offers
                            ] == [1.1, 2.2, 3.3, 4.4]
 
                     # The only two offers left are the last ones that have been issued
