@@ -5,7 +5,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from copy import copy
 from threading import Lock
 
-from d3a_interface.utils import wait_until_timeout_blocking
+from d3a_interface.utils import wait_until_timeout_blocking, execute_function_util
 from redis import StrictRedis
 
 from d3a_api_client.commands import ClientCommandBuffer
@@ -13,11 +13,10 @@ from d3a_api_client.constants import (
     MAX_WORKER_THREADS, MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE)
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.utils import (
-    execute_function_util, log_market_progression, log_trade_info,
-    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation, get_name_from_area_name_uuid_mapping)
-from d3a_api_client.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
-    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message)
+    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message,
+    get_name_from_area_name_uuid_mapping, log_market_progression, log_trade_info,
+    log_bid_offer_confirmation, log_deleted_bid_offer_confirmation)
 
 
 class RedisAPIException(Exception):

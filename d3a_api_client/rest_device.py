@@ -2,14 +2,15 @@ import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Dict
 
-from d3a_interface.client_connections.utils import RestCommunicationMixin, \
-    retrieve_jwt_key_from_server, blocking_post_request
+from d3a_interface.client_connections.utils import (
+    RestCommunicationMixin, retrieve_jwt_key_from_server, blocking_post_request)
 from d3a_interface.client_connections.websocket_connection import WebsocketThread
+from d3a_interface.utils import execute_function_util
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import (
-    logging_decorator, get_aggregator_prefix, execute_function_util,
+    logging_decorator, get_aggregator_prefix,
     log_market_progression, domain_name_from_env, websocket_domain_name_from_env,
     simulation_id_from_env, get_configuration_prefix, log_trade_info)
 from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
@@ -91,14 +92,14 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
                                                     {"energy_forecast": energy_forecast_kWh})
         if posted and do_not_wait is False:
             return self.dispatcher.wait_for_command_response("set_energy_forecast", transaction_id)
-    
+
     @logging_decorator("set-energy-measurement")
     def set_energy_measurement(self, energy_measurement_kWh: Dict, do_not_wait=False):
         transaction_id, posted = self._post_request(
             f"{self.endpoint_prefix}/set-energy-measurement",
             {"energy_measurement": energy_measurement_kWh})
         if posted and do_not_wait is False:
-            return self.dispatcher.wait_for_command_response("set_energy_measurement", 
+            return self.dispatcher.wait_for_command_response("set_energy_measurement",
                                                              transaction_id)
 
     def _on_event_or_response(self, message):

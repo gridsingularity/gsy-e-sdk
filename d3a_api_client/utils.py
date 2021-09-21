@@ -171,14 +171,6 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     }
 
 
-def execute_function_util(function: callable, function_name):
-    try:
-        function()
-    except Exception as e:
-        logging.error(
-            f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
-
-
 def log_market_progression(message):
     try:
         event = message.get("event", None)
