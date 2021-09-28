@@ -6,6 +6,8 @@ from copy import copy
 from threading import Lock
 
 from d3a_interface.utils import wait_until_timeout_blocking, execute_function_util
+from d3a_interface.client_connections.utils import (
+    log_market_progression, get_slot_completion_percentage_int_from_message)
 from redis import StrictRedis
 
 from d3a_api_client.commands import ClientCommandBuffer
@@ -14,8 +16,8 @@ from d3a_api_client.constants import (
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
-    create_area_name_uuid_mapping_from_tree_info, get_slot_completion_percentage_int_from_message,
-    get_name_from_area_name_uuid_mapping, log_market_progression, log_trade_info,
+    create_area_name_uuid_mapping_from_tree_info,
+    get_name_from_area_name_uuid_mapping, log_trade_info,
     log_bid_offer_confirmation, log_deleted_bid_offer_confirmation)
 
 
