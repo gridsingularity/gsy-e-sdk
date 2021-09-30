@@ -8,5 +8,4 @@ paho-mqtt
 parameterized
 pytest
 sgqlc
-tabulate
 websockets
