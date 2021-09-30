@@ -2,7 +2,8 @@ import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Dict
 
-from d3a_interface.client_connections.utils import blocking_post_request, blocking_get_request
+from d3a_interface.client_connections.utils import (
+    blocking_post_request, blocking_get_request, get_slot_completion_percentage_int_from_message)
 from d3a_interface.client_connections.websocket_connection import WebsocketThread
 
 from d3a_api_client.commands import ClientCommandBuffer
@@ -13,7 +14,6 @@ from d3a_api_client.rest_device import RestDeviceClient
 from d3a_api_client.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
     create_area_name_uuid_mapping_from_tree_info,
-    get_slot_completion_percentage_int_from_message,
     log_bid_offer_confirmation, log_deleted_bid_offer_confirmation,
     get_name_from_area_name_uuid_mapping)
 from d3a_api_client.utils import logging_decorator

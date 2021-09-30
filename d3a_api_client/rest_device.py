@@ -4,6 +4,7 @@ from typing import Dict
 
 from d3a_interface.client_connections.utils import (
     RestCommunicationMixin, retrieve_jwt_key_from_server, blocking_post_request)
+from d3a_interface.client_connections.utils import log_market_progression
 from d3a_interface.client_connections.websocket_connection import WebsocketThread
 from d3a_interface.utils import execute_function_util
 
@@ -11,7 +12,7 @@ from d3a_api_client import APIClientInterface
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import (
     logging_decorator, get_aggregator_prefix,
-    log_market_progression, domain_name_from_env, websocket_domain_name_from_env,
+    domain_name_from_env, websocket_domain_name_from_env,
     simulation_id_from_env, get_configuration_prefix, log_trade_info)
 from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
 
