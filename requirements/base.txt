@@ -70,8 +70,6 @@ six==1.15.0
     #   fabric3
     #   parse-type
     #   pynacl
-tabulate==0.8.7
-    # via -r requirements/base.in
 toml==0.10.2
     # via pytest
 unidecode==0.4.21
