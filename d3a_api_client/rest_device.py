@@ -1,15 +1,18 @@
 import logging
 from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Dict
 
-from d3a_interface.client_connections.utils import RestCommunicationMixin, \
-    retrieve_jwt_key_from_server, blocking_post_request
+from d3a_interface.client_connections.utils import (
+    RestCommunicationMixin, retrieve_jwt_key_from_server, blocking_post_request)
+from d3a_interface.client_connections.utils import log_market_progression
 from d3a_interface.client_connections.websocket_connection import WebsocketThread
+from d3a_interface.utils import execute_function_util
 
 from d3a_api_client import APIClientInterface
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import (
-    logging_decorator, get_aggregator_prefix, execute_function_util,
-    log_market_progression, domain_name_from_env, websocket_domain_name_from_env,
+    logging_decorator, get_aggregator_prefix,
+    domain_name_from_env, websocket_domain_name_from_env,
     simulation_id_from_env, get_configuration_prefix, log_trade_info)
 from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
 
@@ -52,44 +55,53 @@ class RestDeviceClient(APIClientInterface, RestCommunicationMixin):
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
-    @logging_decorator('register')
+    @logging_decorator("register")
     def register(self, is_blocking=True):
         transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/register", {})
         if posted:
             return_value = self.dispatcher.wait_for_command_response(
-                'register', transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
+                "register", transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
             self.registered = return_value["registered"]
             return return_value
 
-    @logging_decorator('unregister')
+    @logging_decorator("unregister")
     def unregister(self, is_blocking):
         transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/unregister", {})
         if posted:
             return_value = self.dispatcher.wait_for_command_response(
-                'unregister', transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
+                "unregister", transaction_id, timeout=REGISTER_COMMAND_TIMEOUT)
             self.registered = False
             return return_value
 
-    @logging_decorator('select-aggregator')
+    @logging_decorator("select-aggregator")
     def select_aggregator(self, aggregator_uuid):
-        response = blocking_post_request(f'{self.aggregator_prefix}select-aggregator/',
+        response = blocking_post_request(f"{self.aggregator_prefix}select-aggregator/",
                                          {"aggregator_uuid": aggregator_uuid,
                                           "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = response["aggregator_uuid"] if response else None
 
-    @logging_decorator('unselect-aggregator')
+    @logging_decorator("unselect-aggregator")
     def unselect_aggregator(self, aggregator_uuid):
-        response = blocking_post_request(f'{self.aggregator_prefix}unselect-aggregator/',
+        response = blocking_post_request(f"{self.aggregator_prefix}unselect-aggregator/",
                                          {"aggregator_uuid": aggregator_uuid,
                                           "device_uuid": self.area_id}, self.jwt_token)
         self.active_aggregator = None
 
-    @logging_decorator('set_energy_forecast')
-    def set_energy_forecast(self, pv_energy_forecast_Wh, do_not_wait=False):
-        transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/set_energy_forecast",
-                                                    {"energy_forecast": pv_energy_forecast_Wh})
+    @logging_decorator("set-energy-forecast")
+    def set_energy_forecast(self, energy_forecast_kWh: Dict, do_not_wait=False):
+        transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/set-energy-forecast",
+                                                    {"energy_forecast": energy_forecast_kWh})
         if posted and do_not_wait is False:
-            return self.dispatcher.wait_for_command_response('set_energy_forecast', transaction_id)
+            return self.dispatcher.wait_for_command_response("set_energy_forecast", transaction_id)
+
+    @logging_decorator("set-energy-measurement")
+    def set_energy_measurement(self, energy_measurement_kWh: Dict, do_not_wait=False):
+        transaction_id, posted = self._post_request(
+            f"{self.endpoint_prefix}/set-energy-measurement",
+            {"energy_measurement": energy_measurement_kWh})
+        if posted and do_not_wait is False:
+            return self.dispatcher.wait_for_command_response("set_energy_measurement",
+                                                             transaction_id)
 
     def _on_event_or_response(self, message):
         logging.debug(f"A new message was received. Message information: {message}")

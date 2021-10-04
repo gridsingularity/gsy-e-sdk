@@ -2,15 +2,11 @@ import ast
 import json
 import logging
 import os
-import traceback
-import uuid
 from functools import wraps
 
 import requests
 from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
-from d3a_interface.constants_limits import JWT_TOKEN_EXPIRY_IN_SECS
-from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none, \
-    RepeatingTimer
+from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
 from sgqlc.endpoint.http import HTTPEndpoint
 from tabulate import tabulate
 
@@ -171,47 +167,6 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     }
 
 
-def execute_function_util(function: callable, function_name):
-    try:
-        function()
-    except Exception as e:
-        logging.error(
-            f"{function_name} raised exception: {str(e)}. \n Traceback: {str(traceback.format_exc())}")
-
-
-def log_market_progression(message):
-    try:
-        event = message.get("event", None)
-        if event not in ["tick", "market"]:
-            return
-        headers = ["event", ]
-        table_data = [event, ]
-        data_dict = message.get("content") if "content" in message.keys() else message
-
-        # TODO: "start_time" key will be deprecated
-        #  once the non-aggregator connection is deprecated
-        if "start_time" in data_dict:
-            headers.extend(["start_time", "duration_min", ])
-            table_data.extend([data_dict.get("start_time"), data_dict.get("duration_min")])
-
-        if "slot_completion" in data_dict:
-            headers.append("slot_completion")
-            table_data.append(data_dict.get("slot_completion"))
-
-        if event == "market" and "market_slot" in data_dict:
-            headers.extend(["market_slot"])
-            table_data.extend([data_dict.get("market_slot")])
-
-        if event == "tick":
-            slot_completion_int = get_slot_completion_percentage_int_from_message(message)
-            if slot_completion_int is not None and slot_completion_int < 10:
-                return
-
-        logging.info(f"\n\n{tabulate([table_data, ], headers=headers, tablefmt='fancy_grid')}\n\n")
-    except Exception as e:
-        logging.warning(f"Error while logging market progression {e}")
-
-
 def log_bid_offer_confirmation(message):
     try:
         if message.get("status") == "ready" and message.get("command") in ["bid", "offer"]:
@@ -306,11 +261,6 @@ def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) ->
             else:
                 area_name_uuid_mapping[area_dict["area_name"]] = [area_uuid]
     return area_name_uuid_mapping
-
-
-def get_slot_completion_percentage_int_from_message(message):
-    if "slot_completion" in message:
-        return int(message["slot_completion"].split("%")[0])
 
 
 def read_simulation_config_file(config_file_path):
