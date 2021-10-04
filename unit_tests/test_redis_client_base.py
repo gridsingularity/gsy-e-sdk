@@ -159,12 +159,17 @@ class TestRedisClientBase:
 
     @staticmethod
     @patch("uuid.uuid4", return_value="some-transaction-uuid")
-    def test_on_register(mock_uuid, redis_client_auto_register):
+    @patch("d3a_api_client.redis_client_base.logging")
+    def test_on_register(logging_mock, mock_uuid, redis_client_auto_register):
         """Check the on_register function with correct message that doesn't throw exception."""
+        redis_client_auto_register.on_register = MagicMock()
         redis_client_auto_register.register(is_blocking=False)
         data = {"name": AREA_ID, "device_uuid": DEVICE_ID, "transaction_id": mock_uuid()}
         message = {"data": json.dumps(data)}
         redis_client_auto_register._on_register(message)
+
+        logging_mock.info.assert_called_with(f"{AREA_ID} was registered")
+        redis_client_auto_register.on_register.assert_called()
         assert redis_client_auto_register.is_active is True
         assert redis_client_auto_register.area_uuid == DEVICE_ID
 
