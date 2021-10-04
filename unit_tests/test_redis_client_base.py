@@ -34,9 +34,10 @@ class TestRedisClientBase:
 
     @staticmethod
     @pytest.fixture()
-    def redis_client_auto_register():
+    @patch("d3a_api_client.redis_client_base.StrictRedis")
+    def redis_client_auto_register(strict_redis_mock):
         """Create the fixture for redis client base."""
-        d3a_api_client.redis_client_base.StrictRedis = MagicMock(spec=StrictRedis)
+        strict_redis_mock.return_value = MagicMock(spec=StrictRedis)
         return RedisClientBase(area_id=AREA_ID, autoregister=False)
 
     @staticmethod
