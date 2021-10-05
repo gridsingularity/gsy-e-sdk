@@ -35,8 +35,6 @@ iniconfig==1.1.1
     # via pytest
 packaging==20.7
     # via pytest
-paho-mqtt==1.5.1
-    # via -r requirements/base.in
 parameterized==0.7.4
     # via -r requirements/base.in
 paramiko==2.7.2
