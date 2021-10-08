@@ -189,15 +189,17 @@ class TestRedisClientBase:
     @patch("uuid.uuid4", return_value="some-transaction-uuid")
     def test_on_unregister_throws_exception(uuid_mock, redis_client_auto_register):
         """Check if exception is raised when response of on_unregister is not successful."""
-        with pytest.raises(RedisAPIException,
-                           match=f"Failed to unregister from market {AREA_ID}."
-                                 "Deactivating connection."):
+        with pytest.raises(
+                RedisAPIException,
+                match=f"Failed to unregister from market {AREA_ID}. Deactivating connection."):
             redis_client_auto_register.is_active = True
             redis_client_auto_register.unregister(is_blocking=False)
             data = {"name": AREA_ID, "device_id": DEVICE_ID,
                     "transaction_id": uuid_mock(), "response": "unsuccessful"}
             message = {"data": json.dumps(data)}
             redis_client_auto_register._on_unregister(message)
+
+        assert redis_client_auto_register.is_active == True
 
     @staticmethod
     def test_select_aggregator(redis_client_auto_register):
