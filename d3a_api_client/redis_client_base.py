@@ -120,10 +120,11 @@ class RedisClientBase(APIClientInterface):
     def _on_unregister(self, msg):
         message = json.loads(msg["data"])
         self._check_buffer_message_matching_command_and_id(message)
+        if message.get("response") != "success":
+            raise RedisAPIException(
+                f"Failed to unregister from market {self.area_id}. Deactivating connection.")
+
         self.is_active = False
-        if message["response"] != "success":
-            raise RedisAPIException(f'Failed to unregister from market {self.area_id}.'
-                                    f'Deactivating connection.')
 
     def _on_event_or_response(self, msg):
         message = json.loads(msg["data"])
