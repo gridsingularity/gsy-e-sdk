@@ -28,7 +28,7 @@ class RedisAPIException(Exception):
 class RedisAggregator:
 
     def __init__(self, aggregator_name, accept_all_devices=True,
-                 redis_url='redis://localhost:6379'):
+                 redis_url="redis://localhost:6379"):
 
         self.grid_fee_calculation = GridFeeCalculation()
         self.redis_db = StrictRedis.from_url(redis_url)
@@ -56,10 +56,10 @@ class RedisAggregator:
 
     def _subscribe_to_response_channels(self):
 
-        if b'aggregator_response' in self.pubsub.patterns:
-            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
+        if b"aggregator_response" in self.pubsub.patterns:
+            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b"aggregator_response"]
 
-        event_channel = f'external-aggregator/*/{self.aggregator_uuid}/events/all'
+        event_channel = f"external-aggregator/*/{self.aggregator_uuid}/events/all"
         channel_dict = {event_channel: self._events_callback_dict,
                         "aggregator_response": self._aggregator_response_callback,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
@@ -70,37 +70,40 @@ class RedisAggregator:
         self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):
-        logging.debug(f"AGGREGATORS_BATCH_RESPONSE:: {message}")
-        data = json.loads(message['data'])
-        if self.aggregator_uuid != data['aggregator_uuid']:
+        logging.debug("AGGREGATORS_BATCH_RESPONSE:: %s", message)
+        data = json.loads(message["data"])
+        if self.aggregator_uuid != data["aggregator_uuid"]:
             return
         with self.lock:
-            self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
-            self._transaction_id_response_buffer[data['transaction_id']] = data
+            self._transaction_id_buffer.pop(
+                self._transaction_id_buffer.index(data["transaction_id"]))
+            self._transaction_id_response_buffer[data["transaction_id"]] = data
 
         for asset_uuid, responses in data["responses"].items():
             for command_response in responses:
                 log_bid_offer_confirmation(command_response)
                 log_deleted_bid_offer_confirmation(
                     command_response,
-                    asset_name=get_name_from_area_name_uuid_mapping(self.area_name_uuid_mapping, asset_uuid))
+                    asset_name=get_name_from_area_name_uuid_mapping(
+                        self.area_name_uuid_mapping, asset_uuid))
         self.on_event_or_response(data)
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:
             self._subscribed_aggregator_response_cb(message)
-        data = json.loads(message['data'])
+        data = json.loads(message["data"])
 
-        if data['transaction_id'] in self._transaction_id_buffer:
-            self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
-        if data['status'] == "SELECTED":
+        if data["transaction_id"] in self._transaction_id_buffer:
+            self._transaction_id_buffer.pop(
+                self._transaction_id_buffer.index(data["transaction_id"]))
+        if data["status"] == "SELECTED":
             self._selected_by_device(data)
-        if data['status'] == "UNSELECTED":
+        if data["status"] == "UNSELECTED":
             self._unselected_by_device(data)
 
     def _events_callback_dict(self, message):
-        payload = json.loads(message['data'])
-        if "event" in payload and payload['event'] == 'market':
+        payload = json.loads(message["data"])
+        if "event" in payload and payload["event"] == "market":
             self._on_market_cycle(payload)
         elif "event" in payload and payload["event"] == "tick":
             self._on_tick(payload)
@@ -112,10 +115,10 @@ class RedisAggregator:
         self._on_event_or_response(payload)
 
     def _check_transaction_id_cached_out(self, transaction_id):
-        return transaction_id in self._transaction_id_buffer
+        return transaction_id not in self._transaction_id_buffer
 
     def _create_aggregator(self, is_blocking=True):
-        logging.info(f"Trying to create aggregator {self.aggregator_name}")
+        logging.info("Trying to create aggregator %s", self.aggregator_name)
 
         transaction_id = str(uuid.uuid4())
         data = {"name": self.aggregator_name, "type": "CREATE", "transaction_id": transaction_id}
@@ -129,10 +132,10 @@ class RedisAggregator:
                 )
                 return transaction_id
             except AssertionError:
-                raise RedisAPIException(f'API registration process timed out.')
+                raise RedisAPIException("API registration process timed out.")
 
     def delete_aggregator(self, is_blocking=True):
-        logging.info(f"Trying to delete aggregator {self.aggregator_name}")
+        logging.info("Trying to delete aggregator %s", self.aggregator_name)
 
         transaction_id = str(uuid.uuid4())
         data = {"name": self.aggregator_name,
@@ -149,7 +152,7 @@ class RedisAggregator:
                 )
                 return transaction_id
             except AssertionError:
-                raise RedisAPIException(f'API has timed out.')
+                raise RedisAPIException("API has timed out.")
 
     def _selected_by_device(self, message):
         if self.accept_all_devices:
@@ -163,7 +166,9 @@ class RedisAggregator:
     def _all_uuids_in_selected_device_uuid_list(self, uuid_list):
         for device_uuid in uuid_list:
             if device_uuid not in self.device_uuid_list:
-                logging.error(f"{device_uuid} not in list of selected device uuids {self.device_uuid_list}")
+                logging.error(
+                    "%s not in list of selected device uuids %s",
+                    device_uuid, self.device_uuid_list)
                 raise Exception(f"{device_uuid} not in list of selected device uuids")
         return True
 
@@ -192,22 +197,22 @@ class RedisAggregator:
         batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
                            "aggregator_uuid": self.aggregator_uuid,
                            "batch_commands": batch_command_dict}
-        batch_channel = f'external//aggregator/{self.aggregator_uuid}/batch_commands'
+        batch_channel = f"external//aggregator/{self.aggregator_uuid}/batch_commands"
         self.redis_db.publish(batch_channel, json.dumps(batched_command))
         self._transaction_id_buffer.append(transaction_id)
         if is_blocking:
             try:
                 wait_until_timeout_blocking(
-                    lambda: not self._check_transaction_id_cached_out(transaction_id)
+                    lambda: self._check_transaction_id_cached_out(transaction_id)
                 )
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
-                raise RedisAPIException(f'API registration process timed out.')
+                raise RedisAPIException("API registration process timed out.")
 
     def _on_event_or_response(self, message):
         log_msg = copy(message)
         log_msg.pop("grid_tree", None)
-        logging.debug(f"A new message was received. Message information: {log_msg}")
+        logging.debug("A new message was received. Message information: %s", log_msg)
         log_market_progression(message)
         self.executor.submit(execute_function_util,
                              function=lambda: self.on_event_or_response(message),
@@ -241,7 +246,6 @@ class RedisAggregator:
 
     @buffer_grid_tree_info
     def _on_trade(self, message):
-        # Aggregator message
         for individual_trade in message["trade_list"]:
             log_trade_info(individual_trade)
         self.executor.submit(execute_function_util, function=lambda: self.on_trade(message),
