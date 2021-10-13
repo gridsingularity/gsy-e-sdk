@@ -103,13 +103,13 @@ class RedisAggregator:
 
     def _events_callback_dict(self, message):
         payload = json.loads(message["data"])
-        if "event" in payload and payload["event"] == "market":
+        if payload.get("event") == "market":
             self._on_market_cycle(payload)
-        elif "event" in payload and payload["event"] == "tick":
+        elif payload.get("event") == "tick":
             self._on_tick(payload)
-        elif "event" in payload and payload["event"] == "trade":
+        elif payload.get("event") == "trade":
             self._on_trade(payload)
-        elif "event" in payload and payload["event"] == "finish":
+        elif payload.get("event") == "finish":
             self._on_finish(payload)
 
         self._on_event_or_response(payload)
