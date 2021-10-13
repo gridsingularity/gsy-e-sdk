@@ -86,9 +86,9 @@ _setup_modules = iterate_over_all_modules(modules_path)
 def run(base_setup_path, setup_module_name, username, password, domain_name, web_socket,
         simulation_config_path, simulation_id, run_on_redis, **kwargs):
     if username is not None:
-        os.environ["API_CLIENT_USERNAME"] = username
+        os.environ["API_CLIENT_USERNAME"] = username or ""
     if password is not None:
-        os.environ["API_CLIENT_PASSWORD"] = password
+        os.environ["API_CLIENT_PASSWORD"] = password or ""
 
     os.environ["API_CLIENT_RUN_ON_REDIS"] = "true" if run_on_redis else "false"
     if not run_on_redis:

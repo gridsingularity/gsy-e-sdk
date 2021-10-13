@@ -41,8 +41,8 @@ class RedisAggregator:
         self.device_uuid_list = []
         self._subscribed_aggregator_response_cb = None
         self._client_command_buffer = ClientCommandBuffer()
-        self._connect_to_simulation(is_blocking=True)
         self._subscribe_to_response_channels()
+        self._connect_to_simulation(is_blocking=True)
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.lock = Lock()
         self.latest_grid_tree = {}
