@@ -12,7 +12,7 @@ from redis import StrictRedis
 
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import (
-    MAX_WORKER_THREADS, MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE)
+    MAX_WORKER_THREADS, MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE, LOCAL_REDIS_URL)
 from d3a_api_client.grid_fee_calculation import GridFeeCalculation
 from d3a_api_client.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
@@ -28,7 +28,7 @@ class RedisAPIException(Exception):
 class RedisAggregator:
 
     def __init__(self, aggregator_name, accept_all_devices=True,
-                 redis_url="redis://localhost:6379"):
+                 redis_url=LOCAL_REDIS_URL):
 
         self.grid_fee_calculation = GridFeeCalculation()
         self.redis_db = StrictRedis.from_url(redis_url)

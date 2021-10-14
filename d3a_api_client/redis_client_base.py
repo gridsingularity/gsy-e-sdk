@@ -8,7 +8,7 @@ from d3a_interface.utils import (
 from redis import StrictRedis
 
 from d3a_api_client import APIClientInterface
-from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.constants import MAX_WORKER_THREADS, LOCAL_REDIS_URL
 
 
 class RedisAPIException(Exception):
@@ -16,7 +16,7 @@ class RedisAPIException(Exception):
 
 
 class RedisClientBase(APIClientInterface):
-    def __init__(self, area_id, autoregister=True, redis_url='redis://localhost:6379',
+    def __init__(self, area_id, autoregister=True, redis_url=LOCAL_REDIS_URL,
                  pubsub_thread=None):
         super().__init__(area_id, autoregister, redis_url)
         self.area_uuid = None
