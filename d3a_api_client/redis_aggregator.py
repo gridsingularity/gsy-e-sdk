@@ -114,7 +114,7 @@ class RedisAggregator:
 
         self._on_event_or_response(payload)
 
-    def _check_transaction_id_cached_out(self, transaction_id):
+    def _is_transaction_response_received(self, transaction_id):
         return transaction_id not in self._transaction_id_buffer
 
     def _create_aggregator(self, is_blocking=True):
@@ -128,7 +128,7 @@ class RedisAggregator:
         if is_blocking:
             try:
                 wait_until_timeout_blocking(
-                    lambda: self._check_transaction_id_cached_out(transaction_id)
+                    lambda: self._is_transaction_response_received(transaction_id)
                 )
                 return transaction_id
             except AssertionError:
@@ -148,7 +148,7 @@ class RedisAggregator:
         if is_blocking:
             try:
                 wait_until_timeout_blocking(
-                    lambda: self._check_transaction_id_cached_out(transaction_id)
+                    lambda: self._is_transaction_response_received(transaction_id)
                 )
                 return transaction_id
             except AssertionError:
@@ -203,7 +203,7 @@ class RedisAggregator:
         if is_blocking:
             try:
                 wait_until_timeout_blocking(
-                    lambda: self._check_transaction_id_cached_out(transaction_id)
+                    lambda: self._is_transaction_response_received(transaction_id)
                 )
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError:
