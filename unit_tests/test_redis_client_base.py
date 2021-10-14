@@ -240,3 +240,14 @@ class TestRedisClientBase:
             redis_client_auto_register.area_uuid = str(uuid.uuid4())
             redis_client_auto_register.select_aggregator(aggregator_uuid=aggregator_uuid)
         mock_wait_until_timeout_blocking.assert_called()
+
+    def test_is_transaction_response_received(self, redis_client_auto_register):
+        """Check the return value of is_transaction_response_received."""
+        transaction_id = str(uuid.uuid4())
+        redis_client_auto_register._transaction_id_buffer = [transaction_id]
+        assert redis_client_auto_register._is_transaction_response_received(
+            transaction_id) is False
+
+        redis_client_auto_register._transaction_id_buffer.pop(0)
+        assert redis_client_auto_register._is_transaction_response_received(
+            transaction_id) is True
