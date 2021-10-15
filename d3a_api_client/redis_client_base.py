@@ -8,7 +8,7 @@ from d3a_interface.utils import (
 from redis import StrictRedis
 
 from d3a_api_client import APIClientInterface
-from d3a_api_client.constants import MAX_WORKER_THREADS
+from d3a_api_client.constants import MAX_WORKER_THREADS, LOCAL_REDIS_URL
 
 
 class RedisAPIException(Exception):
@@ -16,7 +16,7 @@ class RedisAPIException(Exception):
 
 
 class RedisClientBase(APIClientInterface):
-    def __init__(self, area_id, autoregister=True, redis_url='redis://localhost:6379',
+    def __init__(self, area_id, autoregister=True, redis_url=LOCAL_REDIS_URL,
                  pubsub_thread=None):
         super().__init__(area_id, autoregister, redis_url)
         self.area_uuid = None
@@ -51,7 +51,7 @@ class RedisClientBase(APIClientInterface):
         if self._subscribed_aggregator_response_cb is not None:
             self._subscribed_aggregator_response_cb(message)
         data = json.loads(message['data'])
-        if not self._check_transaction_id_cached_out(data['transaction_id']):
+        if not self._is_transaction_response_received(data['transaction_id']):
             self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
 
     def _check_buffer_message_matching_command_and_id(self, message):
@@ -65,7 +65,7 @@ class RedisClientBase(APIClientInterface):
             raise RedisAPIException(
                 "The answer message does not contain a valid 'transaction_id' member.")
 
-    def _check_transaction_id_cached_out(self, transaction_id):
+    def _is_transaction_response_received(self, transaction_id):
         return transaction_id not in self._transaction_id_buffer
 
     def register(self, is_blocking=True):
@@ -149,7 +149,7 @@ class RedisClientBase(APIClientInterface):
         if is_blocking:
             try:
                 wait_until_timeout_blocking(
-                    lambda: self._check_transaction_id_cached_out(transaction_id)
+                    lambda: self._is_transaction_response_received(transaction_id)
                 )
                 logging.info(f"{self.area_id} has selected AGGREGATOR: {aggregator_uuid}")
                 return transaction_id

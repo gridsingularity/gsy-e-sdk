@@ -1,3 +1,4 @@
+from d3a_api_client.constants import LOCAL_REDIS_URL
 from d3a_api_client.redis_client_base import RedisClientBase
 from slugify import slugify
 
@@ -7,7 +8,7 @@ class RedisMarketClient(RedisClientBase):
     Class is kept for backward compatibility and also for following the same approach as in the
     REST case to have two different classes for devices and markets
     """
-    def __init__(self, area_id, redis_url='redis://localhost:6379', autoregister=True):
+    def __init__(self, area_id, redis_url=LOCAL_REDIS_URL, autoregister=True):
         # TODO: Homogenize channel names in markets and devices to use either
         #  slugified or normal area names
         area_id = slugify(area_id, to_lower=True)
