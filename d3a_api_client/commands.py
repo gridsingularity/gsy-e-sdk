@@ -17,23 +17,23 @@ class ClientCommandBuffer:
 
     def offer_energy(
             self, area_uuid: str, energy: float, price: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, timeslot: str = None):
+            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.OFFER,
             {"energy": energy, "price": price, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "timeslot": timeslot})
+             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
 
     def offer_energy_rate(
             self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, timeslot: str = None):
+            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.OFFER,
             {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "timeslot": timeslot})
+             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
 
     def update_offer(self, *args, **kwargs):
         logging.warning("update_offer is deprecated,"
@@ -41,39 +41,41 @@ class ClientCommandBuffer:
 
     def bid_energy(
             self, area_uuid: str, energy: float, price: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, timeslot: str = None):
+            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.BID,
             {"energy": energy, "price": price, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "timeslot": timeslot})
+             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
 
     def bid_energy_rate(
             self, area_uuid: str, energy: float, rate: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, timeslot: str = None):
+            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
 
         return self._add_to_buffer(
             area_uuid,
             Commands.BID,
             {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "timeslot": timeslot})
+             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
 
     def update_bid(self, *args, **kwargs):
         logging.warning("update_bid is deprecated,"
                         " use bid_energy with replace_existing=True instead.")
 
-    def delete_offer(self, area_uuid, offer_id, timeslot: str = None):
-        return self._add_to_buffer(area_uuid, Commands.DELETE_OFFER, {"offer_id": offer_id, "timeslot": timeslot})
+    def delete_offer(self, area_uuid, offer_id, time_slot: str = None):
+        return self._add_to_buffer(area_uuid, Commands.DELETE_OFFER,
+                                   {"offer_id": offer_id, "time_slot": time_slot})
 
-    def delete_bid(self, area_uuid, bid_id, timeslot: str = None):
-        return self._add_to_buffer(area_uuid, Commands.DELETE_BID, {"bid_id": bid_id, "timeslot": timeslot})
+    def delete_bid(self, area_uuid, bid_id, time_slot: str = None):
+        return self._add_to_buffer(area_uuid, Commands.DELETE_BID,
+                                   {"bid_id": bid_id, "time_slot": time_slot})
 
-    def list_offers(self, area_uuid, timeslot: str = None):
-        return self._add_to_buffer(area_uuid, Commands.LIST_OFFERS, {"timeslot": timeslot})
+    def list_offers(self, area_uuid, time_slot: str = None):
+        return self._add_to_buffer(area_uuid, Commands.LIST_OFFERS, {"time_slot": time_slot})
 
-    def list_bids(self, area_uuid, timeslot: str = None):
-        return self._add_to_buffer(area_uuid, Commands.LIST_BIDS, {"timeslot": timeslot})
+    def list_bids(self, area_uuid, time_slot: str = None):
+        return self._add_to_buffer(area_uuid, Commands.LIST_BIDS, {"time_slot": time_slot})
 
     def device_info(self, area_uuid):
         return self._add_to_buffer(area_uuid, Commands.DEVICE_INFO, {})
@@ -82,10 +84,12 @@ class ClientCommandBuffer:
         return self._add_to_buffer(area_uuid, Commands.DSO_MARKET_STATS, {"data": {}})
 
     def set_energy_forecast(self, area_uuid, energy_forecast_kWh: Dict):
-        return self._add_to_buffer(area_uuid, Commands.FORECAST, {"energy_forecast": energy_forecast_kWh})
+        return self._add_to_buffer(area_uuid, Commands.FORECAST,
+                                   {"energy_forecast": energy_forecast_kWh})
 
     def set_energy_measurement(self, area_uuid, energy_measurement_kWh: Dict):
-        return self._add_to_buffer(area_uuid, Commands.MEASUREMENT, {"energy_measurement": energy_measurement_kWh})
+        return self._add_to_buffer(area_uuid, Commands.MEASUREMENT,
+                                   {"energy_measurement": energy_measurement_kWh})
 
     def change_grid_fees_percent(self, area_uuid, fee_percent):
         return self._add_to_buffer(
