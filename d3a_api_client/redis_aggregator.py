@@ -41,13 +41,26 @@ class RedisAggregator:
         self.device_uuid_list = []
         self._subscribed_aggregator_response_cb = None
         self._client_command_buffer = ClientCommandBuffer()
-        self._subscribe_to_response_channels()
-        self._connect_to_simulation(is_blocking=True)
+
+        self._connect_and_subscribe()
+
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
         self.lock = Lock()
         self.latest_grid_tree = {}
         self.latest_grid_tree_flat = {}
         self.area_name_uuid_mapping = {}
+
+    def _connect_and_subscribe(self):
+        # order matters here, first connect to the simulation,
+        # then subscribe to all other channels that contain the aggregator_uuid
+        self._subscribe_to_aggregator_response_and_start_redis_threat()
+        self._connect_to_simulation()
+        self._subscribe_to_response_channels()
+
+    def _subscribe_to_aggregator_response_and_start_redis_threat(self):
+        channel_dict = {"aggregator_response": self._aggregator_response_callback}
+        self.pubsub.psubscribe(**channel_dict)
+        self.pubsub.run_in_thread(daemon=True)
 
     def _connect_to_simulation(self, is_blocking=True):
         if self.aggregator_uuid is None:
@@ -55,19 +68,12 @@ class RedisAggregator:
             self.aggregator_uuid = aggr_id
 
     def _subscribe_to_response_channels(self):
-
-        if b"aggregator_response" in self.pubsub.patterns:
-            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b"aggregator_response"]
-
-        event_channel = f"external-aggregator/*/{self.aggregator_uuid}/events/all"
-        channel_dict = {event_channel: self._events_callback_dict,
-                        "aggregator_response": self._aggregator_response_callback,
+        channel_dict = {f"external-aggregator/*/{self.aggregator_uuid}/events/all":
+                        self._events_callback_dict,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
-                            self._batch_response,
+                        self._batch_response,
                         }
-
         self.pubsub.psubscribe(**channel_dict)
-        self.pubsub.run_in_thread(daemon=True)
 
     def _batch_response(self, message):
         logging.debug("AGGREGATORS_BATCH_RESPONSE:: %s", message)
