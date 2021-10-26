@@ -55,11 +55,11 @@ class RedisAggregator:
     def _connect_and_subscribe(self) -> None:
         # order matters here, first connect to the simulation,
         # then subscribe to all other channels that contain the aggregator_uuid
-        self._subscribe_to_aggregator_response_and_start_redis_threat()
+        self._subscribe_to_aggregator_response_and_start_redis_thread()
         self._connect_to_simulation()
         self._subscribe_to_response_channels()
 
-    def _subscribe_to_aggregator_response_and_start_redis_threat(self) -> None:
+    def _subscribe_to_aggregator_response_and_start_redis_thread(self) -> None:
         channel_dict = {"aggregator_response": self._aggregator_response_callback}
         self.pubsub.psubscribe(**channel_dict)
         self.pubsub.run_in_thread(daemon=True)
