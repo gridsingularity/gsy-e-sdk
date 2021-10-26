@@ -101,8 +101,7 @@ class RedisAggregator:
         data = json.loads(message["data"])
 
         if data["transaction_id"] in self._transaction_id_buffer:
-            self._transaction_id_buffer.pop(
-                self._transaction_id_buffer.index(data["transaction_id"]))
+            self._transaction_id_buffer.remove(data["transaction_id"])
         if data["status"] == "SELECTED":
             self._selected_by_device(data)
         if data["status"] == "UNSELECTED":
@@ -142,7 +141,7 @@ class RedisAggregator:
                 raise RedisAggregatorAPIException("API registration process timed out.") from ex
         return None
 
-    def delete_aggregator(self, is_blocking: bool = True) -> None:
+    def delete_aggregator(self, is_blocking: bool = True) -> Optional[str]:
         """Delete aggregator."""
         logging.info("Trying to delete aggregator %s", self.aggregator_name)
 
