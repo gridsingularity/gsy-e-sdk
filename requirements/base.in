@@ -1,3 +1,4 @@
+-e git+https://github.com/gridsingularity/d3a-interface@master#egg=d3a_interface
 awesome-slugify
 behave
 click
