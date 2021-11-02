@@ -120,7 +120,9 @@ pluggy==1.0.0
     #   pytest
     #   tox
 pre-commit==2.15.0
-    # via d3a-interface
+    # via
+    #   -r requirements/base.in
+    #   d3a-interface
 py==1.10.0
     # via
     #   d3a-interface

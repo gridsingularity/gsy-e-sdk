@@ -5,6 +5,7 @@ click-default-group
 colorlog
 fabric3
 parameterized
+pre-commit
 pytest
 sgqlc
 websockets
