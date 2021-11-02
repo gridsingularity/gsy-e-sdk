@@ -25,7 +25,7 @@ import sys
 
 from click.types import Choice
 from click_default_group import DefaultGroup
-from colorlog.colorlog import ColoredFormatter
+from colorlog import ColoredFormatter
 from logging import getLogger
 
 from d3a_interface.exceptions import D3AException
