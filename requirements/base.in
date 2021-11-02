@@ -8,3 +8,4 @@ parameterized
 pytest
 sgqlc
 websockets
+-e git+https://github.com/gridsingularity/d3a-interface@master#egg=d3a_interface
