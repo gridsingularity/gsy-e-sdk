@@ -163,7 +163,8 @@ commands in order to react to an event simultaneously for each owned device.
 
 To list your aggregators, its configuration id and the registered devices, you should:
 ```python
-from d3a_api_client.utils import get_aggregators_list
+```python
+from gsy_e_sdk.utils import get_aggregators_list
 my_aggregators = get_aggregators_list(domain_name="Domain Name")
 ```
 The returned value is a list of aggregators and their connected devices

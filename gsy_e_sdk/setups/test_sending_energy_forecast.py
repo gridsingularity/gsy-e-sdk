@@ -4,10 +4,10 @@ from time import sleep
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
 
-from d3a_api_client.aggregator import Aggregator
-from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.utils import (get_area_uuid_from_area_name_and_collaboration_id,
-                                  get_sim_id_and_domain_names)
+from gsy_e_sdk.aggregator import Aggregator
+from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.utils import (get_area_uuid_from_area_name_and_collaboration_id,
+                             get_sim_id_and_domain_names)
 
 
 class TestAggregator(Aggregator):

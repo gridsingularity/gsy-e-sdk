@@ -5,8 +5,8 @@ import traceback
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
 
-from d3a_api_client.redis_device import RedisDeviceClient
-from d3a_api_client.redis_market import RedisMarketClient
+from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.redis_market import RedisMarketClient
 from integration_tests.test_aggregator_base import TestAggregatorBase
 
 

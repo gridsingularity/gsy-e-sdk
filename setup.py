@@ -3,7 +3,7 @@
 import os
 
 from setuptools import find_packages, setup
-from d3a_api_client import __version__
+from gsy_e_sdk import __version__
 
 BRANCH = os.environ.get("BRANCH", "feature/D3ASIM-3669")
 
@@ -34,12 +34,12 @@ setup(
     url="https://github.com/faizan2590/gsy-e-sdk",
     version=VERSION,
     packages=find_packages(where=".", exclude=["tests"]),
-    package_dir={"d3a_api_client": "d3a_api_client"},
+    package_dir={"gsy_e_sdk": "gsy_e_sdk"},
     package_data={},
     install_requires=REQUIREMENTS,
     entry_points={
         "console_scripts": [
-            "d3a-api-client = d3a_api_client.cli:main",
+            "d3a-api-client = gsy_e_sdk.cli:main",
         ]
     },
     zip_safe=False,

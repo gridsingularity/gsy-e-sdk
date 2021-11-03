@@ -2,7 +2,7 @@ import unittest
 from math import isclose
 from parameterized import parameterized
 
-from d3a_api_client.grid_fee_calculation import GridFeeCalculation
+from gsy_e_sdk.grid_fee_calculation import GridFeeCalculation
 
 # for the unittest the area_uuids are exchanged by unique area_names for better debugging
 grid_stats_example = \

@@ -8,13 +8,13 @@ from gsy_framework.client_connections.utils import log_market_progression
 from gsy_framework.client_connections.websocket_connection import WebsocketThread
 from gsy_framework.utils import execute_function_util
 
-from d3a_api_client import APIClientInterface
-from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import (
+from gsy_e_sdk import APIClientInterface
+from gsy_e_sdk.constants import MAX_WORKER_THREADS
+from gsy_e_sdk.utils import (
     logging_decorator, get_aggregator_prefix,
     domain_name_from_env, websocket_domain_name_from_env,
     simulation_id_from_env, get_configuration_prefix, log_trade_info)
-from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
+from gsy_e_sdk.websocket_device import DeviceWebsocketMessageReceiver
 
 REGISTER_COMMAND_TIMEOUT = 15 * 60
 

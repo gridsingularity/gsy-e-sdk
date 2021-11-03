@@ -30,16 +30,16 @@ from logging import getLogger
 
 from gsy_framework.exceptions import GSyException
 from gsy_framework.utils import iterate_over_all_modules
-import d3a_api_client
+import gsy_e_sdk
 
-import d3a_api_client.setups as setups
-from d3a_api_client.constants import SETUP_FILE_PATH
-from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
+import gsy_e_sdk.setups as setups
+from gsy_e_sdk.constants import SETUP_FILE_PATH
+from gsy_e_sdk.utils import domain_name_from_env, websocket_domain_name_from_env, \
     simulation_id_from_env, read_simulation_config_file
 
 
 log = getLogger(__name__)
-api_client_path = os.path.dirname(inspect.getsourcefile(d3a_api_client))
+api_client_path = os.path.dirname(inspect.getsourcefile(gsy_e_sdk))
 
 
 @click.group(name='d3a-api-client', cls=DefaultGroup, default='run', default_if_no_args=True,

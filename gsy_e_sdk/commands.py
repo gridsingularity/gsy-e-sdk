@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from tabulate import tabulate
 
-from d3a_api_client.enums import Commands, command_enum_to_command_name
+from gsy_e_sdk.enums import Commands, command_enum_to_command_name
 
 
 class ClientCommandBuffer:
