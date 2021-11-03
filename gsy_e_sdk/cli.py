@@ -39,10 +39,10 @@ from gsy_e_sdk.utils import domain_name_from_env, websocket_domain_name_from_env
 
 
 log = getLogger(__name__)
-api_client_path = os.path.dirname(inspect.getsourcefile(gsy_e_sdk))
+gsy_e_sdk_path = os.path.dirname(inspect.getsourcefile(gsy_e_sdk))
 
 
-@click.group(name='d3a-api-client', cls=DefaultGroup, default='run', default_if_no_args=True,
+@click.group(name='gsy-e-sdk', cls=DefaultGroup, default='run', default_if_no_args=True,
              context_settings={'max_content_width': 120})
 @click.option('-l', '--log-level', type=Choice(list(logging._nameToLevel.keys())), default='ERROR',
               show_default=True, help="Log level")

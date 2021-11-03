@@ -1,7 +1,7 @@
 # D3A API Client
 
 ## Table of Content
-- [D3A API Client](#d3a-api-client)
+- [D3A API Client](#gsy-e-sdk)
   * [Overview](#overview)
   * [Installation Instructions](#installation-instructions)
   * [How to use the Client](#how-to-use-the-client)
@@ -39,7 +39,7 @@ In the following commands for the connection via the REST API are marked with `R
 
 ## Installation Instructions
 
-Installation of d3a-api-client using pip:
+Installation of gsy-e-sdk using pip:
 
 ```
 pip install git+https://github.com/gridsingularity/d3a-api-client.git
@@ -51,7 +51,7 @@ pip install git+https://github.com/gridsingularity/d3a-api-client.git
 ### Interacting via CLI
 In order to get help, please run:
 ```
-d3a-api-client run --help
+gsy-e-sdk run --help
 ```
 The following parameters can be set via the CLI:
 - `base-setup-path` --> Path where user's client script resides, otherwise `d3a_api_client/setups` is used.
@@ -70,16 +70,16 @@ The following parameters can be set via the CLI:
 #### Examples
 - For local testing of the API client:
   ```
-  d3a-api-client --log-level ERROR run --setup test_redis_aggregator --run-on-redis
+  gsy-e-sdk --log-level ERROR run --setup test_redis_aggregator --run-on-redis
   ```
 - For testing your api client script on remote server hosting d3a's collaboration/CNs.
     - If user's client script resides on `d3a_api_client/setups`
     ```
-    d3a-api-client run -u <username> -p <password> --setup test_create_aggregator --simulation-config-path <your-downloaded-simulation-config-file-path>
+    gsy-e-sdk run -u <username> -p <password> --setup test_create_aggregator --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```
     - If user's client script resides on a different directory, then its path needs to be set via `--base-setup-path`
     ```
-    d3a-api-client run -u <username> -p <password> --base-setup-path <absolute/relative-path-to-your-client-script> --setup <name-of-your-script> --simulation-config-path <your-downloaded-simulation-config-file-path>
+    gsy-e-sdk run -u <username> -p <password> --base-setup-path <absolute/relative-path-to-your-client-script> --setup <name-of-your-script> --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```
 
 ---
@@ -321,7 +321,7 @@ the corresponding string in the `fee_type` input parameter.
 ### Hardware API
 
 #### Sending Energy Forecast 
-##### With d3a-api-client
+##### With gsy-e-sdk
 The energy consumption or demand for PV and Load devices can be set for the next market slot via
 the following command 
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):

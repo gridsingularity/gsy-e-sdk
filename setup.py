@@ -1,4 +1,4 @@
-"""Setup module for the d3a-api-client."""
+"""Setup module for the gsy-e-sdk."""
 
 import os
 
@@ -39,7 +39,7 @@ setup(
     install_requires=REQUIREMENTS,
     entry_points={
         "console_scripts": [
-            "d3a-api-client = gsy_e_sdk.cli:main",
+            "gsy-e-sdk = gsy_e_sdk.cli:main",
         ]
     },
     zip_safe=False,
