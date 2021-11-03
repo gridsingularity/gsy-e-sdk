@@ -6,9 +6,9 @@ from copy import copy
 from threading import Lock
 from typing import Optional, Dict, List
 
-from d3a_interface.client_connections.utils import (
+from gsy_framework.client_connections.utils import (
     log_market_progression, get_slot_completion_percentage_int_from_message)
-from d3a_interface.utils import wait_until_timeout_blocking, execute_function_util
+from gsy_framework.utils import wait_until_timeout_blocking, execute_function_util
 from redis import StrictRedis
 
 from d3a_api_client.commands import ClientCommandBuffer

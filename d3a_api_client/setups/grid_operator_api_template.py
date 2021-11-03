@@ -9,7 +9,7 @@ from datetime import time
 from time import sleep
 from d3a_api_client.redis_market import RedisMarketClient
 from pendulum import from_format
-from d3a_interface.constants_limits import DATE_TIME_FORMAT, TIME_FORMAT
+from gsy_framework.constants_limits import DATE_TIME_FORMAT, TIME_FORMAT
 from d3a_api_client.types import aggregator_client_type
 from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
 from d3a_api_client.rest_market import RestMarketClient

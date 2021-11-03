@@ -4,18 +4,18 @@
 #
 #    pip-compile --output-file=requirements/base.txt requirements/base.in
 #
--e git+https://github.com/gridsingularity/d3a-interface@master#egg=d3a_interface
+-e git+https://github.com/faizan2590/gsy-framework@feature/D3ASIM-3669#egg=gsy_framework
     # via -r requirements/base.in
 attrs==21.2.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   jsonschema
     #   pytest
 awesome-slugify==1.6.5
     # via -r requirements/base.in
 backports.entry-points-selectable==1.1.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   virtualenv
 bcrypt==3.2.0
     # via paramiko
@@ -23,7 +23,7 @@ behave==1.2.6
     # via -r requirements/base.in
 certifi==2021.10.8
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   requests
 cffi==1.15.0
     # via
@@ -32,11 +32,11 @@ cffi==1.15.0
     #   pynacl
 cfgv==3.3.1
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pre-commit
 chardet==4.0.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   requests
 click==8.0.3
     # via
@@ -50,52 +50,52 @@ cryptography==35.0.0
     # via paramiko
 distlib==0.3.3
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   virtualenv
 entrypoints==0.3
     # via
-    #   d3a-interface
     #   flake8
+    #   gsy-framework
 fabric3==1.14.post1
     # via -r requirements/base.in
 filelock==3.3.2
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   tox
     #   virtualenv
 flake8==3.7.9
     # via
-    #   d3a-interface
     #   flake8-tuple
+    #   gsy-framework
 flake8-tuple==0.4.1
-    # via d3a-interface
+    # via gsy-framework
 graphql-core==3.1.6
     # via sgqlc
 identify==2.3.3
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pre-commit
 idna==2.10
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   requests
 iniconfig==1.1.1
     # via pytest
 jsonschema==4.1.2
-    # via d3a-interface
+    # via gsy-framework
 kafka-python==2.0.2
-    # via d3a-interface
+    # via gsy-framework
 mccabe==0.6.1
     # via
-    #   d3a-interface
     #   flake8
+    #   gsy-framework
 nodeenv==1.6.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pre-commit
 packaging==21.2
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pytest
     #   tox
 parameterized==0.8.1
@@ -109,99 +109,99 @@ parse==1.19.0
 parse-type==0.5.2
     # via behave
 pendulum==2.1.2
-    # via d3a-interface
+    # via gsy-framework
 platformdirs==2.4.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   virtualenv
 pluggy==1.0.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pytest
     #   tox
 pre-commit==2.15.0
-    # via d3a-interface
+    # via gsy-framework
 py==1.10.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pytest
     #   tox
 pycodestyle==2.5.0
     # via
-    #   d3a-interface
     #   flake8
+    #   gsy-framework
 pycparser==2.20
     # via cffi
 pyflakes==2.1.1
     # via
-    #   d3a-interface
     #   flake8
+    #   gsy-framework
 pynacl==1.4.0
     # via paramiko
 pyparsing==2.4.7
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   packaging
 pyrsistent==0.18.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   jsonschema
 pytest==6.2.5
     # via -r requirements/base.in
 python-dateutil==2.8.2
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pendulum
 pytzdata==2020.1
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pendulum
 pyyaml==6.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pre-commit
 redis==3.5.3
-    # via d3a-interface
+    # via gsy-framework
 regex==2021.11.1
     # via awesome-slugify
 requests==2.25.1
-    # via d3a-interface
+    # via gsy-framework
 sgqlc==14.1
     # via -r requirements/base.in
 six==1.16.0
     # via
     #   bcrypt
     #   behave
-    #   d3a-interface
     #   fabric3
     #   flake8-tuple
+    #   gsy-framework
     #   parse-type
     #   pynacl
     #   python-dateutil
     #   tox
     #   virtualenv
 tabulate==0.8.9
-    # via d3a-interface
+    # via gsy-framework
 toml==0.10.2
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pre-commit
     #   pytest
     #   tox
 tox==3.24.4
-    # via d3a-interface
+    # via gsy-framework
 unidecode==0.4.21
     # via awesome-slugify
 urllib3==1.26.7
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   requests
 virtualenv==20.10.0
     # via
-    #   d3a-interface
+    #   gsy-framework
     #   pre-commit
     #   tox
 websockets==10.0
     # via
     #   -r requirements/base.in
-    #   d3a-interface
+    #   gsy-framework

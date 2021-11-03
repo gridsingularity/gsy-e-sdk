@@ -3,7 +3,7 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_interface.utils import (
+from gsy_framework.utils import (
     execute_function_util, wait_until_timeout_blocking, key_in_dict_and_not_none)
 from redis import StrictRedis
 

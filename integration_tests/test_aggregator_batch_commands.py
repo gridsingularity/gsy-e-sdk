@@ -2,7 +2,7 @@ import json
 import logging
 import traceback
 
-from d3a_interface.constants_limits import DATE_TIME_FORMAT
+from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
 
 from d3a_api_client.redis_device import RedisDeviceClient

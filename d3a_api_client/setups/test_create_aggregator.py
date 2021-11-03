@@ -1,7 +1,7 @@
 import logging
 from time import sleep
 
-from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
+from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
 
 from d3a_api_client.aggregator import Aggregator
 from d3a_api_client.rest_device import RestDeviceClient

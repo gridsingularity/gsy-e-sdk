@@ -28,8 +28,8 @@ from click_default_group import DefaultGroup
 from colorlog import ColoredFormatter
 from logging import getLogger
 
-from d3a_interface.exceptions import D3AException
-from d3a_interface.utils import iterate_over_all_modules
+from gsy_framework.exceptions import GSyException
+from gsy_framework.utils import iterate_over_all_modules
 import d3a_api_client
 
 import d3a_api_client.setups as setups
@@ -131,7 +131,7 @@ def load_client_script(base_setup_path, setup_module_name):
             sys.path.append(setup_file_path)
             importlib.import_module(setup_module_name)
 
-    except D3AException as ex:
+    except GSyException as ex:
         raise click.BadOptionUsage(ex.args[0])
     except ModuleNotFoundError as ex:
         log.error("Could not find the specified module")

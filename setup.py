@@ -5,15 +5,15 @@ import os
 from setuptools import find_packages, setup
 from d3a_api_client import __version__
 
-BRANCH = os.environ.get("BRANCH", "master")
+BRANCH = os.environ.get("BRANCH", "feature/D3ASIM-3669")
 
 
 try:
     with open("requirements/base.txt", encoding="utf-8") as req:
         REQUIREMENTS = [r.partition("#")[0] for r in req if not r.startswith("-e")]
         REQUIREMENTS.extend(
-            ["d3a-interface @ "
-             f"git+https://github.com/gridsingularity/d3a-interface.git@{BRANCH}"])
+            ["gsy-framework @ "
+             f"git+https://github.com/faizan2590/gsy-framework@{BRANCH}"])
 
 except OSError:
     # Shouldn't happen
@@ -26,12 +26,12 @@ with open("README.md", "r", encoding="utf-8") as readme:
 VERSION = __version__
 
 setup(
-    name="d3a-api-client",
-    description="D3A API Client",
+    name="gsy-e-sdk",
+    description="GSy Exchange Software Development Kit",
     long_description=README,
     author="GridSingularity",
     author_email="d3a@gridsingularity.com",
-    url="https://github.com/gridsingularity/d3a-api-client",
+    url="https://github.com/faizan2590/gsy-e-sdk",
     version=VERSION,
     packages=find_packages(where=".", exclude=["tests"]),
     package_dir={"d3a_api_client": "d3a_api_client"},

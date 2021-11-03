@@ -1,7 +1,7 @@
 import logging
 from copy import copy
 
-from d3a_interface.utils import key_in_dict_and_not_none
+from gsy_framework.utils import key_in_dict_and_not_none
 
 
 class GridFeeCalculation:

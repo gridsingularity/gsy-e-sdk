@@ -5,8 +5,8 @@ import os
 from functools import wraps
 
 import requests
-from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
-from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
+from gsy_framework.api_simulation_config.validators import validate_api_simulation_config
+from gsy_framework.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
 from sgqlc.endpoint.http import HTTPEndpoint
 from tabulate import tabulate
 

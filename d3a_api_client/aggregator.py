@@ -2,9 +2,9 @@ import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Dict
 
-from d3a_interface.client_connections.utils import (
+from gsy_framework.client_connections.utils import (
     blocking_post_request, blocking_get_request, get_slot_completion_percentage_int_from_message)
-from d3a_interface.client_connections.websocket_connection import WebsocketThread
+from gsy_framework.client_connections.websocket_connection import WebsocketThread
 
 from d3a_api_client.commands import ClientCommandBuffer
 from d3a_api_client.constants import MAX_WORKER_THREADS

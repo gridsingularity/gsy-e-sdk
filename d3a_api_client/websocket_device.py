@@ -1,8 +1,8 @@
 import logging
 import traceback
 
-from d3a_interface.client_connections.websocket_connection import WebsocketMessageReceiver
-from d3a_interface.utils import wait_until_timeout_blocking
+from gsy_framework.client_connections.websocket_connection import WebsocketMessageReceiver
+from gsy_framework.utils import wait_until_timeout_blocking
 
 
 class DeviceWebsocketMessageReceiver(WebsocketMessageReceiver):

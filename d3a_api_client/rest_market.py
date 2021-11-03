@@ -1,7 +1,7 @@
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_interface.client_connections.utils import RestCommunicationMixin, blocking_post_request
-from d3a_interface.client_connections.websocket_connection import WebsocketThread
+from gsy_framework.client_connections.utils import RestCommunicationMixin, blocking_post_request
+from gsy_framework.client_connections.websocket_connection import WebsocketThread
 
 from d3a_api_client.constants import MAX_WORKER_THREADS
 from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
