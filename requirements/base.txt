@@ -6,6 +6,8 @@
 #
 -e git+https://github.com/gridsingularity/d3a-interface@master#egg=d3a_interface
     # via -r requirements/base.in
+astroid==2.8.4
+    # via pylint
 attrs==21.2.0
     # via
     #   d3a-interface
@@ -81,14 +83,19 @@ idna==2.10
     #   requests
 iniconfig==1.1.1
     # via pytest
+isort==5.10.0
+    # via pylint
 jsonschema==4.1.2
     # via d3a-interface
 kafka-python==2.0.2
     # via d3a-interface
+lazy-object-proxy==1.6.0
+    # via astroid
 mccabe==0.6.1
     # via
     #   d3a-interface
     #   flake8
+    #   pylint
 nodeenv==1.6.0
     # via
     #   d3a-interface
@@ -113,6 +120,7 @@ pendulum==2.1.2
 platformdirs==2.4.0
     # via
     #   d3a-interface
+    #   pylint
     #   virtualenv
 pluggy==1.0.0
     # via
@@ -120,7 +128,9 @@ pluggy==1.0.0
     #   pytest
     #   tox
 pre-commit==2.15.0
-    # via d3a-interface
+    # via
+    #   -r requirements/base.in
+    #   d3a-interface
 py==1.10.0
     # via
     #   d3a-interface
@@ -136,6 +146,8 @@ pyflakes==2.1.1
     # via
     #   d3a-interface
     #   flake8
+pylint==2.11.1
+    # via -r requirements/base.in
 pynacl==1.4.0
     # via paramiko
 pyparsing==2.4.7
@@ -186,10 +198,15 @@ toml==0.10.2
     # via
     #   d3a-interface
     #   pre-commit
+    #   pylint
     #   pytest
     #   tox
 tox==3.24.4
     # via d3a-interface
+typing-extensions==3.10.0.2
+    # via
+    #   astroid
+    #   pylint
 unidecode==0.4.21
     # via awesome-slugify
 urllib3==1.26.7
@@ -205,3 +222,8 @@ websockets==10.0
     # via
     #   -r requirements/base.in
     #   d3a-interface
+wrapt==1.13.3
+    # via astroid
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
