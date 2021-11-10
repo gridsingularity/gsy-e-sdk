@@ -16,7 +16,7 @@ def step_impl(context):
            "--net integtestnet redis:6.2.5")
 
 
-@given("d3a is started using setup {setup_file} ({gsy_e_options})")
+@given("gsy-e is started using setup {setup_file} ({gsy_e_options})")
 def step_impl(context, setup_file: str, gsy_e_options: str):
     """Run the d3a container on a specific setup.
 
