@@ -30,7 +30,7 @@ setup(
     description="GSy Exchange Software Development Kit",
     long_description=README,
     author="GridSingularity",
-    author_email="d3a@gridsingularity.com",
+    author_email="contact@gridsingularity.com",
     url="https://github.com/gridsingularity/gsy-e-sdk",
     version=VERSION,
     packages=find_packages(where=".", exclude=["tests"]),
