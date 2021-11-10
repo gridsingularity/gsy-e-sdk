@@ -1,5 +1,5 @@
-from d3a_api_client.constants import LOCAL_REDIS_URL
-from d3a_api_client.redis_client_base import RedisClientBase
+from gsy_e_sdk.constants import LOCAL_REDIS_URL
+from gsy_e_sdk.redis_client_base import RedisClientBase
 from slugify import slugify
 
 

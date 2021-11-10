@@ -2,22 +2,22 @@ import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Dict
 
-from d3a_interface.client_connections.utils import (
+from gsy_framework.client_connections.utils import (
     blocking_post_request, blocking_get_request, get_slot_completion_percentage_int_from_message)
-from d3a_interface.client_connections.websocket_connection import WebsocketThread
+from gsy_framework.client_connections.websocket_connection import WebsocketThread
 
-from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.constants import MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
-from d3a_api_client.grid_fee_calculation import GridFeeCalculation
-from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.utils import (
+from gsy_e_sdk.commands import ClientCommandBuffer
+from gsy_e_sdk.constants import MAX_WORKER_THREADS
+from gsy_e_sdk.constants import MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
+from gsy_e_sdk.grid_fee_calculation import GridFeeCalculation
+from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
     create_area_name_uuid_mapping_from_tree_info,
     log_bid_offer_confirmation, log_deleted_bid_offer_confirmation,
     get_name_from_area_name_uuid_mapping)
-from d3a_api_client.utils import logging_decorator
-from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
+from gsy_e_sdk.utils import logging_decorator
+from gsy_e_sdk.websocket_device import DeviceWebsocketMessageReceiver
 
 
 class AggregatorWebsocketMessageReceiver(DeviceWebsocketMessageReceiver):

@@ -10,4 +10,4 @@ pylint
 pytest
 sgqlc
 websockets
--e git+https://github.com/gridsingularity/d3a-interface@master#egg=d3a_interface
+-e git+https://github.com/gridsingularity/gsy-framework@feature/D3ASIM-3669#egg=gsy_framework

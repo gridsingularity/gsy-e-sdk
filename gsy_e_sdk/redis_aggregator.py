@@ -6,16 +6,16 @@ from copy import copy
 from threading import Lock
 from typing import Optional, Dict, List
 
-from d3a_interface.client_connections.utils import (
+from gsy_framework.client_connections.utils import (
     log_market_progression, get_slot_completion_percentage_int_from_message)
-from d3a_interface.utils import wait_until_timeout_blocking, execute_function_util
+from gsy_framework.utils import wait_until_timeout_blocking, execute_function_util
 from redis import StrictRedis
 
-from d3a_api_client.commands import ClientCommandBuffer
-from d3a_api_client.constants import (
+from gsy_e_sdk.commands import ClientCommandBuffer
+from gsy_e_sdk.constants import (
     MAX_WORKER_THREADS, MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE, LOCAL_REDIS_URL)
-from d3a_api_client.grid_fee_calculation import GridFeeCalculation
-from d3a_api_client.utils import (
+from gsy_e_sdk.grid_fee_calculation import GridFeeCalculation
+from gsy_e_sdk.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
     create_area_name_uuid_mapping_from_tree_info,
     get_name_from_area_name_uuid_mapping, log_trade_info,

@@ -5,10 +5,10 @@ Template file for a trading strategy through the d3a API client
 
 import os
 from time import sleep
-from d3a_api_client.redis_device import RedisDeviceClient
-from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.types import aggregator_client_type
-from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id
+from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.types import aggregator_client_type
+from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 current_dir = os.path.dirname(__file__)
 print(current_dir)

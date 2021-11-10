@@ -3,18 +3,18 @@ import os
 import inspect
 from jsonschema import ValidationError
 
-from d3a_api_client.cli import create_simulation_config_path
-import d3a_api_client
-from d3a_api_client.utils import read_simulation_config_file, get_sim_id_and_domain_names
+from gsy_e_sdk.cli import create_simulation_config_path
+import gsy_e_sdk
+from gsy_e_sdk.utils import read_simulation_config_file, get_sim_id_and_domain_names
 from unit_tests import FIXTURES_DIR
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+from gsy_e_sdk.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     API_CLIENT_SIMULATION_ID
 
 
 class TestSimulationInfo(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.api_client_path = os.path.dirname(inspect.getsourcefile(d3a_api_client))
+        self.api_client_path = os.path.dirname(inspect.getsourcefile(gsy_e_sdk))
 
     def tearDown(self) -> None:
         os.environ.pop('API_CLIENT_SIMULATION_ID', None)

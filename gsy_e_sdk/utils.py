@@ -5,13 +5,13 @@ import os
 from functools import wraps
 
 import requests
-from d3a_interface.api_simulation_config.validators import validate_api_simulation_config
-from d3a_interface.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
+from gsy_framework.api_simulation_config.validators import validate_api_simulation_config
+from gsy_framework.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
 from sgqlc.endpoint.http import HTTPEndpoint
 from tabulate import tabulate
 
-from d3a_api_client import __version__
-from d3a_api_client.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
+from gsy_e_sdk import __version__
+from gsy_e_sdk.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
     CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
 
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",

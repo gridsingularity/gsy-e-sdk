@@ -1,9 +1,9 @@
-"""Setup module for the d3a-api-client."""
+"""Setup module for the gsy-e-sdk."""
 
 import os
 
 from setuptools import find_packages, setup
-from d3a_api_client import __version__
+from gsy_e_sdk import __version__
 
 BRANCH = os.environ.get("BRANCH", "master")
 
@@ -12,8 +12,8 @@ try:
     with open("requirements/base.txt", encoding="utf-8") as req:
         REQUIREMENTS = [r.partition("#")[0] for r in req if not r.startswith("-e")]
         REQUIREMENTS.extend(
-            ["d3a-interface @ "
-             f"git+https://github.com/gridsingularity/d3a-interface.git@{BRANCH}"])
+            ["gsy-framework @ "
+             f"git+https://github.com/gridsingularity/gsy-framework@{BRANCH}"])
 
 except OSError:
     # Shouldn't happen
@@ -26,20 +26,20 @@ with open("README.md", "r", encoding="utf-8") as readme:
 VERSION = __version__
 
 setup(
-    name="d3a-api-client",
-    description="D3A API Client",
+    name="gsy-e-sdk",
+    description="GSy Exchange Software Development Kit",
     long_description=README,
     author="GridSingularity",
-    author_email="d3a@gridsingularity.com",
-    url="https://github.com/gridsingularity/d3a-api-client",
+    author_email="contact@gridsingularity.com",
+    url="https://github.com/gridsingularity/gsy-e-sdk",
     version=VERSION,
     packages=find_packages(where=".", exclude=["tests"]),
-    package_dir={"d3a_api_client": "d3a_api_client"},
+    package_dir={"gsy_e_sdk": "gsy_e_sdk"},
     package_data={},
     install_requires=REQUIREMENTS,
     entry_points={
         "console_scripts": [
-            "d3a-api-client = d3a_api_client.cli:main",
+            "gsy-e-sdk = gsy_e_sdk.cli:main",
         ]
     },
     zip_safe=False,

@@ -16,18 +16,18 @@ def step_impl(context):
            "--net integtestnet redis:6.2.5")
 
 
-@given("d3a is started using setup {setup_file} ({d3a_options})")
-def step_impl(context, setup_file: str, d3a_options: str):
+@given("d3a is started using setup {setup_file} ({gsy_e_options})")
+def step_impl(context, setup_file: str, gsy_e_options: str):
     """Run the d3a container on a specific setup.
 
     Args:
         setup_file (str): the setup file for a d3a simulation.
-        d3a_options (str): options to be passed to the d3a run command. E.g.: "-t 1s -d 12h"
+        gsy_e_options (str): options to be passed to the d3a run command. E.g.: "-t 1s -d 12h"
     """
     sleep(3)
-    system(f"docker run -d --name d3a-tests --env REDIS_URL=redis://redis.container:6379/ "
-           f"--net integtestnet d3a-tests -l INFO run --setup {setup_file} "
-           f"--no-export --seed 0 --enable-external-connection {d3a_options} ")
+    system(f"docker run -d --name gsy-e-tests --env REDIS_URL=redis://redis.container:6379/ "
+           f"--net integtestnet gsy-e-tests -l INFO run --setup {setup_file} "
+           f"--no-export --seed 0 --enable-external-connection {gsy_e_options} ")
 
 
 @when("the external client is started with test_aggregator_load")

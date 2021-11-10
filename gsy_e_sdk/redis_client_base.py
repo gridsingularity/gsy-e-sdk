@@ -3,12 +3,12 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_interface.utils import (
+from gsy_framework.utils import (
     execute_function_util, wait_until_timeout_blocking, key_in_dict_and_not_none)
 from redis import StrictRedis
 
-from d3a_api_client import APIClientInterface
-from d3a_api_client.constants import MAX_WORKER_THREADS, LOCAL_REDIS_URL
+from gsy_e_sdk import APIClientInterface
+from gsy_e_sdk.constants import MAX_WORKER_THREADS, LOCAL_REDIS_URL
 
 
 class RedisAPIException(Exception):

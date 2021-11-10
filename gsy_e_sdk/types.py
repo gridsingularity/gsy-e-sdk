@@ -1,10 +1,10 @@
 import os
-from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.redis_device import RedisDeviceClient
-from d3a_api_client.aggregator import Aggregator
-from d3a_api_client.redis_aggregator import RedisAggregator
-from d3a_api_client.rest_market import RestMarketClient
-from d3a_api_client.redis_market import RedisMarketClient
+from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.aggregator import Aggregator
+from gsy_e_sdk.redis_aggregator import RedisAggregator
+from gsy_e_sdk.rest_market import RestMarketClient
+from gsy_e_sdk.redis_market import RedisMarketClient
 
 
 def _select_client_type(rest_type, redis_type):

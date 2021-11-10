@@ -1,6 +1,6 @@
 import logging
 
-from d3a_api_client.redis_aggregator import RedisAggregator
+from gsy_e_sdk.redis_aggregator import RedisAggregator
 
 
 class TestAggregatorBase(RedisAggregator):

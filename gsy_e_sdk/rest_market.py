@@ -1,14 +1,14 @@
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from d3a_interface.client_connections.utils import RestCommunicationMixin, blocking_post_request
-from d3a_interface.client_connections.websocket_connection import WebsocketThread
+from gsy_framework.client_connections.utils import RestCommunicationMixin, blocking_post_request
+from gsy_framework.client_connections.websocket_connection import WebsocketThread
 
-from d3a_api_client.constants import MAX_WORKER_THREADS
-from d3a_api_client.utils import domain_name_from_env, websocket_domain_name_from_env, \
+from gsy_e_sdk.constants import MAX_WORKER_THREADS
+from gsy_e_sdk.utils import domain_name_from_env, websocket_domain_name_from_env, \
     simulation_id_from_env
-from d3a_api_client.utils import (retrieve_jwt_key_from_server,
-                                  logging_decorator, get_aggregator_prefix)
-from d3a_api_client.websocket_device import DeviceWebsocketMessageReceiver
+from gsy_e_sdk.utils import (retrieve_jwt_key_from_server,
+                             logging_decorator, get_aggregator_prefix)
+from gsy_e_sdk.websocket_device import DeviceWebsocketMessageReceiver
 
 
 class RestMarketClient(RestCommunicationMixin):

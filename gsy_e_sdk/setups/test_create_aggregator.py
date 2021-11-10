@@ -1,12 +1,12 @@
 import logging
 from time import sleep
 
-from d3a_interface.utils import key_in_dict_and_not_none_and_greater_than_zero
+from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
 
-from d3a_api_client.aggregator import Aggregator
-from d3a_api_client.rest_device import RestDeviceClient
-from d3a_api_client.rest_market import RestMarketClient
-from d3a_api_client.utils import get_area_uuid_from_area_name_and_collaboration_id, \
+from gsy_e_sdk.aggregator import Aggregator
+from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.rest_market import RestMarketClient
+from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id, \
     get_sim_id_and_domain_names
 
 

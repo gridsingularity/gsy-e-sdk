@@ -1,7 +1,7 @@
-# D3A API Client
+# GSy Exchange SDK
 
 ## Table of Content
-- [D3A API Client](#d3a-api-client)
+- [GSy Exchange SDK](#gsy-e-sdk)
   * [Overview](#overview)
   * [Installation Instructions](#installation-instructions)
   * [How to use the Client](#how-to-use-the-client)
@@ -27,11 +27,11 @@
 
 ## Overview
 
-D3A API client is responsible for communicating with a running collaboration of D3A. The client uses 
-the API of the D3A external connections in order to be able to dynamically connect to the simulated 
+GSy Exchange SDK is responsible for communicating with a running collaboration of GSy Exchange. The client uses
+the API of the GSy Exchange external connections in order to be able to dynamically connect to the simulated
 electrical grid and place offers for its energy production, and bids for its energy consumption/requirements.
 
-For local test runs of D3A Redis (https://redis.io/) is used as communication protocol. 
+For local test runs of GSy Exchange Redis (https://redis.io/) is used as communication protocol.
 In the following commands for the local test run are marked with `LOCAL`. 
 
 For communication with collaborations or canary networks on https://d3a.io, a RESTful API is used.
@@ -39,10 +39,10 @@ In the following commands for the connection via the REST API are marked with `R
 
 ## Installation Instructions
 
-Installation of d3a-api-client using pip:
+Installation of gsy-e-sdk using pip:
 
 ```
-pip install git+https://github.com/gridsingularity/d3a-api-client.git
+pip install git+https://github.com/gridsingularity/gsy-e-sdk.git
 ```
 ---
 
@@ -51,35 +51,35 @@ pip install git+https://github.com/gridsingularity/d3a-api-client.git
 ### Interacting via CLI
 In order to get help, please run:
 ```
-d3a-api-client run --help
+gsy-e-sdk run --help
 ```
 The following parameters can be set via the CLI:
-- `base-setup-path` --> Path where user's client script resides, otherwise `d3a_api_client/setups` is used.
+- `base-setup-path` --> Path where user's client script resides, otherwise `gsy_e_sdk/setups` is used.
 - `setup` --> Name of user's API client module/script.
 - `username` --> Username of agent authorized to communicate with respective collaboration or Canary Network (CN).
 - `password` --> Password of respective agent
-- `domain-name` --> D3A domain URL
-- `web-socket` --> D3A websocket URL
+- `domain-name` --> GSy Exchange domain URL
+- `web-socket` --> GSy Exchange websocket URL
 - `simulation-id` --> UUID of the collaboration or Canary Network (CN)
 - `simulation-config-path` --> Path to the JSON file that contains the user's collaboration or CN information. 
-  This file can be downloaded from the "Registry" page on the D3A website. 
+  This file can be downloaded from the "Registry" page on the GSy Exchange website.
   `simulation-id`, `domain-name`, and `web-socket` CLI-settings will be overwritten by the settings in the file
 - `run-on-redis` --> This flag can be set for local testing of the API client, where no user authentication is required. 
-  For that, a locally running redis server and d3a simulation are needed.
+  For that, a locally running redis server and GSy Exchange simulation are needed.
 
 #### Examples
 - For local testing of the API client:
   ```
-  d3a-api-client --log-level ERROR run --setup test_redis_aggregator --run-on-redis
+  gsy-e-sdk --log-level ERROR run --setup test_redis_aggregator --run-on-redis
   ```
-- For testing your api client script on remote server hosting d3a's collaboration/CNs.
-    - If user's client script resides on `d3a_api_client/setups`
+- For testing your api client script on remote server hosting GSy Exchange's collaboration/CNs.
+    - If user's client script resides on `gsy_e_sdk/setups`
     ```
-    d3a-api-client run -u <username> -p <password> --setup test_create_aggregator --simulation-config-path <your-downloaded-simulation-config-file-path>
+    gsy-e-sdk run -u <username> -p <password> --setup test_create_aggregator --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```
     - If user's client script resides on a different directory, then its path needs to be set via `--base-setup-path`
     ```
-    d3a-api-client run -u <username> -p <password> --base-setup-path <absolute/relative-path-to-your-client-script> --setup <name-of-your-script> --simulation-config-path <your-downloaded-simulation-config-file-path>
+    gsy-e-sdk run -u <username> -p <password> --base-setup-path <absolute/relative-path-to-your-client-script> --setup <name-of-your-script> --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```
 
 ---
@@ -163,7 +163,8 @@ commands in order to react to an event simultaneously for each owned device.
 
 To list your aggregators, its configuration id and the registered devices, you should:
 ```python
-from d3a_api_client.utils import get_aggregators_list
+```python
+from gsy_e_sdk.utils import get_aggregators_list
 my_aggregators = get_aggregators_list(domain_name="Domain Name")
 ```
 The returned value is a list of aggregators and their connected devices
@@ -218,7 +219,7 @@ aggregator.add_to_batch_commands.bid_energy(<device_uuid>, <energy>, <price_cent
                                 .offer_energy(<device_uuid>, <energy>, <price_cents>)\
                                 .device_info(<device_uuid>)
 ```
-Finally, the batch commands are sent to the D3A via the following command:
+Finally, the batch commands are sent to the GSy Exchange via the following command:
 ```
 aggregator.execute_batch_command()
 ```
@@ -320,7 +321,7 @@ the corresponding string in the `fee_type` input parameter.
 ### Hardware API
 
 #### Sending Energy Forecast 
-##### With d3a-api-client
+##### With gsy-e-sdk
 The energy consumption or demand for PV and Load devices can be set for the next market slot via
 the following command 
 (assuming that a [connection to a device was established](#how-to-create-a-connection-to-a-device)):
@@ -328,7 +329,7 @@ the following command
 device_client.set_energy_forecast(<energy_forecast_Wh>)
 ```
 An example how this command could be added into an aggregator script can be found in 
-**d3a_api_client/setups/test_sending_energy_forecast.py** . 
+**gsy_e_sdk/setups/test_sending_energy_forecast.py** .
 
 ##### Directly via REST endpoint
 In case the user wants to send device measurements without using the API client, the raw REST API 

@@ -20,8 +20,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from redis import StrictRedis
 
-import d3a_api_client
-from d3a_api_client.redis_client_base import RedisClientBase, RedisAPIException
+import gsy_e_sdk
+from gsy_e_sdk.redis_client_base import RedisClientBase, RedisAPIException
 
 AREA_ID = str(uuid.uuid4())
 TRANSACTION_ID = str(uuid.uuid4())
@@ -34,7 +34,7 @@ class TestRedisClientBase:
 
     @staticmethod
     @pytest.fixture()
-    @patch("d3a_api_client.redis_client_base.StrictRedis")
+    @patch("gsy_e_sdk.redis_client_base.StrictRedis")
     def redis_client_auto_register(strict_redis_mock):
         """Create the fixture for redis client base."""
         strict_redis_mock.return_value = MagicMock(spec=StrictRedis)
@@ -99,7 +99,7 @@ class TestRedisClientBase:
             f"{AREA_ID}/register_participant", json.dumps(data))
 
     @staticmethod
-    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking",
+    @patch("gsy_e_sdk.redis_client_base.wait_until_timeout_blocking",
            side_effect=AssertionError)
     def test_register_self_active_false_throws_exception(mock_wait_until_timeout_blocking,
                                                          redis_client_auto_register):
@@ -141,7 +141,7 @@ class TestRedisClientBase:
             redis_client_auto_register.unregister(is_blocking=True)
 
     @staticmethod
-    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking",
+    @patch("gsy_e_sdk.redis_client_base.wait_until_timeout_blocking",
            side_effect=AssertionError)
     def test_unregister_is_active_true_throws_exception(
             mock_wait_until_timeout_blocking,
@@ -159,7 +159,7 @@ class TestRedisClientBase:
 
     @staticmethod
     @patch("uuid.uuid4", return_value="some-transaction-uuid")
-    @patch("d3a_api_client.redis_client_base.logging")
+    @patch("gsy_e_sdk.redis_client_base.logging")
     def test_on_register(logging_mock, uuid_mock, redis_client_auto_register):
         """Check the on_register function with correct message that doesn't throw exception."""
         redis_client_auto_register.on_register = MagicMock()
@@ -228,7 +228,7 @@ class TestRedisClientBase:
                 aggregator_uuid=aggregator_uuid)
 
     @staticmethod
-    @patch("d3a_api_client.redis_client_base.wait_until_timeout_blocking",
+    @patch("gsy_e_sdk.redis_client_base.wait_until_timeout_blocking",
            side_effect=AssertionError)
     def test_select_aggregator_throws_exception_if_no_d3a_is_running(
             mock_wait_until_timeout_blocking,
