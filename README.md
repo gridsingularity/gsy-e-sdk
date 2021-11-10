@@ -42,7 +42,7 @@ In the following commands for the connection via the REST API are marked with `R
 Installation of gsy-e-sdk using pip:
 
 ```
-pip install git+https://github.com/faizan2590/gsy-e-sdk.git
+pip install git+https://github.com/gridsingularity/gsy-e-sdk.git
 ```
 ---
 
