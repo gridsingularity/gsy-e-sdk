@@ -1,4 +1,4 @@
- name: d3a-api-client-CI
+ name: gsy-e-sdk-CI
  on:
   pull_request
 
