@@ -3,8 +3,8 @@ from time import sleep
 
 from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
 
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 from gsy_e_sdk.redis_aggregator import RedisAggregator
-from gsy_e_sdk.redis_device import RedisDeviceClient
 from gsy_e_sdk.redis_market import RedisMarketClient
 
 
@@ -54,10 +54,10 @@ class AutoAggregator(RedisAggregator):
 
 aggregator = AutoAggregator(aggregator_name="test_aggr")
 
-load = RedisDeviceClient("load", autoregister=True, pubsub_thread=aggregator.pubsub)
+load = RedisAssetClient("load", autoregister=True, pubsub_thread=aggregator.pubsub)
 load.select_aggregator(aggregator.aggregator_uuid)
 
-pv = RedisDeviceClient("pv", autoregister=True, pubsub_thread=aggregator.pubsub)
+pv = RedisAssetClient("pv", autoregister=True, pubsub_thread=aggregator.pubsub)
 pv.select_aggregator(aggregator.aggregator_uuid)
 
 redis_market = RedisMarketClient("house-2")

@@ -5,7 +5,7 @@ from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
 
 from gsy_e_sdk.aggregator import Aggregator
-from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.utils import (get_area_uuid_from_area_name_and_collaboration_id,
                              get_sim_id_and_domain_names)
 
@@ -57,10 +57,10 @@ class TestAggregator(Aggregator):
 simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
 
 load_uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, "Load", domain_name)
-load = RestDeviceClient(load_uuid)
+load = RestAssetClient(load_uuid)
 
 pv_uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, "PV", domain_name)
-pv = RestDeviceClient(pv_uuid)
+pv = RestAssetClient(pv_uuid)
 
 aggregator = TestAggregator(aggregator_name="test_aggregator")
 

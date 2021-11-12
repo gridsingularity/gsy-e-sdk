@@ -4,10 +4,11 @@ from time import sleep
 from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
 
 from gsy_e_sdk.aggregator import Aggregator
-from gsy_e_sdk.rest_device import RestDeviceClient
+
+from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.rest_market import RestMarketClient
-from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id, \
-    get_sim_id_and_domain_names
+from gsy_e_sdk.utils import (
+    get_area_uuid_from_area_name_and_collaboration_id, get_sim_id_and_domain_names)
 
 
 class TestAggregator(Aggregator):
@@ -69,11 +70,11 @@ aggr = TestAggregator(aggregator_name="test_aggr")
 
 load1_uuid = get_area_uuid_from_area_name_and_collaboration_id(
     simulation_id, "Load", domain_name)
-load1 = RestDeviceClient(load1_uuid)
+load1 = RestAssetClient(load1_uuid)
 
 pv1_uuid = get_area_uuid_from_area_name_and_collaboration_id(
     simulation_id, "PV", domain_name)
-pv1 = RestDeviceClient(pv1_uuid)
+pv1 = RestAssetClient(pv1_uuid)
 
 load1.select_aggregator(aggr.aggregator_uuid)
 pv1.select_aggregator(aggr.aggregator_uuid)
