@@ -40,6 +40,7 @@ setup(
     entry_points={
         "console_scripts": [
             "gsy-e-sdk = gsy_e_sdk.cli:main",
+            "d3a-api-client = gsy_e_sdk.cli:main",
         ]
     },
     zip_safe=False,
