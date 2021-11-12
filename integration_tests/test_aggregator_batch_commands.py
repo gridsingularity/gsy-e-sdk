@@ -5,7 +5,7 @@ import traceback
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
 
-from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 from gsy_e_sdk.redis_market import RedisMarketClient
 from integration_tests.test_aggregator_base import TestAggregatorBase
 
@@ -18,9 +18,9 @@ class BatchAggregator(TestAggregatorBase):
         self.updated_offer_bid_price = 60
 
     def _setup(self):
-        load = RedisDeviceClient("load")
-        pv = RedisDeviceClient("pv")
-        forecast_load = RedisDeviceClient("forecast-measurement-load")
+        load = RedisAssetClient("load")
+        pv = RedisAssetClient("pv")
+        forecast_load = RedisAssetClient("forecast-measurement-load")
 
         load.select_aggregator(self.aggregator_uuid)
         pv.select_aggregator(self.aggregator_uuid)

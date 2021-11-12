@@ -4,7 +4,7 @@ import json
 import traceback
 
 from integration_tests.test_aggregator_base import TestAggregatorBase
-from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 
 
 class EssAggregator(TestAggregatorBase):
@@ -12,7 +12,7 @@ class EssAggregator(TestAggregatorBase):
         super().__init__(*args, **kwargs)
 
     def _setup(self):
-        storage = RedisDeviceClient("storage")
+        storage = RedisAssetClient("storage")
         storage.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
