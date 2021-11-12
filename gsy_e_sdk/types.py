@@ -8,17 +8,13 @@ from gsy_e_sdk.redis_market import RedisMarketClient
 
 
 def _select_client_type(rest_type, redis_type):
-    if "API_CLIENT_RUN_ON_REDIS" in os.environ and \
-            os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
+    if "API_CLIENT_RUN_ON_REDIS" in os.environ and os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
         return redis_type
-    else:
-        return rest_type
+
+    return rest_type
 
 
+# pylint: disable=invalid-name
 device_client_type = _select_client_type(RestDeviceClient, RedisDeviceClient)
-
-
 aggregator_client_type = _select_client_type(Aggregator, RedisAggregator)
-
-
 market_client_type = _select_client_type(RestMarketClient, RedisMarketClient)
