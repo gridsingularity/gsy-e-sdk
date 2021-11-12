@@ -11,6 +11,7 @@ from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id, \
 
 
 class TestAggregator(Aggregator):
+    """Aggregator that automatically reacts on market cycle events with bids and offers."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,12 +31,12 @@ class TestAggregator(Aggregator):
         market_uuid = self.get_uuid_from_area_name("House")
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             logging.info(
-                f"current_market_fee: "
-                f"{self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid)}")
+                "current_market_fee: %s",
+                self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid))
             if not area_dict.get("asset_info"):
                 if area_uuid == market_uuid:
-                    self.add_to_batch_commands.last_market_dso_stats(area_uuid=area_uuid). \
-                        grid_fees(area_uuid=area_uuid, fee_cents_kwh=5)
+                    self.add_to_batch_commands.last_market_dso_stats(
+                        area_uuid=area_uuid).grid_fees(area_uuid=area_uuid, fee_cents_kwh=5)
             else:
                 if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
                                                                   "available_energy_kWh"):
@@ -50,13 +51,13 @@ class TestAggregator(Aggregator):
                                                           energy=energy)
 
         response = self.execute_batch_commands()
-        logging.info(f"Batch command placed on the new market: {response}")
+        logging.info("Batch command placed on the new market: %s", response)
 
     def on_tick(self, tick_info):
-        logging.debug(f'Progress information on the device: {tick_info}')
+        logging.debug("Progress information on the device: %s", tick_info)
 
     def on_trade(self, trade_info):
-        logging.debug(f'Trade info: {trade_info}')
+        logging.debug("Trade info: %s", trade_info)
 
     def on_finish(self, finish_info):
         self.is_finished = True
@@ -64,14 +65,14 @@ class TestAggregator(Aggregator):
 
 simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
 
-aggr = TestAggregator(aggregator_name='test_aggr')
+aggr = TestAggregator(aggregator_name="test_aggr")
 
 load1_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    simulation_id, 'Load', domain_name)
+    simulation_id, "Load", domain_name)
 load1 = RestDeviceClient(load1_uuid)
 
 pv1_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    simulation_id, 'PV', domain_name)
+    simulation_id, "PV", domain_name)
 pv1 = RestDeviceClient(pv1_uuid)
 
 load1.select_aggregator(aggr.aggregator_uuid)
