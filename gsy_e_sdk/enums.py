@@ -8,7 +8,7 @@ class Commands(Enum):
     DELETE_BID = 4
     LIST_OFFERS = 5
     LIST_BIDS = 6
-    DEVICE_INFO = 7
+    ASSET_INFO = 7
     GRID_FEES = 8
     DSO_MARKET_STATS = 9
     FORECAST = 10
@@ -22,7 +22,7 @@ command_enum_to_command_name_dict = {
     Commands.DELETE_BID: "delete_bid",
     Commands.LIST_OFFERS: "list_offers",
     Commands.LIST_BIDS: "list_bids",
-    Commands.DEVICE_INFO: "device_info",
+    Commands.ASSET_INFO: "device_info",
     Commands.GRID_FEES: "grid_fees",
     Commands.DSO_MARKET_STATS: "dso_market_stats",
     Commands.FORECAST: "set_energy_forecast",

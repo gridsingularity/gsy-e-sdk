@@ -78,7 +78,16 @@ class ClientCommandBuffer:
         return self._add_to_buffer(area_uuid, Commands.LIST_BIDS, {"time_slot": time_slot})
 
     def device_info(self, area_uuid):
-        return self._add_to_buffer(area_uuid, Commands.DEVICE_INFO, {})
+        """Retrieve information about the asset identified by the given UUID.
+
+        Important: this method is deprecated. Please use `asset_info` instead.
+        """
+        logging.warning("device_info is deprecated. Please use asset_info instead.")
+        return self.asset_info(area_uuid)
+
+    def asset_info(self, asset_uuid):
+        """Retrieve information about the asset identified by the given UUID."""
+        return self._add_to_buffer(asset_uuid, Commands.ASSET_INFO, {})
 
     def last_market_dso_stats(self, area_uuid):
         return self._add_to_buffer(area_uuid, Commands.DSO_MARKET_STATS, {"data": {}})

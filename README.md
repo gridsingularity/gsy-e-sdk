@@ -217,7 +217,7 @@ These also can be chained as follow:
 ```
 aggregator.add_to_batch_commands.bid_energy(<asset_uuid>, <energy>, <price_cents>)\
                                 .offer_energy(<asset_uuid>, <energy>, <price_cents>)\
-                                .device_info(<asset_uuid>)
+                                .asset_info(<asset_uuid>)
 ```
 Finally, the batch commands are sent to the GSy Exchange via the following command:
 ```
@@ -254,7 +254,7 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```
 - Get asset info (returns demanded energy for Load assets and available energy for PVs):
     ```python
-    device_info(area_uuid)
+    asset_info(area_uuid)
     ```
 - List all posted offers:
     ```python
