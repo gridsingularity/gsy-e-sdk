@@ -41,7 +41,7 @@ In the following commands for the connection via the REST API are marked with `R
 
 Installation of gsy-e-sdk using pip:
 
-```
+```bash
 pip install git+https://github.com/gridsingularity/gsy-e-sdk.git
 ```
 ---
@@ -50,7 +50,7 @@ pip install git+https://github.com/gridsingularity/gsy-e-sdk.git
 
 ### Interacting via CLI
 In order to get help, please run:
-```
+```bash
 gsy-e-sdk run --help
 ```
 The following parameters can be set via the CLI:
@@ -69,16 +69,16 @@ The following parameters can be set via the CLI:
 
 #### Examples
 - For local testing of the API client:
-  ```
+  ```bash
   gsy-e-sdk --log-level ERROR run --setup test_redis_aggregator --run-on-redis
   ```
 - For testing your api client script on remote server hosting GSy Exchange's collaboration/CNs.
     - If user's client script resides on `gsy_e_sdk/setups`
-    ```
+    ```bash
     gsy-e-sdk run -u <username> -p <password> --setup test_create_aggregator --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```
     - If user's client script resides on a different directory, then its path needs to be set via `--base-setup-path`
-    ```
+    ```bash
     gsy-e-sdk run -u <username> -p <password> --base-setup-path <absolute/relative-path-to-your-client-script> --setup <name-of-your-script> --simulation-config-path <your-downloaded-simulation-config-file-path>
     ```
 
@@ -101,23 +101,23 @@ by overriding the corresponding methods.
 The constructor of the API class can connect and register automatically to a running collaboration:
 - `REST`
   (here the asset uuid has to be obtained first)
-    ```
+    ```python
     asset_uuid = get_area_uuid_from_area_name_and_collaboration_id(
                   <simulation_id>, <asset_name>, <domain_name>
                   )
     asset_client = RestAssetClient(asset_uuid, autoregister=True)
     ```
 - `LOCAL`
-    ```
-    asset_client = RedisClient(<slugified-asset-name>, autoregister=True)
+    ```python
+    asset_client = RedisAssetClient(<asset-uuid>, autoregister=True)
     ```
 
 Otherwise one can connect manually:
-```
+```python
 asset_client.register()
 ```
 To disconnect/unregistering, the following command is available:
-```
+```python
 asset_client.unregister()
 ```
 
@@ -127,14 +127,14 @@ asset_client.unregister()
 #### How to create a connection to a Market
 - `REST`
     (here the market uuid has to be obtained first)
-    ```
+    ```python
     market_uuid = get_area_uuid_from_area_name_and_collaboration_id(
                   <simulation_id>, <market_name>, <domain_name>
                   )
     market_client = RestMarketClient(market_uuid, autoregister=True)
     ```
 - `LOCAL`
-    ```
+    ```python
     market_client = RedisMarketClient(<market_name>, autoregister=True)
     ```
 
@@ -146,7 +146,7 @@ commands in order to react to an event simultaneously for each owned asset.
 #### How to create an Aggregator
 
 - `REST`
-    ```
+    ```python
     aggregator = Aggregator(
             simulation_id=<simulation_id>,
             domain_name=<domain_name>,
@@ -155,14 +155,13 @@ commands in order to react to an event simultaneously for each owned asset.
             )
     ```
 - `LOCAL`
-    ```
+    ```python
     aggregator = AutoAggregator(<aggregator_name>)
     ```
 
 #### How to list your aggregators
 
 To list your aggregators, its configuration id and the registered assets, you should:
-```python
 ```python
 from gsy_e_sdk.utils import get_aggregators_list
 my_aggregators = get_aggregators_list(domain_name="Domain Name")
@@ -210,17 +209,17 @@ Commands to all or individual connected assets or markets can be sent in one bat
 All asset or market specific functions can be sent via commands that are
 accumulated and added to buffer.
 
-```
+```python
 aggregator.add_to_batch_commands.bid_energy(<asset_uuid>, <energy>, <price_cents>)
 ```
 These also can be chained as follow:
-```
+```python
 aggregator.add_to_batch_commands.bid_energy(<asset_uuid>, <energy>, <price_cents>)\
                                 .offer_energy(<asset_uuid>, <energy>, <price_cents>)\
                                 .asset_info(<asset_uuid>)
 ```
 Finally, the batch commands are sent to the GSy Exchange via the following command:
-```
+```python
 aggregator.execute_batch_command()
 ```
 
