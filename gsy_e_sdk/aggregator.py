@@ -49,7 +49,7 @@ class Aggregator(RestAssetClient):
             simulation_id=simulation_id,
             domain_name=domain_name,
             websockets_domain_name=websockets_domain_name,
-            area_id="",
+            asset_uuid="",
             autoregister=False,
             start_websocket=False)
 

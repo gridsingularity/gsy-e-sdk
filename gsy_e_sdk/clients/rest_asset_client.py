@@ -24,12 +24,13 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
 
     # pylint: disable=super-init-not-called
     # pylint: disable=too-many-arguments
-    def __init__(self, area_id, simulation_id=None, domain_name=None, websockets_domain_name=None,
-                 autoregister=False, start_websocket=True, sim_api_domain_name=None):
+    def __init__(
+            self, asset_uuid, simulation_id=None, domain_name=None, websockets_domain_name=None,
+             autoregister=False, start_websocket=True, sim_api_domain_name=None):
         self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
         self.domain_name = domain_name if domain_name else domain_name_from_env()
         self.websockets_domain_name = websockets_domain_name or websocket_domain_name_from_env()
-        self.area_id = area_id
+        self.asset_uuid = asset_uuid
         if sim_api_domain_name is None:
             sim_api_domain_name = self.domain_name
         self.jwt_token = retrieve_jwt_key_from_server(sim_api_domain_name)
@@ -48,12 +49,12 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
     @property
     def endpoint_prefix(self):
         """Return the prefix of the URL used to connect to the asset's endpoints."""
-        return f"{self.domain_name}/external-connection/api/{self.simulation_id}/{self.area_id}"
+        return f"{self.domain_name}/external-connection/api/{self.simulation_id}/{self.asset_uuid}"
 
     def start_websocket_connection(self):
         """Initiate the websocket connection to the exchange."""
         self.dispatcher = DeviceWebsocketMessageReceiver(self)
-        websocket_uri = f"{self.websockets_domain_name}/{self.simulation_id}/{self.area_id}/"
+        websocket_uri = f"{self.websockets_domain_name}/{self.simulation_id}/{self.asset_uuid}/"
         self.websocket_thread = WebsocketThread(websocket_uri, self.domain_name, self.dispatcher)
         self.websocket_thread.start()
         self.callback_thread = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
@@ -87,7 +88,7 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
         """Connect the asset with its aggregator (identified by the provided ID)."""
         response = blocking_post_request(
             f"{self.aggregator_prefix}select-aggregator/",
-            {"aggregator_uuid": aggregator_uuid, "device_uuid": self.area_id},
+            {"aggregator_uuid": aggregator_uuid, "device_uuid": self.asset_uuid},
             self.jwt_token)
 
         self.active_aggregator = response["aggregator_uuid"] if response else None
@@ -97,7 +98,7 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
         """Disconnect the asset from its aggregator (identified by the provided ID)."""
         blocking_post_request(
             f"{self.aggregator_prefix}unselect-aggregator/",
-            {"aggregator_uuid": aggregator_uuid, "device_uuid": self.area_id},
+            {"aggregator_uuid": aggregator_uuid, "device_uuid": self.asset_uuid},
             self.jwt_token)
 
         self.active_aggregator = None
