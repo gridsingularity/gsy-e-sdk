@@ -7,6 +7,7 @@ from tabulate import tabulate
 
 from gsy_e_sdk.enums import Commands, command_enum_to_command_name
 
+
 # pylint: disable=too-many-arguments
 class ClientCommandBuffer:
     """Buffer used to keep in memory the batch commands until they're submitted to the server."""
@@ -83,11 +84,11 @@ class ClientCommandBuffer:
                                    {"bid_id": bid_id, "time_slot": time_slot})
 
     def list_offers(self, area_uuid, time_slot: str = None):
-        """Add a command to list offers made by a specific asset in the given time slot."""
+        """Add a command to list offers made on the specified area in the given time slot."""
         return self._add_to_buffer(area_uuid, Commands.LIST_OFFERS, {"time_slot": time_slot})
 
     def list_bids(self, area_uuid, time_slot: str = None):
-        """Add a command to list bids made by a specific asset in the given time slot."""
+        """Add a command to list bids made on the specified area in the given time slot."""
         return self._add_to_buffer(area_uuid, Commands.LIST_BIDS, {"time_slot": time_slot})
 
     def device_info(self, area_uuid):
