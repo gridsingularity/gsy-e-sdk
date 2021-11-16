@@ -47,67 +47,67 @@ class BatchAggregator(TestAggregatorBase):
                 asset_info = area_dict["asset_info"]
                 if self._can_place_offer(asset_info):
                     self.add_to_batch_commands.offer_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=1.1,
                         energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=False,
                         attributes={"energy_type": "PV"}
                     ).offer_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=2.2,
                         energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=False,
                         attributes={"energy_type": "PV"}
                     ).offer_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=3.3,
                         energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=True,
                         attributes={"energy_type": "PV"}
                     ).offer_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=4.4,
                         energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=False,
                         attributes={"energy_type": "PV"}
-                    ).list_offers(area_uuid=area_uuid)
+                    ).list_offers(asset_uuid=area_uuid)
 
                 if self._can_place_bid(asset_info):
                     self.add_to_batch_commands.bid_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=27,
                         energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=False,
                         requirements=[{"price": 27 / (asset_info["energy_requirement_kWh"] / 4)}]
                     ).bid_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=28,
                         energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=False,
                         requirements=[{"price": 28 / (asset_info["energy_requirement_kWh"] / 4)}]
                     ).bid_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=29,
                         energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=True,
                         requirements=[{"price": 29 / (asset_info["energy_requirement_kWh"] / 4)}]
                     ).bid_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=30,
                         energy=asset_info["energy_requirement_kWh"] / 4,
                         replace_existing=False,
                         requirements=[{"price": 30 / (asset_info["energy_requirement_kWh"] / 4)}]
                     ).list_bids(
-                        area_uuid=area_uuid
+                        asset_uuid=area_uuid
                     )
                 if self._can_place_forecast_measurements(area_dict):
                     next_market_slot_str = (from_format(market_info["market_slot"], DATE_TIME_FORMAT).
                                             add(minutes=15).format(DATE_TIME_FORMAT))
                     self.add_to_batch_commands.set_energy_forecast(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         energy_forecast_kWh={next_market_slot_str: 1234.0}
                     ).set_energy_measurement(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         energy_measurement_kWh={next_market_slot_str: 2345.0}
                     )
 

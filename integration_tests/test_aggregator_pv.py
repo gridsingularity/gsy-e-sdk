@@ -29,7 +29,7 @@ class PVAggregator(TestAggregatorBase):
                     offer_energy = asset_info["available_energy_kWh"]
                     offer_price = 50 * offer_energy
                     self.add_to_batch_commands.offer_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=offer_price,
                         energy=offer_energy,
                         replace_existing=False

@@ -26,12 +26,12 @@ class AutoAggregator(RedisAggregator):
                 if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
                                                                   "available_energy_kWh"):
                     energy = area_dict["asset_info"]["available_energy_kWh"] / 2
-                    self.add_to_batch_commands.offer_energy(area_uuid=area_uuid, price=1,
+                    self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid, price=1,
                                                             energy=energy)
                 if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
                                                                   "energy_requirement_kWh"):
                     energy = area_dict["asset_info"]["energy_requirement_kWh"] / 2
-                    self.add_to_batch_commands.bid_energy(area_uuid=area_uuid, price=30,
+                    self.add_to_batch_commands.bid_energy(asset_uuid=area_uuid, price=30,
                                                           energy=energy)
 
             response = self.execute_batch_commands()

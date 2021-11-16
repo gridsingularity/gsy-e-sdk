@@ -230,11 +230,11 @@ The following commands can be issued as batch commands (refer to [How to send ba
 
 - Send an energy bid with price in cents:
     ```python
-    bid_energy(area_uuid, energy, price_cents, replace_existing, attributes, requirements)
+    bid_energy(asset_uuid, energy, price_cents, replace_existing, attributes, requirements)
     ```
 - Send an energy bid with energy rate in cents/kWh:
     ```python
-    bid_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
+    bid_energy_rate(asset_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
     ```
 - Change grid fees using a percentage value:
     ```python
@@ -246,23 +246,23 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```
 - Delete offer using its ID:
     ```python
-    delete_offer(area_uuid, offer_id)
+    delete_offer(asset_uuid, offer_id)
     ```
 - Delete bid using its ID:
     ```python
-    delete_bid(area_uuid, bid_id)
+    delete_bid(asset_uuid, bid_id)
     ```
 - Get asset info (returns demanded energy for Load assets and available energy for PVs):
     ```python
-    asset_info(area_uuid)
+    asset_info(asset_uuid)
     ```
 - List all posted offers:
     ```python
-    list_offers(area_uuid)
+    list_offers(asset_uuid)
     ```
 - Lists all posted bids:
     ```python
-    list_bids(area_uuid)
+    list_bids(asset_uuid)
     ```
 - Retrieve market DSO statistics:
     ```python
@@ -270,11 +270,11 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```
 - Send an energy offer with price in cents:
     ```python
-    offer_energy(area_uuid, energy, price_cents, replace_existing, attributes, requirements)
+    offer_energy(asset_uuid, energy, price_cents, replace_existing, attributes, requirements)
     ```
 - Send an energy offer with energy rate in cents/kWh:
     ```python
-    offer_energy_rate(area_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
+    offer_energy_rate(asset_uuid, energy, rate_cents_per_kWh, replace_existing, attributes, requirements)
     ```
 ---
 ### Attributes and requirements
