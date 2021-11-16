@@ -70,7 +70,7 @@ class BatchAggregator(TestAggregatorBase):
                         energy=asset_info["available_energy_kWh"] / 4,
                         replace_existing=False,
                         attributes={"energy_type": "PV"}
-                    ).list_offers(asset_uuid=area_uuid)
+                    ).list_offers(area_uuid=area_uuid)
 
                 if self._can_place_bid(asset_info):
                     self.add_to_batch_commands.bid_energy(
@@ -98,7 +98,7 @@ class BatchAggregator(TestAggregatorBase):
                         replace_existing=False,
                         requirements=[{"price": 30 / (asset_info["energy_requirement_kWh"] / 4)}]
                     ).list_bids(
-                        asset_uuid=area_uuid
+                        area_uuid=area_uuid
                     )
                 if self._can_place_forecast_measurements(area_dict):
                     next_market_slot_str = (from_format(market_info["market_slot"], DATE_TIME_FORMAT).

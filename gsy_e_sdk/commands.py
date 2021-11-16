@@ -82,13 +82,13 @@ class ClientCommandBuffer:
         return self._add_to_buffer(asset_uuid, Commands.DELETE_BID,
                                    {"bid_id": bid_id, "time_slot": time_slot})
 
-    def list_offers(self, asset_uuid, time_slot: str = None):
+    def list_offers(self, area_uuid, time_slot: str = None):
         """Add a command to list offers made by a specific asset in the given time slot."""
-        return self._add_to_buffer(asset_uuid, Commands.LIST_OFFERS, {"time_slot": time_slot})
+        return self._add_to_buffer(area_uuid, Commands.LIST_OFFERS, {"time_slot": time_slot})
 
-    def list_bids(self, asset_uuid, time_slot: str = None):
+    def list_bids(self, area_uuid, time_slot: str = None):
         """Add a command to list bids made by a specific asset in the given time slot."""
-        return self._add_to_buffer(asset_uuid, Commands.LIST_BIDS, {"time_slot": time_slot})
+        return self._add_to_buffer(area_uuid, Commands.LIST_BIDS, {"time_slot": time_slot})
 
     def device_info(self, area_uuid):
         """Retrieve information about the asset identified by the given UUID.

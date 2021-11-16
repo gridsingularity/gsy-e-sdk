@@ -258,11 +258,11 @@ The following commands can be issued as batch commands (refer to [How to send ba
     ```
 - List all posted offers:
     ```python
-    list_offers(asset_uuid)
+    list_offers(area_uuid)
     ```
 - Lists all posted bids:
     ```python
-    list_bids(asset_uuid)
+    list_bids(area_uuid)
     ```
 - Retrieve market DSO statistics:
     ```python
