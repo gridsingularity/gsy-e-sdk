@@ -11,6 +11,8 @@ from integration_tests.test_aggregator_base import TestAggregatorBase
 
 
 class BatchAggregator(TestAggregatorBase):
+    """Aggregator class to test the behaviour of batch commands."""
+
     def __init__(self, *args, **kwargs):
         self.events_or_responses = set()
         super().__init__(*args, **kwargs)
@@ -18,91 +20,101 @@ class BatchAggregator(TestAggregatorBase):
         self.updated_offer_bid_price = 60
 
     def _setup(self):
-        load = RedisDeviceClient("load")
-        pv = RedisDeviceClient("pv")
-        forecast_load = RedisDeviceClient("forecast-measurement-load")
+        load_asset = RedisDeviceClient("load")
+        pv_asset = RedisDeviceClient("pv")
+        forecast_load_asset = RedisDeviceClient("forecast-measurement-load")
 
-        load.select_aggregator(self.aggregator_uuid)
-        pv.select_aggregator(self.aggregator_uuid)
-        forecast_load.select_aggregator(self.aggregator_uuid)
+        load_asset.select_aggregator(self.aggregator_uuid)
+        pv_asset.select_aggregator(self.aggregator_uuid)
+        forecast_load_asset.select_aggregator(self.aggregator_uuid)
 
         self.redis_market = RedisMarketClient("house-2")
         self.redis_market.select_aggregator(self.aggregator_uuid)
 
-    def _can_place_forecast_measurements(self, area_dict):
-        return ("area_name" in area_dict and
-            area_dict["area_name"] == "forecast-measurement-load")
+    @staticmethod
+    def _can_place_forecast_measurements(area_dict):
+        return "area_name" in area_dict and area_dict["area_name"] == "forecast-measurement-load"
 
+    def _manage_offers(self, area_uuid, asset_info):
+        if self._can_place_offer(asset_info):
+            self.add_to_batch_commands.offer_energy(
+                area_uuid=area_uuid,
+                price=1.1,
+                energy=asset_info["available_energy_kWh"] / 4,
+                replace_existing=False,
+                attributes={"energy_type": "PV"}
+            ).offer_energy(
+                area_uuid=area_uuid,
+                price=2.2,
+                energy=asset_info["available_energy_kWh"] / 4,
+                replace_existing=False,
+                attributes={"energy_type": "PV"}
+            ).offer_energy(
+                area_uuid=area_uuid,
+                price=3.3,
+                energy=asset_info["available_energy_kWh"] / 4,
+                replace_existing=True,
+                attributes={"energy_type": "PV"}
+            ).offer_energy(
+                area_uuid=area_uuid,
+                price=4.4,
+                energy=asset_info["available_energy_kWh"] / 4,
+                replace_existing=False,
+                attributes={"energy_type": "PV"}
+            ).list_offers(area_uuid=area_uuid)
+
+    def _manage_bids(self, area_uuid, asset_info):
+        if self._can_place_bid(asset_info):
+            self.add_to_batch_commands.bid_energy(
+                area_uuid=area_uuid,
+                price=27,
+                energy=asset_info["energy_requirement_kWh"] / 4,
+                replace_existing=False,
+                requirements=[{"price": 27 / (asset_info["energy_requirement_kWh"] / 4)}]
+            ).bid_energy(
+                area_uuid=area_uuid,
+                price=28,
+                energy=asset_info["energy_requirement_kWh"] / 4,
+                replace_existing=False,
+                requirements=[{"price": 28 / (asset_info["energy_requirement_kWh"] / 4)}]
+            ).bid_energy(
+                area_uuid=area_uuid,
+                price=29,
+                energy=asset_info["energy_requirement_kWh"] / 4,
+                replace_existing=True,
+                requirements=[{"price": 29 / (asset_info["energy_requirement_kWh"] / 4)}]
+            ).bid_energy(
+                area_uuid=area_uuid,
+                price=30,
+                energy=asset_info["energy_requirement_kWh"] / 4,
+                replace_existing=False,
+                requirements=[{"price": 30 / (asset_info["energy_requirement_kWh"] / 4)}]
+            ).list_bids(area_uuid=area_uuid)
+
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     def on_market_cycle(self, market_info):
-        logging.info(f"market_info: {market_info}")
-        try:
-
+        logging.info("market_info: %s", market_info)
+        try:  # pylint: disable=too-many-nested-blocks
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():
                 if area_uuid == self.redis_market.area_uuid:
-                    self.add_to_batch_commands.grid_fees(area_uuid=self.redis_market.area_uuid,
-                                                         fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
+                    self.add_to_batch_commands.grid_fees(
+                        area_uuid=self.redis_market.area_uuid,
+                        fee_cents_kwh=self.updated_house2_grid_fee_cents_kwh)
                     self.add_to_batch_commands.last_market_dso_stats(self.redis_market.area_uuid)
                 if not area_dict.get("asset_info"):
                     continue
                 asset_info = area_dict["asset_info"]
-                if self._can_place_offer(asset_info):
-                    self.add_to_batch_commands.offer_energy(
-                        area_uuid=area_uuid,
-                        price=1.1,
-                        energy=asset_info["available_energy_kWh"] / 4,
-                        replace_existing=False,
-                        attributes={"energy_type": "PV"}
-                    ).offer_energy(
-                        area_uuid=area_uuid,
-                        price=2.2,
-                        energy=asset_info["available_energy_kWh"] / 4,
-                        replace_existing=False,
-                        attributes={"energy_type": "PV"}
-                    ).offer_energy(
-                        area_uuid=area_uuid,
-                        price=3.3,
-                        energy=asset_info["available_energy_kWh"] / 4,
-                        replace_existing=True,
-                        attributes={"energy_type": "PV"}
-                    ).offer_energy(
-                        area_uuid=area_uuid,
-                        price=4.4,
-                        energy=asset_info["available_energy_kWh"] / 4,
-                        replace_existing=False,
-                        attributes={"energy_type": "PV"}
-                    ).list_offers(area_uuid=area_uuid)
 
-                if self._can_place_bid(asset_info):
-                    self.add_to_batch_commands.bid_energy(
-                        area_uuid=area_uuid,
-                        price=27,
-                        energy=asset_info["energy_requirement_kWh"] / 4,
-                        replace_existing=False,
-                        requirements=[{"price": 27 / (asset_info["energy_requirement_kWh"] / 4)}]
-                    ).bid_energy(
-                        area_uuid=area_uuid,
-                        price=28,
-                        energy=asset_info["energy_requirement_kWh"] / 4,
-                        replace_existing=False,
-                        requirements=[{"price": 28 / (asset_info["energy_requirement_kWh"] / 4)}]
-                    ).bid_energy(
-                        area_uuid=area_uuid,
-                        price=29,
-                        energy=asset_info["energy_requirement_kWh"] / 4,
-                        replace_existing=True,
-                        requirements=[{"price": 29 / (asset_info["energy_requirement_kWh"] / 4)}]
-                    ).bid_energy(
-                        area_uuid=area_uuid,
-                        price=30,
-                        energy=asset_info["energy_requirement_kWh"] / 4,
-                        replace_existing=False,
-                        requirements=[{"price": 30 / (asset_info["energy_requirement_kWh"] / 4)}]
-                    ).list_bids(
-                        area_uuid=area_uuid
-                    )
+                self._manage_offers(area_uuid, asset_info)
+                self._manage_bids(area_uuid, asset_info)
+
                 if self._can_place_forecast_measurements(area_dict):
-                    next_market_slot_str = (from_format(market_info["market_slot"], DATE_TIME_FORMAT).
-                                            add(minutes=15).format(DATE_TIME_FORMAT))
+                    next_market_slot_str = (
+                        from_format(
+                            market_info["market_slot"], DATE_TIME_FORMAT).add(
+                                minutes=15).format(DATE_TIME_FORMAT))
                     self.add_to_batch_commands.set_energy_forecast(
                         area_uuid=area_uuid,
                         energy_forecast_kWh={next_market_slot_str: 1234.0}
@@ -120,7 +132,7 @@ class BatchAggregator(TestAggregatorBase):
                         for command_dict in response:
                             if command_dict["status"] == "error":
                                 self.errors += 1
-                logging.info(f"Batch command placed on the new market")
+                logging.info("Batch command placed on the new market")
 
                 # Make assertions about the bids, if they happened during this slot
                 bid_requests = self._filter_commands_from_responses(
@@ -167,8 +179,8 @@ class BatchAggregator(TestAggregatorBase):
                         assert forecast_requests[0]["status"] == "ready"
                         assert forecast_requests[0]["command"] == "set_energy_forecast"
                         assert (
-                            list(forecast_requests[0]["set_energy_forecast"]["energy_forecast"].values())[0]
-                            == 1234.0)
+                            list(forecast_requests[0]["set_energy_forecast"][
+                                "energy_forecast"].values())[0] == 1234.0)
 
                     measurement_requests = self._filter_commands_from_responses(
                         transaction["responses"], "set_energy_measurement")
@@ -177,8 +189,8 @@ class BatchAggregator(TestAggregatorBase):
                         assert measurement_requests[0]["status"] == "ready"
                         assert measurement_requests[0]["command"] == "set_energy_measurement"
                         assert (
-                            list(measurement_requests[0]["set_energy_measurement"]["energy_measurement"].values())[0]
-                            == 2345.0)
+                            list(measurement_requests[0]["set_energy_measurement"][
+                                "energy_measurement"].values())[0] == 2345.0)
 
                 # Make assertions about the offers, if they happened during this slot
                 offer_requests = self._filter_commands_from_responses(

@@ -4,6 +4,8 @@ from gsy_e_sdk.redis_aggregator import RedisAggregator
 
 
 class TestAggregatorBase(RedisAggregator):
+    """Aggregator class to be used for running tests."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.errors = 0
@@ -20,6 +22,7 @@ class TestAggregatorBase(RedisAggregator):
         pass
 
     def send_batch_commands(self):
+        """Send accumulated batch commands to the exchange."""
         if self.commands_buffer_length:
             transaction = self.execute_batch_commands()
             if transaction is None:
@@ -29,13 +32,15 @@ class TestAggregatorBase(RedisAggregator):
                     for command_dict in response:
                         if command_dict["status"] == "error":
                             self.errors += 1
-            logging.info(f"Batch command placed on the new market")
+            logging.info("Batch command placed on the new market")
             return transaction
+
+        return None
 
     @staticmethod
     def _filter_commands_from_responses(responses, command_name):
         filtered_commands = []
-        for area_uuid, response in responses.items():
+        for response in responses.values():
             for command_dict in response:
                 if command_dict["command"] == command_name:
                     filtered_commands.append(command_dict)

@@ -16,7 +16,7 @@ class EssAggregator(TestAggregatorBase):
         storage.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
-        logging.info(f"market_info: {market_info}")
+        logging.info("market_info: %s", market_info)
         try:
 
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():
@@ -57,7 +57,8 @@ class EssAggregator(TestAggregatorBase):
                         bid = json.loads(bid_response["bid"])
                         assert bid_response["status"] == "ready"
                         assert bid["buyer_origin"] == bid["buyer"] == "storage"
-                        assert bid["buyer_origin_id"] == bid["buyer_id"] == bid_response["area_uuid"]
+                        assert bid["buyer_origin_id"] == bid["buyer_id"] == bid_response[
+                            "area_uuid"]
                         assert bid["price"] == bid_price
                         assert bid["energy"] == bid_energy
                         self._has_tested_bids = True
@@ -76,11 +77,9 @@ class EssAggregator(TestAggregatorBase):
                         assert offer["energy"] == offer_energy
 
                         self._has_tested_offers = True
-
         except Exception as ex:
             logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
             self.errors += 1
-
 
     @staticmethod
     def _can_place_bid(asset_info):

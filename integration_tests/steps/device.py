@@ -1,8 +1,11 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=function-redefined
+# pylint: disable=unused-argument
 from math import isclose
 from os import system
 from time import sleep
 
-from behave import given, when, then
+from behave import given, when, then  # pylint: disable=no-name-in-module
 
 from integration_tests.test_aggregator_batch_commands import BatchAggregator
 from integration_tests.test_aggregator_ess import EssAggregator
@@ -12,7 +15,7 @@ from integration_tests.test_aggregator_pv import PVAggregator
 
 @given("redis container is started")
 def step_impl(context):
-    system(f"docker run -d -p 6379:6379 --name redis.container -h redis.container "
+    system("docker run -d -p 6379:6379 --name redis.container -h redis.container "
            "--net integtestnet redis:6.2.5")
 
 
@@ -25,7 +28,7 @@ def step_impl(context, setup_file: str, gsy_e_options: str):
         gsy_e_options (str): options to be passed to the d3a run command. E.g.: "-t 1s -d 12h"
     """
     sleep(3)
-    system(f"docker run -d --name gsy-e-tests --env REDIS_URL=redis://redis.container:6379/ "
+    system("docker run -d --name gsy-e-tests --env REDIS_URL=redis://redis.container:6379/ "
            f"--net integtestnet gsy-e-tests -l INFO run --setup {setup_file} "
            f"--no-export --seed 0 --enable-external-connection {gsy_e_options} ")
 
@@ -63,11 +66,12 @@ def step_impl(context):
 @then("the on_event_or_response is called for different events")
 def step_impl(context):
     # Check if the market event triggered both the on_market_cycle and on_event_or_response
-    assert context.aggregator.events == {"event", "command",
-                                     "tick", "register",
-                                     "offer_delete", "trade",
-                                     "offer", "unregister",
-                                     "list_offers", "market", "finish"}
+    assert context.aggregator.events == {
+        "event", "command",
+        "tick", "register",
+        "offer_delete", "trade",
+        "offer", "unregister",
+        "list_offers", "market", "finish"}
     assert context.aggregator.is_on_market_cycle_called
 
 
@@ -85,7 +89,10 @@ def step_impl(context):
     # placing bids and offers on every market cycle.
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
-    while context.aggregator.errors == 0 and context.aggregator.status != "finished" and counter < 60:
+    while (
+            context.aggregator.errors == 0
+            and context.aggregator.status != "finished"
+            and counter < 60):
         sleep(3)
         counter += 3
 
@@ -98,4 +105,3 @@ def step_impl(context):
 @then("the energy bills of the load report the required energy was bought by the load")
 def step_impl(context):
     assert isclose(context.aggregator.device_bills["bought"], 22 * 0.2)
-
