@@ -182,7 +182,7 @@ class Oracle(aggregator_client_type):
                 rate = self.asset_strategy[area_uuid]["buy_rates"][0]
                 energy = area_dict["asset_info"]["energy_requirement_kWh"]
                 self.add_to_batch_commands.bid_energy_rate(
-                    area_uuid=area_uuid, rate=rate, energy=energy)
+                    asset_uuid=area_uuid, rate=rate, energy=energy)
 
             # Generation strategy
             if (
@@ -191,7 +191,7 @@ class Oracle(aggregator_client_type):
                 rate = self.asset_strategy[area_uuid]["sell_rates"][0]
                 energy = area_dict["asset_info"]["available_energy_kWh"]
                 self.add_to_batch_commands.offer_energy_rate(
-                    area_uuid=area_uuid, rate=rate, energy=energy)
+                    asset_uuid=area_uuid, rate=rate, energy=energy)
 
             # Battery strategy
             if "energy_to_buy" in area_dict["asset_info"]:
@@ -201,12 +201,12 @@ class Oracle(aggregator_client_type):
                 if buy_energy > 0.0:
                     buy_rate = self.asset_strategy[area_uuid]["buy_rates"][0]
                     self.add_to_batch_commands.bid_energy_rate(
-                        area_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
+                        asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
                 # Battery sell strategy
                 if sell_energy > 0.0:
                     sell_rate = self.asset_strategy[area_uuid]["sell_rates"][0]
                     self.add_to_batch_commands.offer_energy_rate(
-                        area_uuid=area_uuid, rate=sell_rate, energy=sell_energy)
+                        asset_uuid=area_uuid, rate=sell_rate, energy=sell_energy)
 
         self.execute_batch_commands()
 
@@ -237,14 +237,14 @@ class Oracle(aggregator_client_type):
                 rate = self.asset_strategy[area_uuid]["buy_rates"][i]
                 energy = area_dict["asset_info"]["energy_requirement_kWh"]
                 self.add_to_batch_commands.bid_energy_rate(
-                    area_uuid=area_uuid, rate=rate, energy=energy)
+                    asset_uuid=area_uuid, rate=rate, energy=energy)
 
             # Generation strategy
             if "available_energy_kWh" in area_dict["asset_info"] and area_dict["asset_info"][
                 "available_energy_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["sell_rates"][i]
                 energy = area_dict["asset_info"]["available_energy_kWh"]
-                self.add_to_batch_commands.offer_energy(area_uuid=area_uuid, price=rate*energy,
+                self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid, price=rate*energy,
                                                         energy=energy, replace_existing=True)
 
             # Battery strategy
@@ -260,12 +260,12 @@ class Oracle(aggregator_client_type):
                 if buy_energy > 0.0:
                     buy_rate = self.asset_strategy[area_uuid]["buy_rates"][i]
                     self.add_to_batch_commands.bid_energy_rate(
-                        area_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
+                        asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
 
                 # Battery sell strategy
                 if sell_energy > 0.0:
                     sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
-                    self.add_to_batch_commands.offer_energy(area_uuid=area_uuid,
+                    self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid,
                                                             price=sell_rate*sell_energy,
                                                             energy=sell_energy,
                                                             replace_existing=True)

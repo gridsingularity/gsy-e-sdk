@@ -27,7 +27,7 @@ class EssAggregator(TestAggregatorBase):
                     bid_energy = asset_info["energy_to_buy"]
                     bid_price = 31 * bid_energy
                     self.add_to_batch_commands.bid_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=bid_price,
                         energy=bid_energy,
                         replace_existing=False
@@ -37,7 +37,7 @@ class EssAggregator(TestAggregatorBase):
                     offer_energy = asset_info["energy_to_sell"]
                     offer_price = 10 * offer_energy
                     self.add_to_batch_commands.offer_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=offer_price,
                         energy=offer_energy,
                         replace_existing=False

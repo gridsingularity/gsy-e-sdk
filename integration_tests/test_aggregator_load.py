@@ -29,7 +29,7 @@ class LoadAggregator(TestAggregatorBase):
                     bid_energy = asset_info["energy_requirement_kWh"]
                     bid_price = 0.0001 * bid_energy
                     self.add_to_batch_commands.bid_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=bid_price,
                         energy=bid_energy,
                         replace_existing=False

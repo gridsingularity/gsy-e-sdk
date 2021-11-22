@@ -20,7 +20,7 @@ class AutoAggregator(RedisAggregator):
                     device_event["device_info"]["energy_to_buy"] > 0.0:
                 buy_energy = device_event["device_info"]["energy_to_buy"] / 2
                 self.add_to_batch_commands.bid_energy(
-                    area_uuid=device_event["area_uuid"], price=31 * buy_energy, energy=buy_energy
+                    asset_uuid=device_event["area_uuid"], price=31 * buy_energy, energy=buy_energy
                     ).list_bids(area_uuid=device_event["area_uuid"])
 
         response = self.execute_batch_commands(batch_commands)
