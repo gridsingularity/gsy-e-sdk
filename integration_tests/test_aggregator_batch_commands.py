@@ -126,12 +126,14 @@ class BatchAggregator(TestAggregatorBase):
             if self.commands_buffer_length:
                 transaction = self.execute_batch_commands()
                 if transaction is None:
-                    self.errors += 1
+                    self.errors.append("Transaction was None after executing batch commands.")
                 else:
                     for response in transaction["responses"].values():
                         for command_dict in response:
                             if command_dict["status"] == "error":
-                                self.errors += 1
+                                self.errors.append(
+                                    "Error status received from response to batch commands.",
+                                    f"Commands: {command_dict}")
                 logging.info("Batch command placed on the new market")
 
                 # Make assertions about the bids, if they happened during this slot
@@ -229,8 +231,9 @@ class BatchAggregator(TestAggregatorBase):
                     self._has_tested_offers = True
 
         except Exception as ex:
-            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
-            self.errors += 1
+            error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
+            logging.error(error_message)
+            self.errors.append(error_message)
 
     def on_event_or_response(self, message):
         if "event" in message:

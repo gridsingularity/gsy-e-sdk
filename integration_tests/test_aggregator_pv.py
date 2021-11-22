@@ -66,5 +66,6 @@ class PVAggregator(TestAggregatorBase):
                     self._has_tested_offers = True
 
         except Exception as ex:
-            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
-            self.errors += 1
+            error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
+            logging.error(error_message)
+            self.errors.append(error_message)

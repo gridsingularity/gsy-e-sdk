@@ -68,4 +68,4 @@ class LoadAggregator(TestAggregatorBase):
         except Exception as ex:
             error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
             logging.error(error_message)
-            self.errors += 1
+            self.errors.append(error_message)

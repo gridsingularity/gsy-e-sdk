@@ -90,7 +90,7 @@ def step_impl(context):
     # Should stop if an error occurs or if the simulation has finished
     counter = 0  # Wait for five minutes at most
     while (
-            context.aggregator.errors == 0
+            len(context.aggregator.errors) == 0
             and context.aggregator.status != "finished"
             and counter < 60):
         sleep(3)
@@ -99,7 +99,8 @@ def step_impl(context):
 
 @then("the external client does not report errors")
 def step_impl(context):
-    assert context.aggregator.errors == 0
+    assert len(context.aggregator.errors) == 0, \
+        f"The following errors were reported: {context.aggregator.errors}"
 
 
 @then("the energy bills of the load report the required energy was bought by the load")

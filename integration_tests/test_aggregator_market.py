@@ -43,14 +43,16 @@ class MarketAggregator(TestAggregatorBase):
                         self._has_tested_market = True
 
         except Exception as ex:
-            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
-            self.errors += 1
+            error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
+            logging.error(error_message)
+            self.errors.append(error_message)
 
     def on_finish(self, finish_info):
         # Make sure that all test cases have been run
         if self._has_tested_market is False:
-            logging.error(
+            error_message = (
                 "Not all test cases have been covered. This will be reported as failure.")
-            self.errors += 1
+            logging.error(error_message)
+            self.errors.append(error_message)
 
         self.status = "finished"

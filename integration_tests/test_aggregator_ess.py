@@ -18,7 +18,6 @@ class EssAggregator(TestAggregatorBase):
     def on_market_cycle(self, market_info):
         logging.info("market_info: %s", market_info)
         try:
-
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():
                 if not area_dict.get("asset_info"):
                     continue
@@ -78,8 +77,9 @@ class EssAggregator(TestAggregatorBase):
 
                         self._has_tested_offers = True
         except Exception as ex:
-            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
-            self.errors += 1
+            error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
+            logging.error(error_message)
+            self.errors.append(error_message)
 
     @staticmethod
     def _can_place_bid(asset_info):
