@@ -1,4 +1,3 @@
-# pylint: disable=too-many-arguments
 """
 Copyright 2018 Grid Singularity
 This file is part of Grid Singularity Exchange.
@@ -16,6 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+# pylint: disable=too-many-arguments
 import importlib
 import inspect
 import logging
