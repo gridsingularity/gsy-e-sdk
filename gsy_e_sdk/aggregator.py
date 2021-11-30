@@ -10,7 +10,7 @@ from gsy_e_sdk.commands import ClientCommandBuffer
 from gsy_e_sdk.constants import MAX_WORKER_THREADS
 from gsy_e_sdk.constants import MIN_SLOT_COMPLETION_TICK_TRIGGER_PERCENTAGE
 from gsy_e_sdk.grid_fee_calculation import GridFeeCalculation
-from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.utils import (
     get_uuid_from_area_name_in_tree_dict, buffer_grid_tree_info,
     create_area_name_uuid_mapping_from_tree_info,
@@ -41,7 +41,7 @@ class AggregatorWebsocketMessageReceiver(DeviceWebsocketMessageReceiver):
             logging.error(f"Received message with unknown event type: {message}")
 
 
-class Aggregator(RestDeviceClient):
+class Aggregator(RestAssetClient):
 
     def __init__(self, aggregator_name, simulation_id=None, domain_name=None,
                  websockets_domain_name=None, accept_all_devices=True):
@@ -49,7 +49,7 @@ class Aggregator(RestDeviceClient):
             simulation_id=simulation_id,
             domain_name=domain_name,
             websockets_domain_name=websockets_domain_name,
-            area_id="",
+            asset_uuid="",
             autoregister=False,
             start_websocket=False)
 

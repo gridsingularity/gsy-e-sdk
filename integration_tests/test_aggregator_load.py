@@ -2,7 +2,7 @@ import json
 import logging
 import traceback
 
-from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 from integration_tests.test_aggregator_base import TestAggregatorBase
 
 
@@ -15,7 +15,7 @@ class LoadAggregator(TestAggregatorBase):
         self._has_tested_offers = True
 
     def _setup(self):
-        load = RedisDeviceClient("load")
+        load = RedisAssetClient("load")
         load.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
@@ -31,7 +31,7 @@ class LoadAggregator(TestAggregatorBase):
                     bid_energy = asset_info["energy_requirement_kWh"]
                     bid_price = 0.0001 * bid_energy
                     self.add_to_batch_commands.bid_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=bid_price,
                         energy=bid_energy,
                         replace_existing=False)

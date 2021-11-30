@@ -2,7 +2,7 @@ import json
 import logging
 import traceback
 
-from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 from integration_tests.test_aggregator_base import TestAggregatorBase
 
 
@@ -13,7 +13,7 @@ class PVAggregator(TestAggregatorBase):
         self._has_tested_bids = True
 
     def _setup(self):
-        pv = RedisDeviceClient("pv")
+        pv = RedisAssetClient("pv")
         pv.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
@@ -29,7 +29,7 @@ class PVAggregator(TestAggregatorBase):
                     offer_energy = asset_info["available_energy_kWh"]
                     offer_price = 50 * offer_energy
                     self.add_to_batch_commands.offer_energy(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         price=offer_price,
                         energy=offer_energy,
                         replace_existing=False

@@ -5,13 +5,15 @@ from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
 
 from gsy_e_sdk.aggregator import Aggregator
-from gsy_e_sdk.rest_device import RestDeviceClient
+from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.utils import (get_area_uuid_from_area_name_and_collaboration_id,
                              get_sim_id_and_domain_names)
 
 
+# pylint: disable=invalid-name
 class TestAggregator(Aggregator):
     """Aggregator used for receiving events from CN"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.future_pv_energy_forecast_kWh = 0
@@ -45,20 +47,20 @@ class TestAggregator(Aggregator):
 
     def on_tick(self, tick_info):
         """Execute the following code when a new tick was started."""
-        logging.debug(f"Progress information on the device: {tick_info}")
+        logging.debug("Progress information on the device: %s", tick_info)
 
     def on_trade(self, trade_info):
         """Execute the following code when a trade happened in the current market."""
-        logging.debug(f"Trade info: {trade_info}")
+        logging.debug("Trade info: %s", trade_info)
 
 
 simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
 
 load_uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, "Load", domain_name)
-load = RestDeviceClient(load_uuid)
+load = RestAssetClient(load_uuid)
 
 pv_uuid = get_area_uuid_from_area_name_and_collaboration_id(simulation_id, "PV", domain_name)
-pv = RestDeviceClient(pv_uuid)
+pv = RestAssetClient(pv_uuid)
 
 aggregator = TestAggregator(aggregator_name="test_aggregator")
 

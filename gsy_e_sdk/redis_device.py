@@ -1,21 +1,17 @@
-from gsy_e_sdk.constants import LOCAL_REDIS_URL
-from gsy_e_sdk.redis_client_base import RedisClientBase
+import logging
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
+
+logger = logging.getLogger(__name__)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+logger.addHandler(console_handler)
+
+logger.warning(
+    "The RedisDeviceClient class name will be deprecated. Please use RedisAssetClient instead.")
 
 
-class RedisDeviceClient(RedisClientBase):
+class RedisDeviceClient(RedisAssetClient):
+    """Client class for assets to be used while working with Redis.
+
+    Important: this class is deprecated. Please use RedisAssetClient instead.
     """
-    Class is kept for backward compatibility and also for following the same approach as in the
-    REST case to have two different classes for devices and markets
-    """
-    def __init__(self, area_id, autoregister=True, redis_url=LOCAL_REDIS_URL,
-                 pubsub_thread=None):
-        super().__init__(area_id, autoregister, redis_url, pubsub_thread)
-
-    def register(self, is_blocking=True):
-        super().register(is_blocking)
-
-    def unregister(self, is_blocking=True):
-        super().unregister(is_blocking)
-
-    def on_event_or_response(self, message):
-        pass

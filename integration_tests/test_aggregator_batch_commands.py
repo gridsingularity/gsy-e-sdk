@@ -5,7 +5,7 @@ import traceback
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
 
-from gsy_e_sdk.redis_device import RedisDeviceClient
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 from gsy_e_sdk.redis_market import RedisMarketClient
 from integration_tests.test_aggregator_base import TestAggregatorBase
 
@@ -20,9 +20,9 @@ class BatchAggregator(TestAggregatorBase):
         self.updated_offer_bid_price = 60
 
     def _setup(self):
-        load_asset = RedisDeviceClient("load")
-        pv_asset = RedisDeviceClient("pv")
-        forecast_load_asset = RedisDeviceClient("forecast-measurement-load")
+        load_asset = RedisAssetClient("load")
+        pv_asset = RedisAssetClient("pv")
+        forecast_load_asset = RedisAssetClient("forecast-measurement-load")
 
         load_asset.select_aggregator(self.aggregator_uuid)
         pv_asset.select_aggregator(self.aggregator_uuid)
@@ -38,25 +38,25 @@ class BatchAggregator(TestAggregatorBase):
     def _manage_offers(self, area_uuid, asset_info):
         if self._can_place_offer(asset_info):
             self.add_to_batch_commands.offer_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=1.1,
                 energy=asset_info["available_energy_kWh"] / 4,
                 replace_existing=False,
                 attributes={"energy_type": "PV"}
             ).offer_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=2.2,
                 energy=asset_info["available_energy_kWh"] / 4,
                 replace_existing=False,
                 attributes={"energy_type": "PV"}
             ).offer_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=3.3,
                 energy=asset_info["available_energy_kWh"] / 4,
                 replace_existing=True,
                 attributes={"energy_type": "PV"}
             ).offer_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=4.4,
                 energy=asset_info["available_energy_kWh"] / 4,
                 replace_existing=False,
@@ -66,25 +66,25 @@ class BatchAggregator(TestAggregatorBase):
     def _manage_bids(self, area_uuid, asset_info):
         if self._can_place_bid(asset_info):
             self.add_to_batch_commands.bid_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=27,
                 energy=asset_info["energy_requirement_kWh"] / 4,
                 replace_existing=False,
                 requirements=[{"price": 27 / (asset_info["energy_requirement_kWh"] / 4)}]
             ).bid_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=28,
                 energy=asset_info["energy_requirement_kWh"] / 4,
                 replace_existing=False,
                 requirements=[{"price": 28 / (asset_info["energy_requirement_kWh"] / 4)}]
             ).bid_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=29,
                 energy=asset_info["energy_requirement_kWh"] / 4,
                 replace_existing=True,
                 requirements=[{"price": 29 / (asset_info["energy_requirement_kWh"] / 4)}]
             ).bid_energy(
-                area_uuid=area_uuid,
+                asset_uuid=area_uuid,
                 price=30,
                 energy=asset_info["energy_requirement_kWh"] / 4,
                 replace_existing=False,
@@ -116,10 +116,10 @@ class BatchAggregator(TestAggregatorBase):
                             market_info["market_slot"], DATE_TIME_FORMAT).add(
                                 minutes=15).format(DATE_TIME_FORMAT))
                     self.add_to_batch_commands.set_energy_forecast(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         energy_forecast_kWh={next_market_slot_str: 1234.0}
                     ).set_energy_measurement(
-                        area_uuid=area_uuid,
+                        asset_uuid=area_uuid,
                         energy_measurement_kWh={next_market_slot_str: 2345.0}
                     )
 
