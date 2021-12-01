@@ -3,12 +3,12 @@ import json
 import logging
 import os
 from functools import wraps
+from typing import Optional, Dict
 
 import requests
 from gsy_framework.api_simulation_config.validators import validate_api_simulation_config
 from gsy_framework.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
 from sgqlc.endpoint.http import HTTPEndpoint
-from tabulate import tabulate
 
 from gsy_e_sdk import __version__
 from gsy_e_sdk.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
@@ -46,7 +46,7 @@ def execute_graphql_request(domain_name, query, headers=None, url=None, authenti
     if authenticate:
         jwt_key = retrieve_jwt_key_from_server(domain_name)
         if jwt_key is None:
-            logging.error(f"authentication failed")
+            logging.error("authentication failed")
             return
     url = f"{domain_name}/graphql/" if url is None else url
     headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'} \
@@ -63,8 +63,8 @@ def retrieve_jwt_key_from_server(domain_name):
                          "password": os.environ["API_CLIENT_PASSWORD"]}),
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
-        logging.error(f"Request for token authentication failed with status code {resp.status_code}. "
-                      f"Response body: {resp.text}")
+        logging.error(f"Request for token authentication failed with status "
+                      f"code {resp.status_code}. Response body: {resp.text}")
         return
 
     validate_client_up_to_date(resp)
@@ -95,7 +95,8 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
             '}") { scenarioData { latest { serialized } } } }'
     data = execute_graphql_request(domain_name=domain_name, query=query)
     area_uuid = get_area_uuid_from_area_name(
-        json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]), area_name
+        json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]),
+        area_name
     )
     if not area_uuid:
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
@@ -149,8 +150,8 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
         configurations {
           uuid
           resultsStatus
-          scenarioData { 
-            forecastStreamAreaMapping 
+          scenarioData {
+            forecastStreamAreaMapping
           }
         }
       }
@@ -263,14 +264,13 @@ def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) ->
     return area_name_uuid_mapping
 
 
-def read_simulation_config_file(config_file_path):
+def read_simulation_config_file(config_file_path: str) -> Optional[Dict]:
+    """Return simulation config as dict if config_file_path is provided."""
     if config_file_path:
         with open(config_file_path) as json_file:
             simulation_config = json.load(json_file)
         validate_api_simulation_config(simulation_config)
         return simulation_config
-    else:
-        raise ValueError("SIMULATION_CONFIG_FILE_PATH environmental variable must be provided ")
 
 
 def get_sim_id_and_domain_names():
@@ -293,4 +293,3 @@ def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
         for area_uuid in area_uuids:
             if area_uuid == asset_uuid:
                 return area_name
-
