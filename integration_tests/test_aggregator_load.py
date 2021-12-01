@@ -7,6 +7,8 @@ from integration_tests.test_aggregator_base import TestAggregatorBase
 
 
 class LoadAggregator(TestAggregatorBase):
+    """Aggregator class to test the behaviour of load assets."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Load only places bids and does not have to be tested for placing offers
@@ -17,7 +19,7 @@ class LoadAggregator(TestAggregatorBase):
         load.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
-        logging.info(f"market_info: {market_info}")
+        logging.info("market_info: %s", market_info)
         try:
 
             for area_uuid, area_dict in self.latest_grid_tree_flat.items():
@@ -32,8 +34,7 @@ class LoadAggregator(TestAggregatorBase):
                         asset_uuid=area_uuid,
                         price=bid_price,
                         energy=bid_energy,
-                        replace_existing=False
-                    )
+                        replace_existing=False)
 
                 transactions = self.send_batch_commands()
                 if transactions:
@@ -64,7 +65,7 @@ class LoadAggregator(TestAggregatorBase):
                     assert bid["energy"] == bid_energy
 
                     self._has_tested_bids = True
-
         except Exception as ex:
-            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
-            self.errors += 1
+            error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
+            logging.error(error_message)
+            self.errors.append(error_message)

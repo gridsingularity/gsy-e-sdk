@@ -16,10 +16,9 @@ class MarketAggregator(TestAggregatorBase):
         self.house_market.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
-        logging.info(f"market_info: {market_info}")
+        logging.info("market_info: %s", market_info)
         try:
-
-            for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            for area_uuid in self.latest_grid_tree_flat:
                 if area_uuid == self.house_market.area_uuid:
                     self.add_to_batch_commands.grid_fees(area_uuid=self.house_market.area_uuid,
                                                          fee_cents_kwh=self.grid_fee_cents_kwh)
@@ -37,21 +36,23 @@ class MarketAggregator(TestAggregatorBase):
                             transactions["responses"], "dso_market_stats")
                         assert len(stats_requests) == 1
                         assert set(stats_requests[0]["market_stats"]) == \
-                            {"min_trade_rate", "max_trade_rate", "avg_trade_rate", 
-                             "median_trade_rate", "total_traded_energy_kWh", "market_bill", 
-                             "market_fee_revenue", "area_throughput", "self_sufficiency", 
+                            {"min_trade_rate", "max_trade_rate", "avg_trade_rate",
+                             "median_trade_rate", "total_traded_energy_kWh", "market_bill",
+                             "market_fee_revenue", "area_throughput", "self_sufficiency",
                              "self_consumption"}
                         self._has_tested_market = True
 
         except Exception as ex:
-            logging.error(f"Raised exception: {ex}. Traceback: {traceback.format_exc()}")
-            self.errors += 1
+            error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
+            logging.error(error_message)
+            self.errors.append(error_message)
 
     def on_finish(self, finish_info):
         # Make sure that all test cases have been run
         if self._has_tested_market is False:
-            logging.error(
+            error_message = (
                 "Not all test cases have been covered. This will be reported as failure.")
-            self.errors += 1
+            logging.error(error_message)
+            self.errors.append(error_message)
 
         self.status = "finished"
