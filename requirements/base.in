@@ -8,6 +8,7 @@ parameterized
 pre-commit
 pylint
 pytest
+pytest-mock
 sgqlc
 websockets
 -e git+https://github.com/gridsingularity/gsy-framework@feature/D3ASIM-3669#egg=gsy_framework

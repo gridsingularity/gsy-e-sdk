@@ -159,6 +159,10 @@ pyrsistent==0.18.0
     #   gsy-framework
     #   jsonschema
 pytest==6.2.5
+    # via
+    #   -r requirements/base.in
+    #   pytest-mock
+pytest-mock==3.6.1
     # via -r requirements/base.in
 python-dateutil==2.8.2
     # via
