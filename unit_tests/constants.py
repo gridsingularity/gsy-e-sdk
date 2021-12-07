@@ -19,3 +19,7 @@ test_batch_command_dict = {"some_device_uuid": [{"command_dict0"},
 
 test_response = {"responses": {"asset_id_1": ["response1", "response2"],
                                "asset_id_2": ["response3", "response4"]}}
+
+TEST_CONFIGURATION_PREFIX = "/configuration_prefix/"
+
+TEST_AGGREGATOR_PREFIX = "/aggregator_prefix/"
