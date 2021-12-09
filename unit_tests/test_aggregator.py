@@ -1,415 +1,434 @@
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, protected-access
+import uuid
 from unittest.mock import patch, PropertyMock
 import pytest
 
-from gsy_e_sdk.aggregator import Aggregator, AggregatorWebsocketMessageReceiver
-from unit_tests.constants import (test_simulation,
-                                  test_agg, test_batch_command_dict,
-                                  test_response, TEST_AGGREGATOR_PREFIX,
-                                  TEST_CONFIGURATION_PREFIX)
+from gsy_e_sdk.aggregator import Aggregator
+
+TEST_SIMULATION = {
+    "username": "user@test.com",
+    "name": "AggregatorTestSuite",
+    "uuid": "some_random_uuid",
+    "domain_name": "https://cool.webpage.com",
+    "websockets_domain_name": "wss://cool.webpage.com/external-ws",
+}
+
+TEST_AGG = {
+    "name": "TestAggr",
+    "uuid": "some_random_aggregator_uuid"
+}
+
+TEST_AGGREGATOR_NAME = "TestAggr"
+TEST_AGGREGATOR_UUID = str(uuid.uuid4())
+
+TEST_AREA_NAME = "TestArea"
+TEST_AREA_MAPPING = {TEST_AREA_NAME: [str(uuid.uuid4())]}
+
+TEST_BATCH_COMMAND_DICT = {"some_device_uuid": [{"command_dict0"},
+                                                {"command_dict1"}],
+                           "some_other_device_uuid": [{"command_dict2"},
+                                                      {"command_dict3"}],
+                           }
+
+TEST_BATCH_COMMAND_RESPONSE = {"responses": {"asset_id_1": ["response1", "response2"],
+                                             "asset_id_2": ["response3", "response4"]}}
+
+TEST_CONFIGURATION_PREFIX = "/configuration_prefix/"
+
+TEST_AGGREGATOR_PREFIX = "/aggregator_prefix/"
+
+TEST_JWT_KEY_FROM_SERVER = str(uuid.uuid4())
+TEST_TRANSACTION_ID = str(uuid.uuid4())
 
 
-#####################################
-#            FIXTURES               #
-
-@pytest.fixture(autouse=True)
-def mock_connections(mocker):
-    """Fixture mocks methods and functions which establish external connections"""
-    mocker.patch("gsy_e_sdk.aggregator.blocking_get_request",
-                 return_value=test_agg, autospec=True)
-    mocker.patch("gsy_e_sdk.aggregator.blocking_post_request",
-                 return_value=test_agg, autospec=True)
+@pytest.fixture(autouse=True, name="mock_connections")
+def fixture_mock_connections(mocker):
+    """Mock methods and functions which establish external connections."""
+    mocker.patch("gsy_e_sdk.aggregator.blocking_get_request")
+    mocker.patch("gsy_e_sdk.aggregator.blocking_post_request")
     mocker.patch("gsy_e_sdk.clients.rest_asset_client.retrieve_jwt_key_from_server",
-                 return_value="some_key")
+                 return_value=TEST_JWT_KEY_FROM_SERVER)
     mocker.patch("gsy_framework.client_connections.utils.RestCommunicationMixin"
-                 + "._create_jwt_refresh_timer")
+                 "._create_jwt_refresh_timer")
     mocker.patch("gsy_e_sdk.aggregator.Aggregator._connect_to_simulation",
                  autospec=True)
 
 
-@pytest.fixture(autouse=True)
-def mock_prefixes(mocker):
-    """
-    Fixture mocks external prefix calculation functions
-    """
+@pytest.fixture(name="mock_prefixes")
+def fixture_mock_prefixes(mocker):
+    """Mock external prefix calculation functions."""
     mocker.patch("gsy_e_sdk.clients.rest_asset_client.get_aggregator_prefix",
                  return_value=TEST_AGGREGATOR_PREFIX, autospec=True)
     mocker.patch("gsy_e_sdk.clients.rest_asset_client.get_configuration_prefix",
                  return_value=TEST_CONFIGURATION_PREFIX)
 
 
-@pytest.fixture(autouse=True)
-def mock_start_websocket_funcs(mocker):
-    """
-    Fixture mocks external classes used in Aggregator.start_websocket_connections
-    """
-    # mocker.patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver")
-    mocker.patch("gsy_e_sdk.aggregator.WebsocketThread", autospec=True)
-    mocker.patch("gsy_e_sdk.aggregator.ThreadPoolExecutor",
-                 autospec=True,
-                 return_value="test_set_callback_thread")
+@pytest.fixture(name="mock_start_websocket_funcs")
+def fixture_mock_start_websocket_funcs(mocker):
+    """Mock external classes used in Aggregator.start_websocket_connections."""
+    mocker.patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver")
+    mocker.patch("gsy_e_sdk.aggregator.WebsocketThread")
+    mocker.patch("gsy_e_sdk.aggregator.ThreadPoolExecutor")
 
 
-@pytest.fixture(autouse=True)
-def mock_execute_batch_command_methods(mocker):
-    """
-    Fixture mocks methods and external functions and other methods used in
-    execute_batch_command.
-    """
+@pytest.fixture(name="mock_execute_batch_command_methods")
+def fixture_mock_execute_batch_command_methods(mocker):
+    """Mock methods and external functions and other methods used in
+    execute_batch_command."""
     mocker.patch("gsy_e_sdk.aggregator.ClientCommandBuffer.buffer_length",
                  new_callable=PropertyMock, return_value=3)
     mocker.patch("gsy_e_sdk.aggregator.ClientCommandBuffer.execute_batch",
-                 return_value=test_batch_command_dict)
+                 return_value=TEST_BATCH_COMMAND_DICT)
+    mocker.patch("gsy_e_sdk.aggregator.ClientCommandBuffer.clear")
     mocker.patch("gsy_e_sdk.aggregator.Aggregator._post_request",
-                 return_value=["some_transaction_id", True])
-    mocker.patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver"
-                 + ".wait_for_command_response",
-                 return_value=test_response)
+                 return_value=[TEST_TRANSACTION_ID, True])
     mocker.patch("gsy_e_sdk.aggregator.Aggregator."
-                 + "_all_uuids_in_selected_device_uuid_list",
+                 "_all_uuids_in_selected_device_uuid_list",
                  return_value=True)
     mocker.patch("gsy_e_sdk.aggregator.log_bid_offer_confirmation")
     mocker.patch("gsy_e_sdk.aggregator.log_deleted_bid_offer_confirmation")
 
 
+@pytest.fixture(name="mock_grid_fee_calculation")
+def fixture_mock_grid_fee_calculation(mocker):
+    """Mock GridFeeCalculation class."""
+    mocker.patch("gsy_e_sdk.aggregator.GridFeeCalculation")
+
+
 @pytest.fixture(name="aggregator_explicit")
 def fixture_aggregator_explicit():
-    """
-    Fixture creates and returns a aggregator with explicit parameters.
-    """
-    return Aggregator(aggregator_name=test_agg["name"],
-                      simulation_id=test_simulation["uuid"],
-                      domain_name=test_simulation["domain_name"],
-                      websockets_domain_name=test_simulation["websockets_domain_name"]
+    """Create and return an aggregator with explicit parameters."""
+
+    return Aggregator(aggregator_name=TEST_AGGREGATOR_NAME,
+                      simulation_id=TEST_SIMULATION["uuid"],
+                      domain_name=TEST_SIMULATION["domain_name"],
+                      websockets_domain_name=TEST_SIMULATION["websockets_domain_name"]
                       )
 
 
 @pytest.fixture(name="aggregator_from_env")
 def fixture_aggregator_from_env(mocker):
-    """
-    Fixture creates and returns an aggregator with implicit parameters.
-    """
+    """Create and return an aggregator with implicit parameters."""
+
     mocker.patch("gsy_e_sdk.clients.rest_asset_client.simulation_id_from_env",
-                 return_value=test_simulation["uuid"])
+                 return_value=TEST_SIMULATION["uuid"])
     mocker.patch("gsy_e_sdk.clients.rest_asset_client.domain_name_from_env",
-                 return_value=test_simulation["domain_name"])
+                 return_value=TEST_SIMULATION["domain_name"])
     mocker.patch("gsy_e_sdk.clients.rest_asset_client.websocket_domain_name_from_env",
-                 return_value=test_simulation["websockets_domain_name"])
+                 return_value=TEST_SIMULATION["websockets_domain_name"])
 
-    return Aggregator(aggregator_name=test_agg["name"])
+    return Aggregator(aggregator_name=TEST_AGGREGATOR_NAME)
 
 
-#####################################
-# DEF TESTS FOR CLASSES CONSTRUCTOR #
-
-class TestConstructor:
-    """Includes methods which test constructor."""
+class TestAggregatorConstructor:
+    """Test cases for Aggregator's class constructor."""
 
     @staticmethod
-    def test_constructor__simulation_id_explicit(aggregator_explicit):
+    def test_constructor_simulation_id_explicit_setup(aggregator_explicit):
         # this attribute is inherited from rest_asset_client
-        agg = aggregator_explicit
-        assert agg.simulation_id == test_simulation["uuid"]
+        assert aggregator_explicit.simulation_id == TEST_SIMULATION["uuid"]
 
     @staticmethod
-    def test_constructor__simulation_id_from_env(aggregator_from_env):
+    def test_constructor_simulation_id_from_env_setup(aggregator_from_env):
         # this attribute is inherited from rest_asset_client
-        assert aggregator_from_env.simulation_id == test_simulation["uuid"]
+        assert aggregator_from_env.simulation_id == TEST_SIMULATION["uuid"]
 
     @staticmethod
-    def test_constructor__domain_name_explicit(aggregator_explicit):
+    def test_constructor_domain_name_explicit_setup(aggregator_explicit):
         # this attribute is inherited from rest_asset_client
-        assert aggregator_explicit.domain_name == test_simulation["domain_name"]
+        assert aggregator_explicit.domain_name == TEST_SIMULATION["domain_name"]
 
     @staticmethod
-    def test_constructor__domain_name_from_env(aggregator_from_env):
+    def test_constructor_domain_name_from_env_setup(aggregator_from_env):
         # this attribute is inherited from rest_asset_client
-        assert aggregator_from_env.domain_name == test_simulation["domain_name"]
+        assert aggregator_from_env.domain_name == TEST_SIMULATION["domain_name"]
 
     @staticmethod
-    def test_constructor__websockets_domain_name_explicit(aggregator_explicit):
+    def test_constructor_websockets_domain_name_explicit_setup(aggregator_explicit):
         # this attribute is inherited from rest_asset_client
         assert aggregator_explicit.websockets_domain_name == \
-               test_simulation["websockets_domain_name"]
+               TEST_SIMULATION["websockets_domain_name"]
 
     @staticmethod
-    def test_constructor__websockets_domain_name_from_env(aggregator_from_env):
+    def test_constructor_websockets_domain_name_from_env_setup(aggregator_from_env):
         # this attribute is inherited from rest_asset_client
         assert aggregator_from_env.websockets_domain_name == \
-               test_simulation["websockets_domain_name"]
+               TEST_SIMULATION["websockets_domain_name"]
 
     @staticmethod
-    def test_constructor__asset_uuid(aggregator_explicit):
+    def test_constructor_asset_uuid_setup(aggregator_explicit):
         # this attribute is inherited from rest_asset_client
         assert aggregator_explicit.asset_uuid == ""
 
     @staticmethod
-    def test_constructor__jwt_token(aggregator_explicit):
+    def test_constructor_jwt_token_setup(aggregator_explicit):
         # this attribute is inherited from rest_asset_client
-        assert aggregator_explicit.jwt_token == "some_key"
+        assert aggregator_explicit.jwt_token == TEST_JWT_KEY_FROM_SERVER
 
     @staticmethod
-    def test_constructor__aggregator_prefix(aggregator_explicit):
+    @pytest.mark.usefixtures("mock_prefixes")
+    def test_constructor_aggregator_prefix_setup(aggregator_explicit):
         # this attribute is inherited from rest_asset_client
-        assert aggregator_explicit.aggregator_prefix == "/aggregator_prefix/"
+        assert aggregator_explicit.aggregator_prefix == TEST_AGGREGATOR_PREFIX
 
     @staticmethod
-    def test_constructor__configuration_prefix(aggregator_explicit):
+    @pytest.mark.usefixtures("mock_prefixes")
+    def test_constructor_configuration_prefix_setup(aggregator_explicit):
         # this attribute is inherited from rest_asset_client
-        assert aggregator_explicit.configuration_prefix == "/configuration_prefix/"
+        assert aggregator_explicit.configuration_prefix == TEST_CONFIGURATION_PREFIX
 
     @staticmethod
-    def test_constructor__grid_fee_calculation():
-        with patch("gsy_e_sdk.aggregator.GridFeeCalculation", autospec=True) as mocked_class:
-            Aggregator(aggregator_name=test_agg["name"])
-            mocked_class.assert_called_once()
+    @pytest.mark.usefixtures("mock_grid_fee_calculation")
+    def test_constructor_grid_fee_calculation_instantiated(aggregator_explicit):
+        assert aggregator_explicit.grid_fee_calculation is not None
 
-    # *
     @staticmethod
-    def test_constructor__aggregator_name(aggregator_explicit):
-        assert aggregator_explicit.aggregator_name == test_agg["name"]
+    def test_constructor_aggregator_name_setup(aggregator_explicit):
+        assert aggregator_explicit.aggregator_name == TEST_AGGREGATOR_NAME
 
-    # *
     @staticmethod
     @pytest.mark.parametrize("accept", [True, False])
-    def test_constructor__accept_all_devices(accept):
-        agg = Aggregator(aggregator_name=test_agg["name"],
+    def test_constructor_accept_all_devices_setup(accept):
+        agg = Aggregator(aggregator_name=TEST_AGGREGATOR_NAME,
                          accept_all_devices=accept)
         assert agg.accept_all_devices == accept
 
-    # *
     @staticmethod
-    def test_constructor__device_uuid_list(aggregator_explicit):
+    def test_constructor_device_uuid_list_setup(aggregator_explicit):
         assert aggregator_explicit.device_uuid_list == []
 
-    # *
     @staticmethod
-    def test_constructor__aggregator_uuid(aggregator_explicit):
+    def test_constructor_aggregator_uuid_setup(aggregator_explicit):
         assert aggregator_explicit.aggregator_uuid is None
 
     @staticmethod
-    def test_constructor__client_command_buffer():
-        with patch("gsy_e_sdk.aggregator.ClientCommandBuffer") as mocked_class:
-            Aggregator(aggregator_name=test_agg["name"])
-            mocked_class.assert_called_once()
+    def test_constructor_client_command_buffer_instantiated(aggregator_explicit):
+        assert aggregator_explicit._client_command_buffer is not None
 
     @staticmethod
-    def test_constructor__connect_to_simulation():
-        with patch.object(Aggregator, "_connect_to_simulation") as mocked_method:
-            Aggregator(aggregator_name=test_agg["name"])
-            mocked_method.assert_called_once()
+    def test_constructor__connect_to_simulation_called(aggregator_explicit):
+        aggregator_explicit._connect_to_simulation.assert_called_once()
 
-    # *
     @staticmethod
-    def test_constructor__latest_grid_tree(aggregator_explicit):
+    def test_constructor_latest_grid_tree_setup(aggregator_explicit):
         assert aggregator_explicit.latest_grid_tree == {}
 
-    # *
     @staticmethod
-    def test_constructor__latest_grid_tree_flat(aggregator_explicit):
+    def test_constructor_latest_grid_tree_flat_setup(aggregator_explicit):
         assert aggregator_explicit.latest_grid_tree_flat == {}
 
-    # *
     @staticmethod
-    def test_constructor__area_name_uuid_mapping(aggregator_explicit):
+    def test_constructor_area_name_uuid_mapping_setup(aggregator_explicit):
         assert aggregator_explicit.area_name_uuid_mapping == {}
 
 
-class TestStartWebsocketConnection:
-    """Includes methods which test start_websocket_connection method."""
+class TestAggregatorStartWebsocketConnection:
+    """Test cases for Aggregator's start_websocket_connection method."""
 
     @staticmethod
-    def test_start_websocket_connection__dispatcher(aggregator_explicit):
-        with patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver") \
-                as mocked_class:
-            aggregator_explicit.start_websocket_connection()
-            mocked_class.assert_called()
+    @pytest.mark.usefixtures("mock_start_websocket_funcs")
+    def test_start_websocket_connection_dispatcher_instantiated(aggregator_explicit):
+        aggregator_explicit.start_websocket_connection()
+        assert aggregator_explicit.dispatcher is not None
 
     @staticmethod
-    def test_start_websocket_connection__websocket_creation(aggregator_explicit):
-        websocket_uri_test = f"{test_simulation['websockets_domain_name']}" \
-                             + f"/{test_simulation['uuid']}/aggregator/" \
-                             + f"{test_agg['uuid']}/"
-
-        with patch("gsy_e_sdk.aggregator.WebsocketThread") as mocked_class:
-            aggregator_explicit.aggregator_uuid = test_agg["uuid"]
-            aggregator_explicit.start_websocket_connection()
-            mocked_class.assert_called_with(websocket_uri_test, test_simulation["domain_name"],
-                                            aggregator_explicit.dispatcher)
+    @pytest.mark.usefixtures("mock_start_websocket_funcs")
+    def test_start_websocket_connection_websocket_instantiated(aggregator_explicit):
+        aggregator_explicit.aggregator_uuid = TEST_AGGREGATOR_UUID
+        aggregator_explicit.start_websocket_connection()
+        assert aggregator_explicit.websocket_thread is not None
 
     @staticmethod
-    def test_start_websocket_connection__websocket_start(aggregator_explicit):
+    @pytest.mark.usefixtures("mock_start_websocket_funcs")
+    def test_start_websocket_connection_websocket_thread_start(aggregator_explicit):
         aggregator_explicit.start_websocket_connection()
         aggregator_explicit.websocket_thread.start.assert_called_once()
 
     @staticmethod
-    def test_start_websocket_connection__callback_thread(aggregator_explicit):
+    @pytest.mark.usefixtures("mock_start_websocket_funcs")
+    def test_start_websocket_connection_callback_thread_instantiated(aggregator_explicit):
         aggregator_explicit.start_websocket_connection()
-        assert aggregator_explicit.callback_thread == "test_set_callback_thread"
+        assert aggregator_explicit.callback_thread is not None
 
 
-class TestGetUuidFromAreaName:
-    """Includes methods which test get_uuid_from_area_name method."""
+class TestAggregatorGetUuidFromAreaName:
+    """Test cases for Aggregator's get_uuid_from_area_name method."""
 
     @staticmethod
-    def test_get_uuid_from_area_name__not_empty_dict(aggregator_explicit):
-        aggregator_explicit.area_name_uuid_mapping = {"TestArea": ["test_area_uuid"]}
-        area_name = "TestArea"
+    def test_get_uuid_from_area_name_returns_expected_with_non_empty_dict(aggregator_explicit):
+        aggregator_explicit.area_name_uuid_mapping = TEST_AREA_MAPPING
+        area_name = TEST_AREA_NAME
+        ret_val = TEST_AREA_MAPPING[TEST_AREA_NAME][0]
 
         patch("gsy_e_sdk.aggregator.get_uuid_from_area_name_in_tree_dict",
-              return_value="test_area_uuid")
-        assert aggregator_explicit.get_uuid_from_area_name(area_name) == "test_area_uuid"
+              return_value=ret_val)
+        assert aggregator_explicit.get_uuid_from_area_name(area_name) == ret_val
 
     @staticmethod
-    def test_get_uuid_from_area_name__empty_dict(aggregator_explicit):
+    def test_get_uuid_from_area_name_returns_none_with_empty_dict(aggregator_explicit):
         aggregator_explicit.area_name_uuid_mapping = {}
-        area_name = "TestArea"
+        area_name = TEST_AREA_NAME
+        ret_val = TEST_AREA_MAPPING[TEST_AREA_NAME][0]
 
         patch("gsy_e_sdk.aggregator.get_uuid_from_area_name_in_tree_dict",
-              return_value="test_area_uuid")
+              return_value=ret_val)
         assert aggregator_explicit.get_uuid_from_area_name(area_name) is None
 
 
-class TestCalculateGridFee:
-    """Includes methods which test calculate_grid_fee method."""
+class TestAggregatorCalculateGridFee:
+    """Test cases for Aggregator's calculate_grid_fee method."""
 
     @staticmethod
-    def test_calculate_grid_fee__called(aggregator_explicit):
-        with patch("gsy_e_sdk.aggregator.GridFeeCalculation.calculate_grid_fee") as mocked_method:
-            aggregator_explicit.calculate_grid_fee("start_market",
-                                                   "target_market",
-                                                   "current_market_fee")
-            mocked_method.assert_called_with("start_market",
-                                             "target_market",
-                                             "current_market_fee")
+    @pytest.mark.usefixtures("mock_grid_fee_calculation")
+    def test_calculate_grid_fee_called_with_args(aggregator_explicit):
+        aggregator_explicit.calculate_grid_fee("start_market",
+                                               "target_market",
+                                               "current_market_fee")
+        aggregator_explicit.grid_fee_calculation.calculate_grid_fee.assert_called_with(
+            "start_market",
+            "target_market",
+            "current_market_fee")
 
     @staticmethod
-    def test_calculate_grid_fee__return(aggregator_explicit):
-        with patch("gsy_e_sdk.aggregator.GridFeeCalculation.calculate_grid_fee",
-                   return_value="test_ok"):
-            ret_val = aggregator_explicit.calculate_grid_fee("start_market",
-                                                             "target_market",
-                                                             "current_market_fee")
-            assert ret_val == "test_ok"
+    @pytest.mark.usefixtures("mock_grid_fee_calculation")
+    def test_calculate_grid_fee_returns_expected(aggregator_explicit):
+        aggregator_explicit.grid_fee_calculation.calculate_grid_fee.return_value = "TEST_OK"
+        ret_val = aggregator_explicit.calculate_grid_fee("start_market",
+                                                         "target_market",
+                                                         "current_market_fee")
+        assert ret_val == "TEST_OK"
 
 
-class TestExecuteBatchCommands:
-    """Includes methods which test execute_batch_commands method."""
+class TestAggregatorExecuteBatchCommands:
+    """Test cases for Aggregator's execute_batch_commands method."""
 
     @staticmethod
-    def test_execute_batch_commands__command_buffer_length_zero(aggregator_explicit):
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
+    def test_execute_batch_commands_commands_buffer_length_with_length_zero(aggregator_explicit):
         with patch("gsy_e_sdk.aggregator.ClientCommandBuffer.buffer_length",
                    new_callable=PropertyMock, return_value=0):
             assert aggregator_explicit.execute_batch_commands() is None
 
     @staticmethod
-    def test_execute_batch_commands__execute_batch_called(aggregator_explicit):
-        with patch("gsy_e_sdk.aggregator.ClientCommandBuffer.execute_batch") as mocked_method:
-            aggregator_explicit.start_websocket_connection()
-            aggregator_explicit.execute_batch_commands()
-            mocked_method.assert_called_once()
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    def test_execute_batch_commands_execute_batch_called(aggregator_explicit):
+        aggregator_explicit.start_websocket_connection()
+        aggregator_explicit.execute_batch_commands()
+        aggregator_explicit._client_command_buffer.execute_batch.assert_called_once()
 
     @staticmethod
-    def test_execute_batch_commands__validate_all_uuids_in_list(aggregator_explicit):
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    def test_execute_batch_commands_all_uuids_in_selected_device_uuid_list_called(
+            aggregator_explicit):
         with patch("gsy_e_sdk.aggregator.Aggregator"
-                   + "._all_uuids_in_selected_device_uuid_list") as mocked_method:
+                   "._all_uuids_in_selected_device_uuid_list") as mocked_method:
             aggregator_explicit.start_websocket_connection()
             aggregator_explicit.execute_batch_commands()
             mocked_method.assert_called()
 
     @staticmethod
-    def test_execute_batch_commands__post_request_called_with_args(aggregator_explicit):
-        args_ = (f"{'/aggregator_prefix/'}batch-commands",
-                 {"aggregator_uuid": test_agg["uuid"], "batch_commands": test_batch_command_dict}
-                 )
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods",
+                             "mock_start_websocket_funcs",
+                             "mock_prefixes")
+    def test_execute_batch_commands_post_request_called_with_args(aggregator_explicit):
+        func_input = (f"{'/aggregator_prefix/'}batch-commands",
+                      {"aggregator_uuid": TEST_AGGREGATOR_UUID,
+                       "batch_commands": TEST_BATCH_COMMAND_DICT}
+                      )
 
-        with patch("gsy_e_sdk.aggregator.Aggregator._post_request",
-                   return_value=["test_transaction_id", True]) as mocked_method:
-            aggregator_explicit.aggregator_uuid = test_agg["uuid"]
-            aggregator_explicit.start_websocket_connection()
-            aggregator_explicit.execute_batch_commands()
-            mocked_method.assert_called_with(*args_)
-
-    @staticmethod
-    def test_execute_batch_commands__post_request_not_posted(aggregator_explicit):
-        with patch("gsy_e_sdk.aggregator.Aggregator._post_request",
-                   return_value=["test_transaction_id", False]):
-            assert aggregator_explicit.execute_batch_commands() is None
+        aggregator_explicit.aggregator_uuid = TEST_AGGREGATOR_UUID
+        aggregator_explicit.start_websocket_connection()
+        aggregator_explicit.execute_batch_commands()
+        aggregator_explicit._post_request.assert_called_with(*func_input)
 
     @staticmethod
-    def test_execute_batch_commands__clear_command_buffer(aggregator_explicit):
-        with patch("gsy_e_sdk.aggregator.ClientCommandBuffer.clear") as mocked_method:
-            aggregator_explicit.start_websocket_connection()
-            aggregator_explicit.execute_batch_commands()
-            mocked_method.assert_called_once()
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
+    def test_execute_batch_commands_post_request_not_posted(aggregator_explicit):
+        aggregator_explicit._post_request.return_value = [TEST_TRANSACTION_ID, False]
+        assert aggregator_explicit.execute_batch_commands() is None
 
     @staticmethod
-    def test_execute_batch_commands__wait_for_command_response_called(aggregator_explicit):
-        with patch.object(AggregatorWebsocketMessageReceiver, "wait_for_command_response",
-                          return_value=test_response) as mocked_method:
-            aggregator_explicit.start_websocket_connection()
-            aggregator_explicit.execute_batch_commands()
-            mocked_method.assert_called_once()
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    def test_execute_batch_commands_clear_command_buffer_called(aggregator_explicit):
+        aggregator_explicit.start_websocket_connection()
+        aggregator_explicit.execute_batch_commands()
+        aggregator_explicit._client_command_buffer.clear.assert_called_once()
 
     @staticmethod
-    def test_execute_batch_commands__return_response(aggregator_explicit):
-        with patch.object(AggregatorWebsocketMessageReceiver, "wait_for_command_response",
-                          return_value=test_response):
-            aggregator_explicit.start_websocket_connection()
-            response = aggregator_explicit.execute_batch_commands()
-            assert response == test_response
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    def test_execute_batch_commands_wait_for_command_response_called(aggregator_explicit):
+        aggregator_explicit.start_websocket_connection()
+        aggregator_explicit.execute_batch_commands()
+        aggregator_explicit.dispatcher.wait_for_command_response.assert_called_once()
 
     @staticmethod
-    def test_execute_batch_commands__log_bid__offer_confirmation_called(aggregator_explicit):
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    def test_execute_batch_commands_returns_response(aggregator_explicit):
+        aggregator_explicit.start_websocket_connection()
+        aggregator_explicit.dispatcher.wait_for_command_response.return_value = \
+            TEST_BATCH_COMMAND_RESPONSE
+        response = aggregator_explicit.execute_batch_commands()
+        assert response == TEST_BATCH_COMMAND_RESPONSE
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    def test_execute_batch_commands_log_bid_offer_confirmation_called(aggregator_explicit):
         with patch("gsy_e_sdk.aggregator.log_bid_offer_confirmation") as mocked_method:
             aggregator_explicit.start_websocket_connection()
+            aggregator_explicit.dispatcher.wait_for_command_response.return_value = \
+                TEST_BATCH_COMMAND_RESPONSE
             aggregator_explicit.execute_batch_commands()
             mocked_method.assert_called()
 
     @staticmethod
-    def test_execute_batch_commands__log_deleted_bid_offer_confirmation_called(
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    def test_execute_batch_commands_log_deleted_bid_offer_confirmation_called(
             aggregator_explicit):
-        with patch("gsy_e_sdk.aggregator.log_deleted_bid_offer_confirmation") \
-                as mocked_method:
+        with patch("gsy_e_sdk.aggregator.log_deleted_bid_offer_confirmation"
+                   ) as mocked_method:
             aggregator_explicit.start_websocket_connection()
+            aggregator_explicit.dispatcher.wait_for_command_response.return_value = \
+                TEST_BATCH_COMMAND_RESPONSE
             aggregator_explicit.execute_batch_commands()
             mocked_method.assert_called()
 
 
-@pytest.mark.parametrize("aggregator_specs", [test_agg, None])
-def test_list_aggregators(aggregator_specs, aggregator_explicit):
-    with patch("gsy_e_sdk.aggregator.blocking_get_request", return_value=aggregator_specs):
+def test_list_aggregators_request_empty_list(aggregator_explicit):
+    with patch("gsy_e_sdk.aggregator.blocking_get_request", return_value=None):
         aggs_list = aggregator_explicit.list_aggregators()
-
-        if aggregator_specs is not None:
-            assert aggs_list == test_agg
-        else:
-            assert aggs_list == []
+        assert aggs_list == []
 
 
-def test_get_configuration_registry(aggregator_explicit):
+def test_list_aggregators_request_not_empty_list(aggregator_explicit):
+    with patch("gsy_e_sdk.aggregator.blocking_get_request", return_value=[TEST_AGG]):
+        aggs_list = aggregator_explicit.list_aggregators()
+        assert aggs_list == [TEST_AGG]
+
+
+@pytest.mark.usefixtures("mock_prefixes")
+def test_get_configuration_registry_calls_blocking_get_request(aggregator_explicit):
     conf = f"{TEST_CONFIGURATION_PREFIX}registry"
 
     with patch("gsy_e_sdk.aggregator.blocking_get_request") as mocked_func:
         aggregator_explicit.get_configuration_registry()
-        mocked_func.assert_called_with(conf, {}, "some_key")
+        mocked_func.assert_called_with(conf, {}, TEST_JWT_KEY_FROM_SERVER)
 
 
-def test_delete_aggregator(aggregator_explicit):
+@pytest.mark.usefixtures("mock_prefixes")
+def test_delete_aggregator_calls_blocking_post_request(aggregator_explicit):
     conf = f"{TEST_AGGREGATOR_PREFIX}delete-aggregator/"
 
     with patch("gsy_e_sdk.aggregator.blocking_post_request") as mocked_func:
         aggregator_explicit.delete_aggregator()
-        mocked_func.assert_called_with(conf, {"aggregator_uuid": None}, "some_key")
+        mocked_func.assert_called_with(conf, {"aggregator_uuid": None},
+                                       TEST_JWT_KEY_FROM_SERVER)
 
 
-def test_add_to_batch_commands(aggregator_explicit):
-    # pylint: disable=protected-access
+def test_add_to_batch_commands_returns_client_command_buffer(aggregator_explicit):
     buffer_instance = aggregator_explicit.add_to_batch_commands
     assert buffer_instance == aggregator_explicit._client_command_buffer
 
 
-def test_commands_buffer_length(aggregator_explicit):
-    patch("gsy_e_sdk.aggregator.ClientCommandBuffer.buffer_length",
-          new_callable=PropertyMock, return_value=3)
+@pytest.mark.usefixtures("mock_execute_batch_command_methods")
+def test_commands_buffer_length_returns_expected_buffer_length(aggregator_explicit):
     assert aggregator_explicit.commands_buffer_length == 3
