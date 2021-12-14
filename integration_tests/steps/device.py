@@ -36,7 +36,7 @@ def step_impl(context, setup_file: str, gsy_e_options: str):
     #  2. connect sdk
     #  3. un-pause simulation
     #  as a quick fix we wait:
-    sleep(2)
+    sleep(1.5)
 
 
 @when("the external client is started with test_aggregator_load")
