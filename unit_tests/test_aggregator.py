@@ -13,11 +13,6 @@ TEST_SIMULATION = {
     "websockets_domain_name": "wss://cool.webpage.com/external-ws",
 }
 
-TEST_AGG = {
-    "name": "TestAggr",
-    "uuid": "some_random_aggregator_uuid"
-}
-
 TEST_AGGREGATOR_NAME = "TestAggr"
 TEST_AGGREGATOR_UUID = str(uuid.uuid4())
 
@@ -251,30 +246,6 @@ class TestAggregatorStartWebsocketConnection:
         assert aggregator_explicit.callback_thread is not None
 
 
-class TestAggregatorGetUuidFromAreaName:
-    """Test cases for Aggregator's get_uuid_from_area_name method."""
-
-    @staticmethod
-    def test_get_uuid_from_area_name_returns_expected_with_non_empty_dict(aggregator_explicit):
-        aggregator_explicit.area_name_uuid_mapping = TEST_AREA_MAPPING
-        area_name = TEST_AREA_NAME
-        ret_val = TEST_AREA_MAPPING[TEST_AREA_NAME][0]
-
-        patch("gsy_e_sdk.aggregator.get_uuid_from_area_name_in_tree_dict",
-              return_value=ret_val)
-        assert aggregator_explicit.get_uuid_from_area_name(area_name) == ret_val
-
-    @staticmethod
-    def test_get_uuid_from_area_name_returns_none_with_empty_dict(aggregator_explicit):
-        aggregator_explicit.area_name_uuid_mapping = {}
-        area_name = TEST_AREA_NAME
-        ret_val = TEST_AREA_MAPPING[TEST_AREA_NAME][0]
-
-        patch("gsy_e_sdk.aggregator.get_uuid_from_area_name_in_tree_dict",
-              return_value=ret_val)
-        assert aggregator_explicit.get_uuid_from_area_name(area_name) is None
-
-
 class TestAggregatorCalculateGridFee:
     """Test cases for Aggregator's calculate_grid_fee method."""
 
@@ -393,16 +364,24 @@ class TestAggregatorExecuteBatchCommands:
             mocked_method.assert_called()
 
 
-def test_list_aggregators_request_empty_list(aggregator_explicit):
-    with patch("gsy_e_sdk.aggregator.blocking_get_request", return_value=None):
-        aggs_list = aggregator_explicit.list_aggregators()
-        assert aggs_list == []
+@pytest.mark.parametrize("uuid_mapping, expected_ret_val",
+                         [(TEST_AREA_MAPPING, TEST_AREA_MAPPING[TEST_AREA_NAME][0]), ({}, None)])
+def test_get_uuid_from_area_name_returns_none_with_empty_dict_(uuid_mapping, expected_ret_val,
+                                                               aggregator_explicit):
+    aggregator_explicit.area_name_uuid_mapping = uuid_mapping
+    patch("gsy_e_sdk.aggregator.get_uuid_from_area_name_in_tree_dict",
+          return_value=TEST_AREA_MAPPING[TEST_AREA_NAME][0])
+    assert aggregator_explicit.get_uuid_from_area_name(TEST_AREA_NAME) is expected_ret_val
 
 
-def test_list_aggregators_request_not_empty_list(aggregator_explicit):
-    with patch("gsy_e_sdk.aggregator.blocking_get_request", return_value=[TEST_AGG]):
+@pytest.mark.parametrize("blocking_get_request_ret_val, expected_ret_val",
+                         [([TEST_AGGREGATOR_NAME], [TEST_AGGREGATOR_NAME]), (None, [])])
+def test_list_aggregators_request_not_empty_list(blocking_get_request_ret_val, expected_ret_val,
+                                                 aggregator_explicit):
+    with patch("gsy_e_sdk.aggregator.blocking_get_request",
+               return_value=blocking_get_request_ret_val):
         aggs_list = aggregator_explicit.list_aggregators()
-        assert aggs_list == [TEST_AGG]
+        assert aggs_list == expected_ret_val
 
 
 @pytest.mark.usefixtures("mock_prefixes")
