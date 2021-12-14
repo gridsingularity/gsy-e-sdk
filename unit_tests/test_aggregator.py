@@ -39,8 +39,6 @@ TEST_TRANSACTION_ID = str(uuid.uuid4())
 @pytest.fixture(autouse=True, name="mock_connections")
 def fixture_mock_connections(mocker):
     """Mock methods and functions which establish external connections."""
-    mocker.patch("gsy_e_sdk.aggregator.blocking_get_request")
-    mocker.patch("gsy_e_sdk.aggregator.blocking_post_request")
     mocker.patch("gsy_e_sdk.clients.rest_asset_client.retrieve_jwt_key_from_server",
                  return_value=TEST_JWT_KEY_FROM_SERVER)
     mocker.patch("gsy_framework.client_connections.utils.RestCommunicationMixin"
