@@ -31,6 +31,12 @@ def step_impl(context, setup_file: str, gsy_e_options: str):
     system("docker run -d --name gsy-e-tests --env REDIS_URL=redis://redis.container:6379/ "
            f"--net integtestnet gsy-e-tests -l INFO run --setup {setup_file} "
            f"--no-export --seed 0 --enable-external-connection {gsy_e_options} ")
+    # TODO: We need to somehow handle the correct workflow in the future:
+    #  1. start the simulation in paused mode
+    #  2. connect sdk
+    #  3. un-pause simulation
+    #  as a quick fix we wait:
+    sleep(2)
 
 
 @when("the external client is started with test_aggregator_load")
