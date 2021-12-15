@@ -1,45 +1,47 @@
 # pylint: disable=missing-function-docstring
 # pylint: disable=function-redefined
-# pylint: disable=unused-argument
 from math import isclose
 from os import system
 from time import sleep
 
-from behave import given, when, then  # pylint: disable=no-name-in-module
+from behave import given, when, then, step  # pylint: disable=no-name-in-module
 
 from integration_tests.test_aggregator_batch_commands import BatchAggregator
 from integration_tests.test_aggregator_ess import EssAggregator
 from integration_tests.test_aggregator_load import LoadAggregator
 from integration_tests.test_aggregator_pv import PVAggregator
+from integration_tests.sim_container_redis_commands import send_resume_to_simulation
 
 
 @given("redis container is started")
-def step_impl(context):
-    system("docker run -d -p 6379:6379 --name redis.container -h redis.container "
+def step_impl(_context):
+    system("docker run -d -p 6379:6379 --name gsy-e-tests-redis -h redis.container "
            "--net integtestnet redis:6.2.5")
+    # Wait for redis to startup:
+    sleep(3)
 
 
-@given("gsy-e is started using setup {setup_file} ({gsy_e_options})")
-def step_impl(context, setup_file: str, gsy_e_options: str):
+@given("gsy-e is started in paused mode using setup {setup_file} ({gsy_e_options})")
+def step_impl(_context, setup_file: str, gsy_e_options: str):
     """Run the d3a container on a specific setup.
 
     Args:
         setup_file (str): the setup file for a d3a simulation.
         gsy_e_options (str): options to be passed to the d3a run command. E.g.: "-t 1s -d 12h"
     """
-    sleep(3)
     system("docker run -d --name gsy-e-tests --env REDIS_URL=redis://redis.container:6379/ "
            f"--net integtestnet gsy-e-tests -l INFO run --setup {setup_file} "
-           f"--no-export --seed 0 --enable-external-connection {gsy_e_options} ")
-    # TODO: We need to somehow handle the correct workflow in the future:
-    #  1. start the simulation in paused mode
-    #  2. connect sdk
-    #  3. un-pause simulation
-    #  as a quick fix we wait:
-    sleep(1.5)
+           f"--no-export --seed 0 --enable-external-connection {gsy_e_options} --paused")
+    # Wait for simulation to start up:
+    sleep(5)
 
 
-@when("the external client is started with test_aggregator_load")
+@step("gsy-e is resumed")
+def step_impl(_context):
+    send_resume_to_simulation()
+
+
+@when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_load")
 def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
@@ -49,7 +51,7 @@ def step_impl(context):
     assert context.aggregator.is_active is True
 
 
-@when("the external client is started with test_aggregator_batch_commands")
+@when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_batch_commands")
 def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
@@ -59,7 +61,7 @@ def step_impl(context):
     assert context.aggregator.is_active is True
 
 
-@when("the external client is started with test_aggregator_pv")
+@when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_pv")
 def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
@@ -81,7 +83,7 @@ def step_impl(context):
     assert context.aggregator.is_on_market_cycle_called
 
 
-@when("the external client is started with test_aggregator_ess")
+@when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_ess")
 def step_impl(context):
     # Wait for d3a to activate all areas
     sleep(5)
@@ -89,7 +91,7 @@ def step_impl(context):
     context.aggregator = EssAggregator("storage_aggregator")
 
 
-@then("the external client is connecting to the simulation until finished")
+@step("the gsye-e-sdk is connected to the gsy-e until finished")
 def step_impl(context):
     # Infinite loop in order to leave the client running on the background
     # placing bids and offers on every market cycle.
@@ -103,7 +105,7 @@ def step_impl(context):
         counter += 3
 
 
-@then("the external client does not report errors")
+@step("the gsye-e-sdk does not report errors")
 def step_impl(context):
     assert len(context.aggregator.errors) == 0, \
         f"The following errors were reported: {context.aggregator.errors}"
