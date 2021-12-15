@@ -8,5 +8,6 @@ from integration_tests.test_aggregator_market import MarketAggregator
 
 @step("the gsy-e-sdk is connected {area_id} market on gsy-e")
 def step_impl(context, area_id):
-    sleep(5)
     context.aggregator = MarketAggregator(area_id)
+    sleep(3)
+    assert context.aggregator.is_active is True
