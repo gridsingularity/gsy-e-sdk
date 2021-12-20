@@ -28,7 +28,7 @@ class BatchAggregator(TestAggregatorBase):
         pv_asset.select_aggregator(self.aggregator_uuid)
         forecast_load_asset.select_aggregator(self.aggregator_uuid)
 
-        self.redis_market = RedisMarketClient("house-2", pubsub_thread=self.pubsub)
+        self.redis_market = RedisMarketClient("house-2")
         self.redis_market.select_aggregator(self.aggregator_uuid)
 
     @staticmethod

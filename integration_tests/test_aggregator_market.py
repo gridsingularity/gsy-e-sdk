@@ -13,7 +13,7 @@ class MarketAggregator(TestAggregatorBase):
         self._has_tested_market = False
 
     def _setup(self):
-        self.house_market = RedisMarketClient("house-2", pubsub_thread=self.pubsub)
+        self.house_market = RedisMarketClient("house-2")
         self.house_market.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):
