@@ -152,8 +152,8 @@ class RedisAggregator:
                 "aggregator_uuid": self.aggregator_uuid,
                 "type": "DELETE",
                 "transaction_id": transaction_id}
-        self.redis_db.publish("aggregator", json.dumps(data))
         self._transaction_id_buffer.append(transaction_id)
+        self.redis_db.publish("aggregator", json.dumps(data))
 
         if is_blocking:
             try:
@@ -211,8 +211,11 @@ class RedisAggregator:
                            "aggregator_uuid": self.aggregator_uuid,
                            "batch_commands": batch_command_dict}
         batch_channel = f"external//aggregator/{self.aggregator_uuid}/batch_commands"
-        self.redis_db.publish(batch_channel, json.dumps(batched_command))
+        # IMPORTANT: Order matters in the following two steps because redis could be faster
+        # than the appending of the transaction_id to the buffer:
         self._transaction_id_buffer.append(transaction_id)
+        self.redis_db.publish(batch_channel, json.dumps(batched_command))
+
         if is_blocking:
             try:
                 wait_until_timeout_blocking(
@@ -220,7 +223,7 @@ class RedisAggregator:
                 )
                 return self._transaction_id_response_buffer.get(transaction_id, None)
             except AssertionError as ex:
-                raise RedisAggregatorAPIException("API registration process timed out.") from ex
+                raise RedisAggregatorAPIException("Sending batch commands timed out.") from ex
         return None
 
     def _on_event_or_response(self, message: Dict) -> None:
