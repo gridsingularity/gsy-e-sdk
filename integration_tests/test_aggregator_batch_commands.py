@@ -20,15 +20,15 @@ class BatchAggregator(TestAggregatorBase):
         self.updated_offer_bid_price = 60
 
     def _setup(self):
-        load_asset = RedisAssetClient("load")
-        pv_asset = RedisAssetClient("pv")
+        load_asset = RedisAssetClient("load", pubsub_thread=self.pubsub)
+        pv_asset = RedisAssetClient("pv", pubsub_thread=self.pubsub)
         forecast_load_asset = RedisAssetClient("forecast-measurement-load")
 
         load_asset.select_aggregator(self.aggregator_uuid)
         pv_asset.select_aggregator(self.aggregator_uuid)
         forecast_load_asset.select_aggregator(self.aggregator_uuid)
 
-        self.redis_market = RedisMarketClient("house-2")
+        self.redis_market = RedisMarketClient("house-2", pubsub_thread=self.pubsub)
         self.redis_market.select_aggregator(self.aggregator_uuid)
 
     @staticmethod
