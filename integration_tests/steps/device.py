@@ -11,8 +11,7 @@ from integration_tests.test_aggregator_batch_commands import BatchAggregator
 from integration_tests.test_aggregator_ess import EssAggregator
 from integration_tests.test_aggregator_load import LoadAggregator
 from integration_tests.test_aggregator_pv import PVAggregator
-from integration_tests.utils import (wait_for_active_aggregator,
-                                     wait_for_log_to_appear_in_container_logs)
+from integration_tests.utils import wait_for_log_to_appear_in_container_logs
 
 REDIS_HOST = "redis.container"
 REDIS_PORT = 6379
@@ -51,19 +50,19 @@ def step_impl(_context):
 @when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_load")
 def step_impl(context):
     context.aggregator = LoadAggregator("load")
-    wait_for_active_aggregator(context, time_out=3)
+    assert context.aggregator.is_active
 
 
 @when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_batch_commands")
 def step_impl(context):
     context.aggregator = BatchAggregator(aggregator_name="My_aggregator")
-    wait_for_active_aggregator(context, time_out=3)
+    assert context.aggregator.is_active
 
 
 @when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_pv")
 def step_impl(context):
     context.aggregator = PVAggregator("pv_aggregator")
-    wait_for_active_aggregator(context, time_out=3)
+    assert context.aggregator.is_active
 
 
 @then("the on_event_or_response is called for different events")
@@ -81,7 +80,7 @@ def step_impl(context):
 @when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_ess")
 def step_impl(context):
     context.aggregator = EssAggregator("storage_aggregator")
-    wait_for_active_aggregator(context, time_out=3)
+    assert context.aggregator.is_active
 
 
 @step("the gsy-e-sdk is connected to the gsy-e until finished")
