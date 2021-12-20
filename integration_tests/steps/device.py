@@ -84,7 +84,7 @@ def step_impl(context):
     wait_for_active_aggregator(context, time_out=3)
 
 
-@step("the gsye-e-sdk is connected to the gsy-e until finished")
+@step("the gsy-e-sdk is connected to the gsy-e until finished")
 def step_impl(context):
     # Infinite loop in order to leave the client running on the background
     # placing bids and offers on every market cycle.
@@ -98,7 +98,7 @@ def step_impl(context):
         counter += 3
 
 
-@step("the gsye-e-sdk does not report errors")
+@step("the gsy-e-sdk does not report errors")
 def step_impl(context):
     assert len(context.aggregator.errors) == 0, \
         f"The following errors were reported: {context.aggregator.errors}"
