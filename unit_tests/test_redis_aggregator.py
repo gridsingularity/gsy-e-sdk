@@ -1,26 +1,23 @@
-# pylint: disable=missing-function-docstring, protected-access
+# pylint: disable=missing-function-docstring, protected-access, no-member
 import json
 import uuid
-from unittest.mock import patch, PropertyMock, MagicMock
+from unittest.mock import patch, PropertyMock, MagicMock, call
 import pytest
+from gsy_e_sdk.constants import LOCAL_REDIS_URL
 
 from gsy_e_sdk.redis_aggregator import RedisAggregator, RedisAggregatorAPIException
 
 TEST_AGGREGATOR_NAME = "TestAgg"
-
-TEST_AREA_NAME = "TestArea"
-TEST_AREA_MAPPING = {TEST_AREA_NAME: [str(uuid.uuid4())]}
 
 TEST_TRANSACTION_ID = str(uuid.uuid4())
 TEST_AGGREGATOR_UUID = str(uuid.uuid4())
 
 TEST_DEVICE_UUID_1 = str(uuid.uuid4())
 TEST_DEVICE_UUID_2 = str(uuid.uuid4())
-TEST_BATCH_COMMAND = "TEST_BATCH_COMMAND"
 
 TEST_BATCH_COMMAND_DICT = {
-    TEST_DEVICE_UUID_1: [TEST_BATCH_COMMAND],
-    TEST_DEVICE_UUID_2: [TEST_BATCH_COMMAND]
+    TEST_DEVICE_UUID_1: ["TEST_BATCH_COMMAND"],
+    TEST_DEVICE_UUID_2: ["TEST_BATCH_COMMAND"]
 }
 
 TEST_TRANSACTION_ID_RESPONSE = "TEST_TRANSACTION_ID_RESPONSE"
@@ -29,14 +26,51 @@ TEST_TRANSACTION_ID_BUFFER = {
                           "response": TEST_TRANSACTION_ID_RESPONSE}
 }
 
-TEST_RESPONSE = "TEST_RESPONSE"
+TEST_RESPONSE = {"status": "ready",
+                 "command": "offer",
+                 "offer": {"energy": 1,
+                           "price": 1,
+                           "seller": "test_seller"},
+                 "bid": {"energy": 1,
+                         "price": 1,
+                         "buyer": "test_buyer"},
+                 }
+
 TEST_TRANSACTION_ID_RESPONSE_BUFFER = {TEST_TRANSACTION_ID: TEST_RESPONSE}
+
+TEST_BATCH_RESPONSES = {"TEST_ASSET_UUID": [TEST_RESPONSE]}
+TEST_GRID_TREE = {}
+
+TEST_MESSAGE_DICT = {
+    "data": {
+        "transaction_id": TEST_TRANSACTION_ID,
+        "status": "SELECTED",
+        "event": "market",
+        "aggregator_uuid": None,
+        "responses": TEST_BATCH_RESPONSES,
+        "device_uuid": None,
+        "grid_tree": TEST_GRID_TREE,
+        "trade_list": [{"trade_price": 1,
+                        "traded_energy": 1,
+                        "buyer": "anonymous",
+                        "seller": "test_seller"}],
+
+        "slot_completion": "0%",
+        "content": {
+            "slot_completion": "0%",
+            "start_time": "00:00",
+            "duration_min": 300,
+            "market_slot": 1, }
+    }
+}
 
 
 @pytest.fixture(autouse=True)
 def fixture_mock_connections(mocker):
     mocker.patch("gsy_e_sdk.redis_aggregator.StrictRedis")
     mocker.patch("gsy_e_sdk.redis_aggregator.ThreadPoolExecutor")
+    mocker.patch("gsy_e_sdk.redis_aggregator.Dict",
+                 return_value=TEST_MESSAGE_DICT)
 
 
 @pytest.fixture(name="mock_grid_fee_calculation")
@@ -62,44 +96,98 @@ def fixture_mock_client_command_buffer(mocker):
 
 @pytest.fixture(name="aggregator")
 def fixture_aggregator(mocker):
-    mocker.patch("gsy_e_sdk.redis_aggregator.RedisAggregator._create_aggregator")
+    mocker.patch("gsy_e_sdk.redis_aggregator.uuid.uuid4",
+                 return_value=TEST_TRANSACTION_ID)
+    mocker.patch("gsy_e_sdk.redis_aggregator.wait_until_timeout_blocking")
     return RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
 
 
 class TestRedisAggregatorConstructor:
-    """Includes tests for the constructor of the RedisAggregator class."""
+    """Include tests for the constructor of the RedisAggregator class."""
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_grid_fee_calculation")
-    def test_constructor_grid_fee_calculation_instantiated(aggregator):
-        assert aggregator.grid_fee_calculation is not None
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_grid_fee_calculation_instantiated():
+        grid_fee_calculation_mock = MagicMock()
+        with patch("gsy_e_sdk.redis_aggregator.GridFeeCalculation",
+                   return_value=grid_fee_calculation_mock) as mocked_class:
+            agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+            mocked_class.assert_called()
+            assert agg.grid_fee_calculation is grid_fee_calculation_mock
 
     @staticmethod
-    def test_constructor_redis_db_instantiated(aggregator):
-        assert aggregator.redis_db is not None
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_redis_db_instantiated():
+        redis_db_mock = MagicMock()
+        with patch("gsy_e_sdk.redis_aggregator.StrictRedis.from_url",
+                   return_value=redis_db_mock) as redis_from_url:
+            agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+            redis_from_url.assert_called_with(LOCAL_REDIS_URL)
+            assert agg.redis_db is redis_db_mock
 
     @staticmethod
     def test_constructor_pubsub_instantiated(aggregator):
-        assert aggregator.pubsub is not None
+        aggregator.redis_db.pubsub.assert_called()
+        assert aggregator.pubsub is aggregator.redis_db.pubsub()
 
     @staticmethod
-    def test_constructor_client_command_buffer_instantiated(aggregator):
-        assert aggregator._client_command_buffer is not None
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_client_command_buffer_instantiated():
+        client_command_buffer_mock = MagicMock()
+        with patch("gsy_e_sdk.redis_aggregator.ClientCommandBuffer",
+                   return_value=client_command_buffer_mock) as mocked_class:
+            agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+            mocked_class.assert_called()
+        assert agg._client_command_buffer is client_command_buffer_mock
 
     @staticmethod
-    def test_constructor_threadpoolexecutor_instantiated(aggregator):
-        assert aggregator.executor is not None
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_threadpoolexecutor_instantiated():
+        ThreadPoolExecutor_mock = MagicMock
+        with patch("gsy_e_sdk.redis_aggregator.ThreadPoolExecutor",
+                   return_value=ThreadPoolExecutor_mock) as mocked_class:
+            agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+            mocked_class.assert_called()
+        assert agg.executor is ThreadPoolExecutor_mock
 
     @staticmethod
-    def test_constructor_connect_and_subscribe_called():
-        with patch("gsy_e_sdk.redis_aggregator."
-                   "RedisAggregator._connect_and_subscribe") as mocked_method:
-            RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-            mocked_method.assert_called()
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_connect_and_subscribe_side_effects_1():
+        """Test the side effects due to the methods called
+        with _connect_and_subscribe()"""
+
+        # side effects of _subscribe_to_aggregator_response_and_start_redis_thread
+        # private method
+        aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+
+        channel_dict_1 = {"aggregator_response": aggregator._aggregator_response_callback}
+        aggregator.pubsub.run_in_thread.assert_called_with(daemon=True)
+
+        # side effects of _connect_to_simulation -> _create_aggregator private method
+        data = {"name": aggregator.aggregator_name, "type": "CREATE",
+                "transaction_id": TEST_TRANSACTION_ID}
+        aggregator.redis_db.publish.assert_called_with("aggregator", json.dumps(data))
+        assert TEST_TRANSACTION_ID in aggregator._transaction_id_buffer
+        assert aggregator.aggregator_uuid is TEST_TRANSACTION_ID
+
+        # side effects of _subscribe_to_response_channels private method
+        channel_dict_2 = {f"external-aggregator/*/{aggregator.aggregator_uuid}/events"
+                          f"/all": aggregator._events_callback_dict,
+                          f"external-aggregator/*/{aggregator.aggregator_uuid}/response"
+                          f"/batch_commands": aggregator._batch_response,
+                          }
+
+        aggregator.pubsub.psubscribe.assert_has_calls([call(**channel_dict_1),
+                                                       call(**channel_dict_2)])
 
     @staticmethod
-    def test_constructor_lock_instantiated(aggregator):
-        assert aggregator.lock is not None
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_lock_instantiated():
+        with patch("gsy_e_sdk.redis_aggregator.Lock"
+                   ) as mocked_class:
+            agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+            mocked_class.assert_called()
+            assert agg.lock is not None
 
 
 @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
@@ -155,9 +243,8 @@ class TestRedisAggregatorExecuteBatchCommands:
             aggregator.execute_batch_commands(is_blocking=False)
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
     def test_execute_batch_commands_batched_command_published(aggregator):
-        uuid.uuid4 = MagicMock(return_value=TEST_TRANSACTION_ID)
-
         aggregator.device_uuid_list = [TEST_DEVICE_UUID_1, TEST_DEVICE_UUID_2]
         aggregator.aggregator_uuid = TEST_AGGREGATOR_UUID
 
@@ -182,17 +269,17 @@ class TestRedisAggregatorExecuteBatchCommands:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
-    @pytest.mark.parametrize("is_blocking_, trans_id_resp_buffer, expected_ret_val",
+    @pytest.mark.parametrize("is_blocking, trans_id_resp_buffer, expected_ret_val",
                              [(True, TEST_TRANSACTION_ID_RESPONSE_BUFFER, TEST_RESPONSE),
                               (False, TEST_TRANSACTION_ID_RESPONSE_BUFFER, None),
                               (True, {}, None)])
-    def test_execute_batch_commands_returns_expected(aggregator, is_blocking_,
+    def test_execute_batch_commands_returns_expected(aggregator, is_blocking,
                                                      trans_id_resp_buffer, expected_ret_val):
         aggregator.device_uuid_list = [TEST_DEVICE_UUID_1, TEST_DEVICE_UUID_2]
         aggregator.aggregator_uuid = TEST_AGGREGATOR_UUID
         aggregator._transaction_id_response_buffer = trans_id_resp_buffer
 
-        assert aggregator.execute_batch_commands(is_blocking=is_blocking_) is expected_ret_val
+        assert aggregator.execute_batch_commands(is_blocking=is_blocking) is expected_ret_val
 
 
 @pytest.mark.usefixtures("mock_grid_fee_calculation")
@@ -219,18 +306,22 @@ class TestRedisAggregatorCalculateGridFee:
 
 
 def test_get_uuid_from_area_name_returns_expected(aggregator):
-    aggregator.area_name_uuid_mapping = TEST_AREA_MAPPING
-    area_name = TEST_AREA_NAME
-    ret_val = TEST_AREA_MAPPING[TEST_AREA_NAME][0]
+    test_area_mapping = {"TestArea": [str(uuid.uuid4())]}
 
-    patch("gsy_e_sdk.redis_aggregator.get_uuid_from_area_name_in_tree_dict",
-          return_value=ret_val)
+    aggregator.area_name_uuid_mapping = test_area_mapping
+    area_name = "TestArea"
+    ret_val = test_area_mapping[area_name][0]
+
     assert aggregator.get_uuid_from_area_name(area_name) == ret_val
 
 
-def test_add_to_batch_commands_returns_client_command_buffer(aggregator):
-    buffer_instance = aggregator.add_to_batch_commands
-    assert buffer_instance == aggregator._client_command_buffer
+@pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+def test_add_to_batch_commands_returns_client_command_buffer():
+    client_command_buffer_mock = MagicMock()
+    with patch("gsy_e_sdk.redis_aggregator.ClientCommandBuffer",
+               return_value=client_command_buffer_mock):
+        aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+        assert aggregator.add_to_batch_commands is client_command_buffer_mock
 
 
 @pytest.mark.usefixtures("mock_client_command_buffer_attributes")
