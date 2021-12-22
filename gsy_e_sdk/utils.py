@@ -11,8 +11,9 @@ from gsy_framework.utils import get_area_name_uuid_mapping
 from sgqlc.endpoint.http import HTTPEndpoint
 
 from gsy_e_sdk import __version__
-from gsy_e_sdk.constants import DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN, \
-    CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID
+from gsy_e_sdk.constants import (
+    DEFAULT_DOMAIN_NAME, DEFAULT_WEBSOCKET_DOMAIN,
+    CUSTOMER_WEBSOCKET_DOMAIN_NAME, API_CLIENT_SIMULATION_ID)
 
 CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOMAIN_NAME",
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
@@ -49,8 +50,8 @@ def execute_graphql_request(domain_name: str, query: str,
             logging.error("authentication failed")
             return None
     url = f"{domain_name}/graphql/" if url is None else url
-    headers = {"Authorization": f"JWT {jwt_key}", "Content-Type": "application/json"} \
-        if headers is None else headers
+    headers = {"Authorization": f"JWT {jwt_key}",
+               "Content-Type": "application/json"} if headers is None else headers
     endpoint = HTTPEndpoint(url, headers)
     data = endpoint(query=query)
     return data
@@ -109,8 +110,8 @@ def get_area_uuid_from_area_name_and_collaboration_id(
     Fire a request to get the scenario representation of the collaboration and
     search for the uuid of the area that name matches area_name.
     """
-    query = "query { readConfiguration(uuid: '{" + collab_id + \
-            "}') { scenarioData { latest { serialized } } } }"
+    query = ("query { readConfiguration(uuid: '{" + collab_id +
+             "}') { scenarioData { latest { serialized } } } }")
     data = execute_graphql_request(domain_name=domain_name, query=query)
     area_uuid = get_area_uuid_from_area_name(
         json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]),
@@ -127,8 +128,8 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id) -> dict:
     Fire a request to get the scenario representation of the collaboration and
     map for the uuid of the areas to their names.
     """
-    query = "query { readConfiguration(uuid: '{" + collab_id + \
-            "}') { scenarioData { latest { serialized } } } }"
+    query = ("query { readConfiguration(uuid: '{" + collab_id +
+             "}') { scenarioData { latest { serialized } } } }")
 
     data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
     if data.get("errors"):
@@ -148,8 +149,8 @@ def get_aggregators_list(domain_name: Optional[str] = None) -> list:
     query = "query { aggregatorsList { configUuid name  devicesList { deviceUuid } } }"
 
     data = execute_graphql_request(domain_name=domain_name, query=query)
-    return ast.literal_eval(data["errors"][0]["message"]) if \
-        data.get("errors") else data["data"]["aggregatorsList"]
+    return (ast.literal_eval(data["errors"][0]["message"]) if
+            data.get("errors") else data["data"]["aggregatorsList"])
 
 
 def logging_decorator(command_name: str):
