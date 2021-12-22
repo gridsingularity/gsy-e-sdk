@@ -266,7 +266,7 @@ def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) ->
 def read_simulation_config_file(config_file_path: str) -> Optional[Dict]:
     """Return simulation config as dict if config_file_path is provided."""
     if config_file_path:
-        with open(config_file_path) as json_file:
+        with open(config_file_path, encoding="utf-8") as json_file:
             simulation_config = json.load(json_file)
         validate_api_simulation_config(simulation_config)
         return simulation_config
