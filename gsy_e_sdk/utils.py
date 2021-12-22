@@ -40,14 +40,14 @@ class RedisAPIException(Exception):
 
 def execute_graphql_request(domain_name, query, headers=None, url=None, authenticate=True):
     """
-    Fires a graphql request to the desired url and returns the response
+    Fire a graphql request to the desired url and returns the response
     """
     jwt_key = None
     if authenticate:
         jwt_key = retrieve_jwt_key_from_server(domain_name)
         if jwt_key is None:
             logging.error("authentication failed")
-            return
+            return None
     url = f"{domain_name}/graphql/" if url is None else url
     headers = {"Authorization": f"JWT {jwt_key}", "Content-Type": "application/json"} \
         if headers is None else headers
@@ -65,7 +65,7 @@ def retrieve_jwt_key_from_server(domain_name):
     if resp.status_code != 200:
         logging.error("Request for token authentication failed with status "
                       "code %s. Response body: %s", resp.status_code, resp.text)
-        return
+        return None
 
     validate_client_up_to_date(resp)
     return json.loads(resp.text)["token"]
@@ -111,11 +111,10 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id):
     data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
     if key_in_dict_and_not_none(data, "errors"):
         return ast.literal_eval(data["errors"][0]["message"])
-    else:
-        area_name_uuid_map = get_area_name_uuid_mapping(
-            json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"])
-        )
-        return area_name_uuid_map
+    area_name_uuid_map = get_area_name_uuid_mapping(
+        json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"])
+    )
+    return area_name_uuid_map
 
 
 def get_aggregators_list(domain_name=None):
@@ -241,8 +240,7 @@ def get_uuid_from_area_name_in_tree_dict(area_name_uuid_mapping, name):
         raise ValueError(f"Could not find {name} in tree")
     if len(area_name_uuid_mapping[name]) == 1:
         return area_name_uuid_mapping[name][0]
-    else:
-        ValueError(f"There are multiple areas named {name} in the tree")
+    raise ValueError(f"There are multiple areas named {name} in the tree")
 
 
 def buffer_grid_tree_info(f):
@@ -272,6 +270,7 @@ def read_simulation_config_file(config_file_path: str) -> Optional[Dict]:
             simulation_config = json.load(json_file)
         validate_api_simulation_config(simulation_config)
         return simulation_config
+    return None
 
 
 def get_sim_id_and_domain_names():
@@ -294,3 +293,4 @@ def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
         for area_uuid in area_uuids:
             if area_uuid == asset_uuid:
                 return area_name
+    return None
