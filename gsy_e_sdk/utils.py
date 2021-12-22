@@ -7,7 +7,7 @@ from typing import Optional, Dict
 
 import requests
 from gsy_framework.api_simulation_config.validators import validate_api_simulation_config
-from gsy_framework.utils import get_area_name_uuid_mapping, key_in_dict_and_not_none
+from gsy_framework.utils import get_area_name_uuid_mapping
 from sgqlc.endpoint.http import HTTPEndpoint
 
 from gsy_e_sdk import __version__
@@ -18,27 +18,27 @@ CONSUMER_WEBSOCKET_DOMAIN_NAME_FROM_ENV = os.environ.get("CUSTOMER_WEBSOCKET_DOM
                                                          CUSTOMER_WEBSOCKET_DOMAIN_NAME)
 
 
-def domain_name_from_env():
+def domain_name_from_env() -> str:
+    """Return the domain name's environment variable if set."""
     return os.environ.get("API_CLIENT_DOMAIN_NAME", DEFAULT_DOMAIN_NAME)
 
 
-def websocket_domain_name_from_env():
+def websocket_domain_name_from_env() -> str:
+    """Return the websocket domain name's environment variable if set."""
     return os.environ.get("API_CLIENT_WEBSOCKET_DOMAIN_NAME", DEFAULT_WEBSOCKET_DOMAIN)
 
 
-def simulation_id_from_env():
+def simulation_id_from_env() -> str:
+    """Return the simulation ID environment variable if set."""
     return os.environ.get("API_CLIENT_SIMULATION_ID", API_CLIENT_SIMULATION_ID)
 
 
 class AreaNotFoundException(Exception):
-    pass
+    """Exception denoting that an area was not found in a simulation."""
 
 
-class RedisAPIException(Exception):
-    pass
-
-
-def execute_graphql_request(domain_name, query, headers=None, url=None, authenticate=True):
+def execute_graphql_request(domain_name: str, query: str,
+                            headers=None, url=None, authenticate=True):
     """
     Fire a graphql request to the desired url and returns the response
     """
@@ -56,7 +56,11 @@ def execute_graphql_request(domain_name, query, headers=None, url=None, authenti
     return data
 
 
-def retrieve_jwt_key_from_server(domain_name):
+def retrieve_jwt_key_from_server(domain_name: str) -> Optional[str]:
+    """
+    Get the jwt token from the server based on credentials set in the
+    environment variables.
+    """
     resp = requests.post(
         f"{domain_name}/api-token-auth/",
         data=json.dumps({"username": os.environ["API_CLIENT_USERNAME"],
@@ -71,15 +75,24 @@ def retrieve_jwt_key_from_server(domain_name):
     return json.loads(resp.text)["token"]
 
 
-def get_aggregator_prefix(domain_name, simulation_id=None):
+def get_aggregator_prefix(domain_name: str,
+                          simulation_id: Optional[str] = None) -> str:
+    """Build a prefix for the aggregator API endpoint."""
     return f"{domain_name}/external-connection/aggregator-api/{simulation_id}/"
 
 
-def get_configuration_prefix(domain_name, simulation_id=None):
+def get_configuration_prefix(domain_name: str,
+                             simulation_id: Optional[str] = None) -> str:
+    """Build a prefix for the configurations API endpoint."""
     return f"{domain_name}/external-connection/configurations/{simulation_id}/"
 
 
-def get_area_uuid_from_area_name(serialized_scenario, area_name):
+def get_area_uuid_from_area_name(serialized_scenario: dict,
+                                 area_name: str) -> Optional[str]:
+    """
+    Iterate over a scenario representation and look up the uuid of the
+    area that name matches area_name.
+    """
     if "name" in serialized_scenario and serialized_scenario["name"] == area_name:
         return serialized_scenario["uuid"]
     if "children" in serialized_scenario:
@@ -90,7 +103,12 @@ def get_area_uuid_from_area_name(serialized_scenario, area_name):
     return None
 
 
-def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, domain_name):
+def get_area_uuid_from_area_name_and_collaboration_id(
+        collab_id, area_name, domain_name) -> str:
+    """
+    Fire a request to get the scenario representation of the collaboration and
+    search for the uuid of the area that name matches area_name.
+    """
     query = "query { readConfiguration(uuid: '{" + collab_id + \
             "}') { scenarioData { latest { serialized } } } }"
     data = execute_graphql_request(domain_name=domain_name, query=query)
@@ -104,12 +122,16 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
     return area_uuid
 
 
-def get_area_uuid_and_name_mapping_from_simulation_id(collab_id):
+def get_area_uuid_and_name_mapping_from_simulation_id(collab_id) -> dict:
+    """
+    Fire a request to get the scenario representation of the collaboration and
+    map for the uuid of the areas to their names.
+    """
     query = "query { readConfiguration(uuid: '{" + collab_id + \
             "}') { scenarioData { latest { serialized } } } }"
 
     data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
-    if key_in_dict_and_not_none(data, "errors"):
+    if data.get("errors"):
         return ast.literal_eval(data["errors"][0]["message"])
     area_name_uuid_map = get_area_name_uuid_mapping(
         json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"])
@@ -117,9 +139,9 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id):
     return area_name_uuid_map
 
 
-def get_aggregators_list(domain_name=None):
+def get_aggregators_list(domain_name: Optional[str] = None) -> list:
     """
-    Returns a list of aggregators for the logged in user
+    Return a list of aggregators for the logged in user.
     """
     if not domain_name:
         domain_name = os.environ.get("API_CLIENT_DOMAIN_NAME")
@@ -127,10 +149,14 @@ def get_aggregators_list(domain_name=None):
 
     data = execute_graphql_request(domain_name=domain_name, query=query)
     return ast.literal_eval(data["errors"][0]["message"]) if \
-        key_in_dict_and_not_none(data, "errors") else data["data"]["aggregatorsList"]
+        data.get("errors") else data["data"]["aggregatorsList"]
 
 
 def logging_decorator(command_name: str):
+    """
+    Decorator that logs the commands performed before executing them and
+    return the response afterwords.
+    """
     def decorator(function: callable):
         @wraps(function)
         def wrapped(self, *args, **kwargs):
@@ -142,7 +168,8 @@ def logging_decorator(command_name: str):
     return decorator
 
 
-def list_running_canary_networks_and_devices_with_live_data(domain_name):
+def list_running_canary_networks_and_devices_with_live_data(domain_name) -> dict:
+    """Return all canary networks with their forecastStreamAreaMapping setting."""
     query = '''
     query {
       listCanaryNetworks {
@@ -167,7 +194,8 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     }
 
 
-def log_bid_offer_confirmation(message):
+def log_bid_offer_confirmation(message: dict) -> None:
+    """Log the details of orders placed in the markets."""
     try:
         if message.get("status") == "ready" and message.get("command") in ["bid", "offer"]:
             event = "bid" if "bid" in message.get("command") else "offer"
@@ -179,12 +207,15 @@ def log_bid_offer_confirmation(message):
             action = "OFFERED" if event == "offer" else "BID"
             logging.info("%s %s %s kWh at %s cts/kWh",
                          trader, action, round(energy, 3), rate)
+    # pylint: disable = broad-except
     except Exception:
         logging.exception("Logging bid/offer info failed.")
 
 
-def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None,
-                                       asset_name=None):
+def log_deleted_bid_offer_confirmation(
+        message: dict, command_type: Optional[str] = None,
+        bid_offer_id: Optional[str] = None, asset_name: Optional[str] = None) -> None:
+    """Log the details of orders deleted from the markets."""
     try:
         if message.get("status") == "ready" and message.get("command") in ["bid_delete",
                                                                            "offer_delete"]:
@@ -197,11 +228,13 @@ def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=
             else:
                 logging.info(
                     "<-- %s %s is successfully deleted-->", command_type, bid_offer_id)
+    # pylint: disable = broad-except
     except Exception:
         logging.exception("Logging bid/offer deletion confirmation failed.")
 
 
 def log_trade_info(message):
+    """Log the details of trades matched in the markets."""
     rate = round(message.get("trade_price") / message.get("traded_energy"), 2)
     if message.get("buyer") == "anonymous":
         logging.info(
@@ -235,7 +268,9 @@ def _flatten_info_dict(indict: dict, outdict: dict):
             _flatten_info_dict(indict[area_name]["children"], outdict)
 
 
-def get_uuid_from_area_name_in_tree_dict(area_name_uuid_mapping, name):
+def get_uuid_from_area_name_in_tree_dict(
+        area_name_uuid_mapping: dict, name: str) -> str:
+    """Look up the area uuid in the area_name_uuid_mapping based on its name."""
     if name not in area_name_uuid_mapping:
         raise ValueError(f"Could not find {name} in tree")
     if len(area_name_uuid_mapping[name]) == 1:
@@ -244,6 +279,7 @@ def get_uuid_from_area_name_in_tree_dict(area_name_uuid_mapping, name):
 
 
 def buffer_grid_tree_info(function: callable):
+    """Update the grid_tree details of the calling class."""
     @wraps(function)
     def wrapper(self, message):
         self.latest_grid_tree = message["grid_tree"]
@@ -253,6 +289,7 @@ def buffer_grid_tree_info(function: callable):
 
 
 def create_area_name_uuid_mapping_from_tree_info(latest_grid_tree_flat: dict) -> dict:
+    """Build up a {area_name: [area_uuids]} mapping from the latest_grid_tree_flat."""
     area_name_uuid_mapping = {}
     for area_uuid, area_dict in latest_grid_tree_flat.items():
         if "area_name" in area_dict:
@@ -274,10 +311,12 @@ def read_simulation_config_file(config_file_path: str) -> Optional[Dict]:
 
 
 def get_sim_id_and_domain_names():
+    """Return the simulation id, domain name and websocket domain name from the environment."""
     return simulation_id_from_env(), domain_name_from_env(), websocket_domain_name_from_env()
 
 
 def validate_client_up_to_date(response):
+    """Check whether the client is connected to the supporting version of the server."""
     remote_version = response.headers.get("API-VERSION")
     if not remote_version:
         return
@@ -289,6 +328,7 @@ def validate_client_up_to_date(response):
 
 
 def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
+    """Get the area name from the name: [uuids] mapping."""
     for area_name, area_uuids in area_name_uuid_mapping.items():
         for area_uuid in area_uuids:
             if area_uuid == asset_uuid:
