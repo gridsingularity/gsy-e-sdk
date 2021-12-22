@@ -49,7 +49,7 @@ def execute_graphql_request(domain_name, query, headers=None, url=None, authenti
             logging.error("authentication failed")
             return
     url = f"{domain_name}/graphql/" if url is None else url
-    headers = {'Authorization': f'JWT {jwt_key}', 'Content-Type': 'application/json'} \
+    headers = {"Authorization": f"JWT {jwt_key}", "Content-Type": "application/json"} \
         if headers is None else headers
     endpoint = HTTPEndpoint(url, headers)
     data = endpoint(query=query)
@@ -91,8 +91,8 @@ def get_area_uuid_from_area_name(serialized_scenario, area_name):
 
 
 def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, domain_name):
-    query = 'query { readConfiguration(uuid: "{' + collab_id + \
-            '}") { scenarioData { latest { serialized } } } }'
+    query = "query { readConfiguration(uuid: '{" + collab_id + \
+            "}') { scenarioData { latest { serialized } } } }"
     data = execute_graphql_request(domain_name=domain_name, query=query)
     area_uuid = get_area_uuid_from_area_name(
         json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]),
@@ -105,12 +105,12 @@ def get_area_uuid_from_area_name_and_collaboration_id(collab_id, area_name, doma
 
 
 def get_area_uuid_and_name_mapping_from_simulation_id(collab_id):
-    query = 'query { readConfiguration(uuid: "{' + collab_id + \
-            '}") { scenarioData { latest { serialized } } } }'
+    query = "query { readConfiguration(uuid: '{" + collab_id + \
+            "}') { scenarioData { latest { serialized } } } }"
 
     data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
-    if key_in_dict_and_not_none(data, 'errors'):
-        return ast.literal_eval(data['errors'][0]['message'])
+    if key_in_dict_and_not_none(data, "errors"):
+        return ast.literal_eval(data["errors"][0]["message"])
     else:
         area_name_uuid_map = get_area_name_uuid_mapping(
             json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"])
@@ -124,7 +124,7 @@ def get_aggregators_list(domain_name=None):
     """
     if not domain_name:
         domain_name = os.environ.get("API_CLIENT_DOMAIN_NAME")
-    query = 'query { aggregatorsList { configUuid name  devicesList { deviceUuid } } }'
+    query = "query { aggregatorsList { configUuid name  devicesList { deviceUuid } } }"
 
     data = execute_graphql_request(domain_name=domain_name, query=query)
     return ast.literal_eval(data["errors"][0]["message"]) if \
@@ -135,9 +135,9 @@ def logging_decorator(command_name):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            logging.debug(f'Sending command {command_name} to device.')
+            logging.debug(f"Sending command {command_name} to device.")
             return_value = f(self, *args, **kwargs)
-            logging.debug(f'Command {command_name} responded with: {return_value}.')
+            logging.debug(f"Command {command_name} responded with: {return_value}.")
             return return_value
         return wrapped
     return decorator
@@ -202,7 +202,7 @@ def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=
 
 
 def log_trade_info(message):
-    rate = round(message.get('trade_price') / message.get('traded_energy'), 2)
+    rate = round(message.get("trade_price") / message.get("traded_energy"), 2)
     if message.get("buyer") == "anonymous":
         logging.info(
             f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 3)} kWh "
@@ -231,8 +231,8 @@ def _flatten_info_dict(indict: dict, outdict: dict):
     """
     for area_name, area_dict in indict.items():
         outdict[area_name] = area_dict
-        if 'children' in area_dict:
-            _flatten_info_dict(indict[area_name]['children'], outdict)
+        if "children" in area_dict:
+            _flatten_info_dict(indict[area_name]["children"], outdict)
 
 
 def get_uuid_from_area_name_in_tree_dict(area_name_uuid_mapping, name):
