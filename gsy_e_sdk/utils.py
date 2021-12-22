@@ -130,12 +130,12 @@ def get_aggregators_list(domain_name=None):
         key_in_dict_and_not_none(data, "errors") else data["data"]["aggregatorsList"]
 
 
-def logging_decorator(command_name):
-    def decorator(f):
-        @wraps(f)
+def logging_decorator(command_name: str):
+    def decorator(function: callable):
+        @wraps(function)
         def wrapped(self, *args, **kwargs):
             logging.debug("Sending command %s to device.", command_name)
-            return_value = f(self, *args, **kwargs)
+            return_value = function(self, *args, **kwargs)
             logging.debug("Command %s responded with: %s.", command_name, return_value)
             return return_value
         return wrapped
@@ -179,8 +179,8 @@ def log_bid_offer_confirmation(message):
             action = "OFFERED" if event == "offer" else "BID"
             logging.info("%s %s %s kWh at %s cts/kWh",
                          trader, action, round(energy, 3), rate)
-    except Exception as e:
-        logging.exception("Logging bid/offer info failed.%s", str(e))
+    except Exception:
+        logging.exception("Logging bid/offer info failed.")
 
 
 def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=None,
@@ -197,8 +197,8 @@ def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=
             else:
                 logging.info(
                     "<-- %s %s is successfully deleted-->", command_type, bid_offer_id)
-    except Exception as e:
-        logging.error("Logging bid/offer deletion confirmation failed.%s", e)
+    except Exception:
+        logging.exception("Logging bid/offer deletion confirmation failed.")
 
 
 def log_trade_info(message):
@@ -243,12 +243,12 @@ def get_uuid_from_area_name_in_tree_dict(area_name_uuid_mapping, name):
     raise ValueError(f"There are multiple areas named {name} in the tree")
 
 
-def buffer_grid_tree_info(f):
-    @wraps(f)
+def buffer_grid_tree_info(function: callable):
+    @wraps(function)
     def wrapper(self, message):
         self.latest_grid_tree = message["grid_tree"]
         self.latest_grid_tree_flat = flatten_info_dict(self.latest_grid_tree)
-        f(self, message)
+        function(self, message)
     return wrapper
 
 
