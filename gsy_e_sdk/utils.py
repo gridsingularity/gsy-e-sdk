@@ -201,13 +201,14 @@ def log_bid_offer_confirmation(message: dict) -> None:
         if message.get("status") == "ready" and message.get("command") in ["bid", "offer"]:
             event = "bid" if "bid" in message.get("command") else "offer"
             data_dict = json.loads(message.get(event))
+            market_type = data_dict.get("market_type")
             energy = data_dict.get("energy")
             price = data_dict.get("price")
             rate = price / energy
             trader = data_dict.get("seller" if event == "offer" else "buyer")
             action = "OFFERED" if event == "offer" else "BID"
-            logging.info("%s %s %s kWh at %s cts/kWh",
-                         trader, action, round(energy, 3), rate)
+            logging.info("[%s] %s %s %s kWh at %s cts/kWh",
+                         market_type, trader, action, round(energy, 3), rate)
     # pylint: disable = broad-except
     except Exception:
         logging.exception("Logging bid/offer info failed.")
