@@ -63,8 +63,8 @@ def retrieve_jwt_key_from_server(domain_name):
                          "password": os.environ["API_CLIENT_PASSWORD"]}),
         headers={"Content-Type": "application/json"})
     if resp.status_code != 200:
-        logging.error(f"Request for token authentication failed with status "
-                      f"code {resp.status_code}. Response body: {resp.text}")
+        logging.error("Request for token authentication failed with status "
+                      "code %s. Response body: %s", resp.status_code, resp.text)
         return
 
     validate_client_up_to_date(resp)
@@ -135,9 +135,9 @@ def logging_decorator(command_name):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            logging.debug(f"Sending command {command_name} to device.")
+            logging.debug("Sending command %s to device.", command_name)
             return_value = f(self, *args, **kwargs)
-            logging.debug(f"Command {command_name} responded with: {return_value}.")
+            logging.debug("Command %s responded with: %s.", command_name, return_value)
             return return_value
         return wrapped
     return decorator
@@ -159,7 +159,7 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name):
     '''
     data = execute_graphql_request(domain_name=domain_name, query=query)
 
-    logging.debug(f"Received Canary Network data: {data}")
+    logging.debug("Received Canary Network data: %s", data)
 
     return {
         cn["uuid"]: cn["scenarioData"]["forecastStreamAreaMapping"]
@@ -177,8 +177,9 @@ def log_bid_offer_confirmation(message):
             price = data_dict.get("price")
             rate = price / energy
             trader = data_dict.get("seller" if event == "offer" else "buyer")
-            logging.info(f"{trader} {'OFFERED' if event == 'offer' else 'BID'} "
-                         f"{round(energy, 3)} kWh at {rate} cts/kWh")
+            action = "OFFERED" if event == "offer" else "BID"
+            logging.info("%s %s %s kWh at %s cts/kWh",
+                         trader, action, round(energy, 3), rate)
     except Exception as e:
         logging.exception("Logging bid/offer info failed.%s", str(e))
 
@@ -193,24 +194,24 @@ def log_deleted_bid_offer_confirmation(message, command_type=None, bid_offer_id=
                 command_type = "bid" if "bid" in message.get("command") else "offer"
             if bid_offer_id is None:
                 logging.info(
-                    f"<-- All {command_type}s of {asset_name} are successfully deleted-->")
+                    "<-- All %ss of %s are successfully deleted-->", command_type, asset_name)
             else:
                 logging.info(
-                    f"<-- {command_type} {bid_offer_id} is successfully deleted-->")
+                    "<-- %s %s is successfully deleted-->", command_type, bid_offer_id)
     except Exception as e:
-        logging.error(f"Logging bid/offer deletion confirmation failed.{e}")
+        logging.error("Logging bid/offer deletion confirmation failed.%s", e)
 
 
 def log_trade_info(message):
     rate = round(message.get("trade_price") / message.get("traded_energy"), 2)
     if message.get("buyer") == "anonymous":
         logging.info(
-            f"<-- {message.get('seller')} SOLD {round(message.get('traded_energy'), 3)} kWh "
-            f"at {rate} cents/kWh -->")
+            "<-- %s SOLD %s kWh at %s cents/kWh -->",
+            message.get("seller"), round(message.get("traded_energy"), 3), rate)
     else:
         logging.info(
-            f"<-- {message.get('buyer')} BOUGHT {round(message.get('traded_energy'), 3)} kWh "
-            f"at {rate} cents/kWh -->")
+            "<-- %s BOUGHT %s kWh at %s cents/kWh -->",
+            message.get("buyer"), round(message.get("traded_energy"), 3), rate)
 
 
 def flatten_info_dict(indict: dict) -> dict:
@@ -284,8 +285,8 @@ def validate_client_up_to_date(response):
 
     if __version__ < remote_version:
         logging.warning(
-            f"Your version of the client {__version__} is outdated, kindly upgrade to "
-            f"version {remote_version} to make use of our latest features")
+            "Your version of the client %s is outdated, kindly upgrade to "
+            "version %s to make use of our latest features", __version__, remote_version)
 
 
 def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
