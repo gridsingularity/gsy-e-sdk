@@ -20,11 +20,6 @@ TEST_BATCH_COMMAND_DICT = {
     TEST_DEVICE_UUID_2: ["TEST_BATCH_COMMAND"]
 }
 
-TEST_TRANSACTION_ID_RESPONSE = "TEST_TRANSACTION_ID_RESPONSE"
-TEST_TRANSACTION_ID_BUFFER = {
-    TEST_TRANSACTION_ID: {"transaction_id": TEST_TRANSACTION_ID,
-                          "response": TEST_TRANSACTION_ID_RESPONSE}
-}
 
 TEST_RESPONSE = {"status": "ready",
                  "command": "offer",
@@ -36,20 +31,15 @@ TEST_RESPONSE = {"status": "ready",
                          "buyer": "test_buyer"},
                  }
 
-TEST_TRANSACTION_ID_RESPONSE_BUFFER = {TEST_TRANSACTION_ID: TEST_RESPONSE}
-
-TEST_BATCH_RESPONSES = {"TEST_ASSET_UUID": [TEST_RESPONSE]}
-TEST_GRID_TREE = {}
-
 TEST_MESSAGE_DICT = {
     "data": {
         "transaction_id": TEST_TRANSACTION_ID,
         "status": "SELECTED",
         "event": "market",
         "aggregator_uuid": None,
-        "responses": TEST_BATCH_RESPONSES,
+        "responses": {"TEST_ASSET_UUID": [TEST_RESPONSE]},
         "device_uuid": None,
-        "grid_tree": TEST_GRID_TREE,
+        "grid_tree": {},
         "trade_list": [{"trade_price": 1,
                         "traded_energy": 1,
                         "buyer": "anonymous",
@@ -270,8 +260,8 @@ class TestRedisAggregatorExecuteBatchCommands:
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
     @pytest.mark.parametrize("is_blocking, trans_id_resp_buffer, expected_ret_val",
-                             [(True, TEST_TRANSACTION_ID_RESPONSE_BUFFER, TEST_RESPONSE),
-                              (False, TEST_TRANSACTION_ID_RESPONSE_BUFFER, None),
+                             [(True, {TEST_TRANSACTION_ID: TEST_RESPONSE}, TEST_RESPONSE),
+                              (False, {TEST_TRANSACTION_ID: TEST_RESPONSE}, None),
                               (True, {}, None)])
     def test_execute_batch_commands_returns_expected(aggregator, is_blocking,
                                                      trans_id_resp_buffer, expected_ret_val):
