@@ -20,11 +20,6 @@ TEST_SIMULATION = {
 TEST_AGGREGATOR_NAME = "TestAggr"
 TEST_AGGREGATOR_UUID = str(uuid.uuid4())
 
-TEST_AGGREGATORS_LIST = [{"name": TEST_AGGREGATOR_NAME, "uuid": TEST_AGGREGATOR_UUID},
-                         {"name": TEST_AGGREGATOR_NAME + "2", "uuid": None}]
-
-TEST_NEW_AGGREGATOR_DICT = [{"name": TEST_AGGREGATOR_NAME, "uuid": TEST_AGGREGATOR_UUID}]
-
 TEST_AREA_NAME = "TestArea"
 TEST_AREA_MAPPING = {TEST_AREA_NAME: [str(uuid.uuid4())]}
 
@@ -37,9 +32,6 @@ TEST_BATCH_COMMAND_DICT = {"some_device_uuid": [{"command_dict0"},
 TEST_BATCH_COMMAND_RESPONSE = {"responses": {"asset_id_1": ["response1", "response2"],
                                              "asset_id_2": ["response3", "response4"]}}
 
-TEST_CONFIGURATION_PREFIX = "/configuration_prefix/"
-
-TEST_AGGREGATOR_PREFIX = "/aggregator_prefix/"
 
 TEST_JWT_KEY_FROM_SERVER = str(uuid.uuid4())
 TEST_TRANSACTION_ID = str(uuid.uuid4())
@@ -72,10 +64,14 @@ def fixture_mock_env_use_functions(mocker):
 
 @pytest.fixture(name="mock_outgoing_funcs_in_construction")
 def fixture_mock_outgoing_funcs_in_construction(mocker):
+    test_aggregators_list = [{"name": TEST_AGGREGATOR_NAME, "uuid": TEST_AGGREGATOR_UUID},
+                             {"name": TEST_AGGREGATOR_NAME + "2", "uuid": None}]
+    test_new_aggregator_dict = [{"name": TEST_AGGREGATOR_NAME, "uuid": TEST_AGGREGATOR_UUID}]
+
     mocker.patch("gsy_e_sdk.aggregator.blocking_get_request",
-                 return_value=TEST_AGGREGATORS_LIST)
+                 return_value=test_aggregators_list)
     mocker.patch("gsy_e_sdk.aggregator.blocking_post_request",
-                 return_value=TEST_NEW_AGGREGATOR_DICT)
+                 return_value=test_new_aggregator_dict)
     mocker.patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver")
     mocker.patch("gsy_e_sdk.aggregator.WebsocketThread")
     mocker.patch("gsy_e_sdk.aggregator.ThreadPoolExecutor")
