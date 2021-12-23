@@ -231,10 +231,13 @@ class TestRedisAggregatorExecuteBatchCommands:
     """Test cases for RedisAggregator's execute_batch_commands method."""
 
     @staticmethod
-    def test_execute_batch_commands_commands_buffer_length_zero_return_none(aggregator):
-        with patch("gsy_e_sdk.redis_aggregator.ClientCommandBuffer.buffer_length",
-                   new_callable=PropertyMock, return_value=0):
-            assert aggregator.execute_batch_commands() is None
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_execute_batch_commands_commands_buffer_length_zero_return_none():
+        with patch("gsy_e_sdk.redis_aggregator.RedisAggregator.commands_buffer_length",
+                   new_callable=PropertyMock,
+                   return_value=0):
+            agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+            assert agg.execute_batch_commands() is None
 
     @staticmethod
     def test_execute_batch_commands_not_all_uuids_in_selected_device_uuid_list_raise_exception(
