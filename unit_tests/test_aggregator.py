@@ -1,7 +1,9 @@
 # pylint: disable=missing-function-docstring, protected-access
 import uuid
-from unittest.mock import patch, PropertyMock, MagicMock, call
+from unittest.mock import patch, PropertyMock, MagicMock
 import pytest
+from gsy_e_sdk.constants import MAX_WORKER_THREADS
+
 from gsy_e_sdk.utils import get_aggregator_prefix, get_configuration_prefix
 
 from gsy_e_sdk.aggregator import Aggregator
@@ -60,12 +62,12 @@ def fixture_mock_prefixes(mocker):
                  return_value=TEST_CONFIGURATION_PREFIX)
 
 
-@pytest.fixture(name="mock_start_websocket_funcs")
-def fixture_mock_start_websocket_funcs(mocker):
-    """Mock external classes used in Aggregator.start_websocket_connections."""
-    mocker.patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver")
-    mocker.patch("gsy_e_sdk.aggregator.WebsocketThread")
-    mocker.patch("gsy_e_sdk.aggregator.ThreadPoolExecutor")
+# @pytest.fixture(name="mock_start_websocket_funcs")
+# def fixture_mock_start_websocket_funcs(mocker):
+#     """Mock external classes used in Aggregator.start_websocket_connections."""
+#     mocker.patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver")
+#     mocker.patch("gsy_e_sdk.aggregator.WebsocketThread")
+#     mocker.patch("gsy_e_sdk.aggregator.ThreadPoolExecutor")
 
 
 @pytest.fixture(name="mock_execute_batch_command_methods")
@@ -247,29 +249,42 @@ class TestAggregatorStartWebsocketConnection:
     """Test cases for Aggregator's start_websocket_connection method."""
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_start_websocket_funcs")
     def test_start_websocket_connection_dispatcher_instantiated(aggregator):
-        aggregator.start_websocket_connection()
-        assert aggregator.dispatcher is not None
+        agg_websocket_msg_receiver_mock = MagicMock()
+        with patch("gsy_e_sdk.aggregator.AggregatorWebsocketMessageReceiver",
+                   return_value=agg_websocket_msg_receiver_mock) as mocked_class:
+            aggregator.start_websocket_connection()
+
+            mocked_class.assert_called_once()
+            assert aggregator.dispatcher is agg_websocket_msg_receiver_mock
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_start_websocket_funcs")
     def test_start_websocket_connection_websocket_instantiated(aggregator):
-        aggregator.aggregator_uuid = TEST_AGGREGATOR_UUID
-        aggregator.start_websocket_connection()
-        assert aggregator.websocket_thread is not None
+        websocket_thread_mock = MagicMock()
+        with patch("gsy_e_sdk.aggregator.WebsocketThread",
+                   return_value=websocket_thread_mock) as mocked_class:
+            aggregator.start_websocket_connection()
+            websocket_uri = f"{aggregator.websockets_domain_name}/" \
+                            f"{aggregator.simulation_id}/aggregator/" \
+                            f"{aggregator.aggregator_uuid}/"
+
+            mocked_class.assert_called_with(websocket_uri, aggregator.domain_name,
+                                            aggregator.dispatcher)
+            assert aggregator.websocket_thread is websocket_thread_mock
 
     @staticmethod
-    # @pytest.mark.usefixtures("mock_start_websocket_funcs")
     def test_start_websocket_connection_websocket_thread_start(aggregator):
-        aggregator.start_websocket_connection()
-        aggregator.websocket_thread.start.assert_has_calls([call(), call()])
+        aggregator.websocket_thread.start.assert_called_once()
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_start_websocket_funcs")
     def test_start_websocket_connection_callback_thread_instantiated(aggregator):
-        aggregator.start_websocket_connection()
-        assert aggregator.callback_thread is not None
+        thread_pool_executor_mock = MagicMock()
+        with patch("gsy_e_sdk.aggregator.ThreadPoolExecutor",
+                   return_value=thread_pool_executor_mock) as mocked_class:
+            aggregator.start_websocket_connection()
+
+            mocked_class.assert_called_with(max_workers=MAX_WORKER_THREADS)
+            assert aggregator.callback_thread is thread_pool_executor_mock
 
 
 class TestAggregatorCalculateGridFee:
@@ -307,14 +322,14 @@ class TestAggregatorExecuteBatchCommands:
             assert aggregator.execute_batch_commands() is None
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
     def test_execute_batch_commands_execute_batch_called(aggregator):
         aggregator.start_websocket_connection()
         aggregator.execute_batch_commands()
         aggregator._client_command_buffer.execute_batch.assert_called_once()
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
     def test_execute_batch_commands_all_uuids_in_selected_device_uuid_list_called(
             aggregator):
         with patch("gsy_e_sdk.aggregator.Aggregator"
@@ -325,7 +340,6 @@ class TestAggregatorExecuteBatchCommands:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_execute_batch_command_methods",
-                             "mock_start_websocket_funcs",
                              "mock_prefixes")
     def test_execute_batch_commands_post_request_called_with_args(aggregator):
         func_input = (f"{'/aggregator_prefix/'}batch-commands",
@@ -345,21 +359,21 @@ class TestAggregatorExecuteBatchCommands:
         assert aggregator.execute_batch_commands() is None
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
     def test_execute_batch_commands_clear_command_buffer_called(aggregator):
         aggregator.start_websocket_connection()
         aggregator.execute_batch_commands()
         aggregator._client_command_buffer.clear.assert_called_once()
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
     def test_execute_batch_commands_wait_for_command_response_called(aggregator):
         aggregator.start_websocket_connection()
         aggregator.execute_batch_commands()
         aggregator.dispatcher.wait_for_command_response.assert_called_once()
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
     def test_execute_batch_commands_returns_response(aggregator):
         aggregator.start_websocket_connection()
         aggregator.dispatcher.wait_for_command_response.return_value = \
@@ -368,7 +382,7 @@ class TestAggregatorExecuteBatchCommands:
         assert response == TEST_BATCH_COMMAND_RESPONSE
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
     def test_execute_batch_commands_log_bid_offer_confirmation_called(aggregator):
         with patch("gsy_e_sdk.aggregator.log_bid_offer_confirmation") as mocked_method:
             aggregator.start_websocket_connection()
@@ -378,7 +392,7 @@ class TestAggregatorExecuteBatchCommands:
             mocked_method.assert_called()
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_execute_batch_command_methods", "mock_start_websocket_funcs")
+    @pytest.mark.usefixtures("mock_execute_batch_command_methods")
     def test_execute_batch_commands_log_deleted_bid_offer_confirmation_called(
             aggregator):
         with patch("gsy_e_sdk.aggregator.log_deleted_bid_offer_confirmation"
