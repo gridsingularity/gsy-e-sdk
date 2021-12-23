@@ -143,32 +143,44 @@ class TestRedisAggregatorConstructor:
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
     def test_constructor_connect_and_subscribe_side_effects_1():
-        """Test the side effects due to the methods called
-        with _connect_and_subscribe()"""
+        """Test  side effects due to the methods called with _connect_and_subscribe().
+        -> Side effects of _subscribe_to_aggregator_response_and_start_redis_thread
+        """
 
-        # side effects of _subscribe_to_aggregator_response_and_start_redis_thread
-        # private method
         aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-
         channel_dict_1 = {"aggregator_response": aggregator._aggregator_response_callback}
-        aggregator.pubsub.run_in_thread.assert_called_with(daemon=True)
 
-        # side effects of _connect_to_simulation -> _create_aggregator private method
+        aggregator.pubsub.run_in_thread.assert_called_with(daemon=True)
+        aggregator.pubsub.psubscribe.assert_has_calls([call(**channel_dict_1)])
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_connect_and_subscribe_side_effects_2():
+        """Test  side effects due to the methods called with _connect_and_subscribe().
+        -> Side effects of _connect_to_simulation -> _create_aggregator private method.
+        """
+        aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
         data = {"name": aggregator.aggregator_name, "type": "CREATE",
                 "transaction_id": TEST_TRANSACTION_ID}
+
         aggregator.redis_db.publish.assert_called_with("aggregator", json.dumps(data))
         assert TEST_TRANSACTION_ID in aggregator._transaction_id_buffer
         assert aggregator.aggregator_uuid is TEST_TRANSACTION_ID
 
-        # side effects of _subscribe_to_response_channels private method
+    @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_constructor_connect_and_subscribe_side_effects_3():
+        """Test  side effects due to the methods called with _connect_and_subscribe().
+        -> Side effects of _subscribe_to_response_channels private method
+        """
+        aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
         channel_dict_2 = {f"external-aggregator/*/{aggregator.aggregator_uuid}/events"
                           f"/all": aggregator._events_callback_dict,
                           f"external-aggregator/*/{aggregator.aggregator_uuid}/response"
                           f"/batch_commands": aggregator._batch_response,
                           }
 
-        aggregator.pubsub.psubscribe.assert_has_calls([call(**channel_dict_1),
-                                                       call(**channel_dict_2)])
+        aggregator.pubsub.psubscribe.assert_called_with(**channel_dict_2)
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
