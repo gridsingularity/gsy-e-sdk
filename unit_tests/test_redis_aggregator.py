@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring, protected-access, no-member
+# pylint: disable=missing-function-docstring, protected-access, no-member, too-many-public-methods
 import json
 import uuid
 from unittest.mock import patch, PropertyMock, MagicMock, call
@@ -67,8 +67,8 @@ def fixture_aggregator(mocker):
     return RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
 
 
-class TestRedisAggregatorConstructor:
-    """Include tests for the constructor of the RedisAggregator class."""
+class TestRedisAggregator:
+    """Test RedisAggregator public methods."""
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
@@ -165,12 +165,8 @@ class TestRedisAggregatorConstructor:
             mocked_class.assert_called()
             assert agg.lock is lock_mock
 
-
-@pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
-class TestRedisAggregatorDeleteAggregator:
-    """Test cases for RedisAggregator's delete_aggregator method."""
-
     @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
     def test_delete_aggregator_redis_db_publishes_data(aggregator):
         data = {"name": TEST_AGGREGATOR_NAME,
                 "aggregator_uuid": TEST_AGGREGATOR_UUID,
@@ -184,6 +180,7 @@ class TestRedisAggregatorDeleteAggregator:
             "aggregator", json.dumps(data))
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
     def test_delete_aggregator_api_time_out_raise_exception(aggregator):
         with patch("gsy_e_sdk.redis_aggregator.wait_until_timeout_blocking",
                    side_effect=AssertionError):
@@ -192,6 +189,7 @@ class TestRedisAggregatorDeleteAggregator:
                 aggregator.delete_aggregator()
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
     @pytest.mark.parametrize("test_is_blocking, expected_ret_val",
                              [(True, TEST_TRANSACTION_ID), (False, None)])
     def test_delete_aggregator_returns_expected(aggregator, test_is_blocking,
@@ -199,13 +197,9 @@ class TestRedisAggregatorDeleteAggregator:
         aggregator.aggregator_uuid = TEST_AGGREGATOR_UUID
         assert aggregator.delete_aggregator(is_blocking=test_is_blocking) is expected_ret_val
 
-
-@pytest.mark.usefixtures("mock_client_command_buffer_attributes")
-class TestRedisAggregatorExecuteBatchCommands:
-    """Test cases for RedisAggregator's execute_batch_commands method."""
-
     @staticmethod
-    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking",
+                             "mock_client_command_buffer_attributes")
     def test_execute_batch_commands_commands_buffer_length_zero_return_none():
         with patch("gsy_e_sdk.redis_aggregator.RedisAggregator.commands_buffer_length",
                    new_callable=PropertyMock,
@@ -214,6 +208,7 @@ class TestRedisAggregatorExecuteBatchCommands:
             assert agg.execute_batch_commands() is None
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_client_command_buffer_attributes")
     def test_execute_batch_commands_not_all_uuids_in_selected_device_uuid_list_raise_exception(
             aggregator):
         aggregator.device_uuid_list = [TEST_DEVICE_UUID_1]
@@ -222,7 +217,8 @@ class TestRedisAggregatorExecuteBatchCommands:
             aggregator.execute_batch_commands(is_blocking=False)
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking",
+                             "mock_client_command_buffer_attributes")
     def test_execute_batch_commands_batched_command_published(aggregator):
         aggregator.device_uuid_list = [TEST_DEVICE_UUID_1, TEST_DEVICE_UUID_2]
         aggregator.aggregator_uuid = TEST_AGGREGATOR_UUID
@@ -237,6 +233,7 @@ class TestRedisAggregatorExecuteBatchCommands:
                                                        json.dumps(batched_command_input))
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_client_command_buffer_attributes")
     def test_execute_batch_commands_api_time_out_raise_exception(aggregator):
         with patch("gsy_e_sdk.redis_aggregator.wait_until_timeout_blocking",
                    side_effect=AssertionError):
@@ -246,7 +243,8 @@ class TestRedisAggregatorExecuteBatchCommands:
                 aggregator.execute_batch_commands()
 
     @staticmethod
-    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking",
+                             "mock_client_command_buffer_attributes")
     @pytest.mark.parametrize("is_blocking, trans_id_resp_buffer, expected_ret_val",
                              [(True, {TEST_TRANSACTION_ID: TEST_RESPONSE}, TEST_RESPONSE),
                               (False, {TEST_TRANSACTION_ID: TEST_RESPONSE}, None),
@@ -259,12 +257,8 @@ class TestRedisAggregatorExecuteBatchCommands:
 
         assert aggregator.execute_batch_commands(is_blocking=is_blocking) is expected_ret_val
 
-
-@pytest.mark.usefixtures("mock_grid_fee_calculation")
-class TestRedisAggregatorCalculateGridFee:
-    """Test cases for RedisAggregator's calculate_grid_fee method."""
-
     @staticmethod
+    @pytest.mark.usefixtures("mock_grid_fee_calculation")
     def test_calculate_grid_fee_called_with_args(aggregator):
         aggregator.calculate_grid_fee("start_market",
                                       "target_market",
@@ -275,6 +269,7 @@ class TestRedisAggregatorCalculateGridFee:
             "current_market_fee")
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_grid_fee_calculation")
     def test_calculate_grid_fee_returns_expected(aggregator):
         aggregator.grid_fee_calculation.calculate_grid_fee.return_value = "TEST_OK"
         ret_val = aggregator.calculate_grid_fee("start_market",
@@ -282,26 +277,26 @@ class TestRedisAggregatorCalculateGridFee:
                                                 "current_market_fee")
         assert ret_val == "TEST_OK"
 
+    @staticmethod
+    def test_get_uuid_from_area_name_returns_expected(aggregator):
+        test_area_mapping = {"TestArea": [str(uuid.uuid4())]}
 
-def test_get_uuid_from_area_name_returns_expected(aggregator):
-    test_area_mapping = {"TestArea": [str(uuid.uuid4())]}
+        aggregator.area_name_uuid_mapping = test_area_mapping
+        area_name = "TestArea"
+        ret_val = test_area_mapping[area_name][0]
 
-    aggregator.area_name_uuid_mapping = test_area_mapping
-    area_name = "TestArea"
-    ret_val = test_area_mapping[area_name][0]
+        assert aggregator.get_uuid_from_area_name(area_name) == ret_val
 
-    assert aggregator.get_uuid_from_area_name(area_name) == ret_val
+    @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
+    def test_add_to_batch_commands_returns_client_command_buffer():
+        client_command_buffer_mock = MagicMock()
+        with patch("gsy_e_sdk.redis_aggregator.ClientCommandBuffer",
+                   return_value=client_command_buffer_mock):
+            aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
+            assert aggregator.add_to_batch_commands is client_command_buffer_mock
 
-
-@pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
-def test_add_to_batch_commands_returns_client_command_buffer():
-    client_command_buffer_mock = MagicMock()
-    with patch("gsy_e_sdk.redis_aggregator.ClientCommandBuffer",
-               return_value=client_command_buffer_mock):
-        aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-        assert aggregator.add_to_batch_commands is client_command_buffer_mock
-
-
-@pytest.mark.usefixtures("mock_client_command_buffer_attributes")
-def test_commands_buffer_length_returns_expected_buffer_length(aggregator):
-    assert aggregator.commands_buffer_length == 3
+    @staticmethod
+    @pytest.mark.usefixtures("mock_client_command_buffer_attributes")
+    def test_commands_buffer_length_returns_expected_buffer_length(aggregator):
+        assert aggregator.commands_buffer_length == 3
