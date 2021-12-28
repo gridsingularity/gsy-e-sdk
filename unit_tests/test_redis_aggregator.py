@@ -91,7 +91,6 @@ class TestRedisAggregator:
 
     @staticmethod
     def test_constructor_pubsub_instantiated(aggregator):
-        aggregator.redis_db.pubsub.assert_called()
         assert aggregator.pubsub is aggregator.redis_db.pubsub()
 
     @staticmethod
@@ -108,9 +107,8 @@ class TestRedisAggregator:
     def test_constructor_threadpoolexecutor_instantiated():
         thread_pool_executor_mock = MagicMock
         with patch("gsy_e_sdk.redis_aggregator.ThreadPoolExecutor",
-                   return_value=thread_pool_executor_mock) as mocked_class:
+                   return_value=thread_pool_executor_mock):
             agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-            mocked_class.assert_called()
         assert agg.executor is thread_pool_executor_mock
 
     @staticmethod
@@ -160,10 +158,9 @@ class TestRedisAggregator:
     def test_constructor_lock_instantiated():
         lock_mock = MagicMock()
         with patch("gsy_e_sdk.redis_aggregator.Lock",
-                   return_value=lock_mock) as mocked_class:
+                   return_value=lock_mock):
             agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-            mocked_class.assert_called()
-            assert agg.lock is lock_mock
+        assert agg.lock is lock_mock
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
