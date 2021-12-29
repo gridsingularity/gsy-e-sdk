@@ -10,11 +10,11 @@ from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 
 TEST_ASSET_UUID = str(uuid.uuid4())
 TEST_SIMULATION_ID = str(uuid.uuid4())
+TEST_AGGREGATOR_UUID = str(uuid.uuid4())
+TEST_TRANSACTION_ID = str(uuid.uuid4())
 
 TEST_DOMAIN_NAME = "test.domain@name.com"
 TEST_WEBSOCKETS_DOMAIN_NAME = "wss:test.domain@name.com"
-
-TEST_TRANSACTION_ID = str(uuid.uuid4())
 
 TEST_COMMAND_RESPONSE = {"command": "register",
                          "transaction_id": TEST_TRANSACTION_ID,
@@ -215,3 +215,33 @@ class TestRestAssetClient:
             assert client.unregister(is_blocking=False) == TEST_COMMAND_RESPONSE
             client.dispatcher.wait_for_command_response.assert_called_with(
                 "unregister", TEST_TRANSACTION_ID, timeout=15 * 60)
+
+    @staticmethod
+    @pytest.mark.parametrize("post_response",
+                             [{"aggregator_uuid": TEST_AGGREGATOR_UUID},
+                              None])
+    def test_select_aggregator_post_request_and_set_active_aggregator(client, post_response):
+        endpoint = f"{client.aggregator_prefix}select-aggregator/"
+        data = {"aggregator_uuid": TEST_AGGREGATOR_UUID, "device_uuid": client.asset_uuid}
+        jwt_token = client.jwt_token
+
+        with patch("gsy_e_sdk.clients.rest_asset_client.blocking_post_request",
+                   return_value=post_response) as mocked_func:
+            client.select_aggregator(TEST_AGGREGATOR_UUID)
+
+            mocked_func.assert_called_with(endpoint, data, jwt_token)
+            expected_ret_val = post_response["aggregator_uuid"] if post_response else None
+            assert client.active_aggregator is expected_ret_val
+
+    @staticmethod
+    def test_unselect_aggregator_post_request_and_remove_active_aggregator(client):
+        endpoint = f"{client.aggregator_prefix}unselect-aggregator/"
+        data = {"aggregator_uuid": TEST_AGGREGATOR_UUID, "device_uuid": client.asset_uuid}
+        jwt_token = client.jwt_token
+
+        with patch("gsy_e_sdk.clients.rest_asset_client."
+                   "blocking_post_request") as mocked_func:
+            client.unselect_aggregator(TEST_AGGREGATOR_UUID)
+
+            mocked_func.assert_called_with(endpoint, data, jwt_token)
+            assert client.active_aggregator is None
