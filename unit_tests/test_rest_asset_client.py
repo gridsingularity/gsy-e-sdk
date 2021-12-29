@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring, no-member
+# pylint: disable=missing-function-docstring, no-member, too-many-public-methods
 import uuid
 from unittest.mock import patch, MagicMock
 # import os
@@ -96,20 +96,6 @@ class TestRestAssetClient:
             mocked_func.assert_called_with(expected_call_val)
 
     @staticmethod
-    def test_constructor_websocket_connection_started():
-        # This method does not need to bee tested regarding this attribute
-        # because it should if start_websocket_connection method works
-        # properly (its own tests pass), then this should also work ok.
-        pass
-
-    @staticmethod
-    def test_constructor_register_called_with_autoregister():
-        # This method does not need to bee tested regarding this attribute
-        # because it should if register() method works
-        # properly (its own tests pass), then this should also work ok.
-        pass
-
-    @staticmethod
     def test_start_websocket_connection_device_websocket_message_receiver_instantiated():
         device_websocket_msg_rec_mock = MagicMock()
         with patch("gsy_e_sdk.clients.rest_asset_client.DeviceWebsocketMessageReceiver",
@@ -138,6 +124,7 @@ class TestRestAssetClient:
         with patch("gsy_e_sdk.clients.rest_asset_client.ThreadPoolExecutor",
                    return_value=thread_pool_executor_mock) as mocked_class:
             client = RestAssetClient(asset_uuid=TEST_ASSET_UUID)
+
             mocked_class.assert_called_with(max_workers=MAX_WORKER_THREADS)
             assert client.callback_thread is thread_pool_executor_mock
 
@@ -149,31 +136,28 @@ class TestRestAssetClient:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id")
-    def test_register_request_post_call():
+    def test_register_request_post_call(client):
+        endpoint = f"{client.endpoint_prefix}/register/"
+        data = {"transaction_id": TEST_TRANSACTION_ID}
+
         with patch("gsy_framework.client_connections.utils.post_request",
                    return_value=None) as mocked_func:
-            client = RestAssetClient(asset_uuid=TEST_ASSET_UUID)
-            endpoint = f"{client.endpoint_prefix}/register/"
-            data = {"transaction_id": TEST_TRANSACTION_ID}
-
             client.register()
             mocked_func.assert_called_with(endpoint, data, client.jwt_token)
 
     @staticmethod
-    def test_register_request_not_posted_return_none():
+    def test_register_request_not_posted_return_none(client):
         with patch("gsy_framework.client_connections.utils.post_request",
                    return_value=False):
-            client = RestAssetClient(asset_uuid=TEST_ASSET_UUID)
-
             ret_val = client.register()
+
             assert ret_val is None
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id")
-    def test_register_request_posted_waits_for_command_response_and_return_expected():
+    def test_register_request_posted_waits_for_command_response_and_return_expected(client):
         with patch("gsy_framework.client_connections.utils.post_request",
                    return_value=True):
-            client = RestAssetClient(asset_uuid=TEST_ASSET_UUID)
             client.dispatcher = MagicMock()
             client.dispatcher.wait_for_command_response.return_value = TEST_COMMAND_RESPONSE
 
@@ -183,32 +167,28 @@ class TestRestAssetClient:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id")
-    def test_unregister_request_post_call():
+    def test_unregister_request_post_call(client):
+        endpoint = f"{client.endpoint_prefix}/unregister/"
+        data = {"transaction_id": TEST_TRANSACTION_ID}
         with patch("gsy_framework.client_connections.utils.post_request",
                    return_value=None) as mocked_func:
-            client = RestAssetClient(asset_uuid=TEST_ASSET_UUID)
-            endpoint = f"{client.endpoint_prefix}/unregister/"
-            data = {"transaction_id": TEST_TRANSACTION_ID}
-
             client.unregister(is_blocking=False)
 
             mocked_func.assert_called_with(endpoint, data, client.jwt_token)
 
     @staticmethod
-    def test_unregister_request_not_posted_return_none():
+    def test_unregister_request_not_posted_return_none(client):
         with patch("gsy_framework.client_connections.utils.post_request",
                    return_value=False):
-            client = RestAssetClient(asset_uuid=TEST_ASSET_UUID)
             ret_val = client.unregister(is_blocking=False)
 
             assert ret_val is None
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id")
-    def test_unregister_request_posted_waits_for_command_response_and_return_expected():
+    def test_unregister_request_posted_waits_for_command_response_and_return_expected(client):
         with patch("gsy_framework.client_connections.utils.post_request",
                    return_value=True):
-            client = RestAssetClient(asset_uuid=TEST_ASSET_UUID)
             client.dispatcher = MagicMock()
             client.dispatcher.wait_for_command_response.return_value = TEST_COMMAND_RESPONSE
 
@@ -228,9 +208,9 @@ class TestRestAssetClient:
         with patch("gsy_e_sdk.clients.rest_asset_client.blocking_post_request",
                    return_value=post_response) as mocked_func:
             client.select_aggregator(TEST_AGGREGATOR_UUID)
+            expected_ret_val = post_response["aggregator_uuid"] if post_response else None
 
             mocked_func.assert_called_with(endpoint, data, jwt_token)
-            expected_ret_val = post_response["aggregator_uuid"] if post_response else None
             assert client.active_aggregator is expected_ret_val
 
     @staticmethod
@@ -245,3 +225,73 @@ class TestRestAssetClient:
 
             mocked_func.assert_called_with(endpoint, data, jwt_token)
             assert client.active_aggregator is None
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id")
+    def test_set_energy_forecast_post_request(client):
+        endpoint = f"{client.endpoint_prefix}/set-energy-forecast/"
+        data = {"energy_forecast": {},
+                "transaction_id": TEST_TRANSACTION_ID}
+        jwt_token = client.jwt_token
+
+        with patch("gsy_framework.client_connections.utils.post_request",
+                   return_value=True) as mocked_func:
+            client.set_energy_forecast(energy_forecast_kWh={}, do_not_wait=True)
+
+            mocked_func.assert_called_with(endpoint, data, jwt_token)
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id")
+    def test_set_energy_forecast_call_wait_for_command_response_and_return_response(client):
+        client.dispatcher = MagicMock()
+        client.dispatcher.wait_for_command_response.return_value = TEST_COMMAND_RESPONSE
+        with patch("gsy_framework.client_connections.utils.post_request", return_value=True):
+            ret_val = client.set_energy_forecast(energy_forecast_kWh={})
+
+            client.dispatcher.wait_for_command_response.assert_called_with("set_energy_forecast",
+                                                                           TEST_TRANSACTION_ID)
+            assert ret_val is TEST_COMMAND_RESPONSE
+
+    @staticmethod
+    @pytest.mark.parametrize("posted, do_not_wait", [(True, True), (False, True), (False, False)])
+    def test_set_energy_forecast_return_none(client, posted, do_not_wait):
+        with patch("gsy_framework.client_connections.utils.post_request",
+                   return_value=posted):
+            ret_val = client.set_energy_forecast(energy_forecast_kWh={},
+                                                 do_not_wait=do_not_wait)
+            assert ret_val is None
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id")
+    def test_set_energy_measurement_post_request(client):
+        endpoint = f"{client.endpoint_prefix}/set-energy-measurement/"
+        data = {"energy_measurement": {},
+                "transaction_id": TEST_TRANSACTION_ID}
+        jwt_token = client.jwt_token
+
+        with patch("gsy_framework.client_connections.utils.post_request",
+                   return_value=True) as mocked_func:
+            client.set_energy_measurement(energy_measurement_kWh={}, do_not_wait=True)
+
+            mocked_func.assert_called_with(endpoint, data, jwt_token)
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_transaction_id")
+    def test_set_energy_measurement_call_wait_for_command_response_and_return_response(client):
+        client.dispatcher = MagicMock()
+        client.dispatcher.wait_for_command_response.return_value = TEST_COMMAND_RESPONSE
+        with patch("gsy_framework.client_connections.utils.post_request", return_value=True):
+            ret_val = client.set_energy_measurement(energy_measurement_kWh={})
+
+            client.dispatcher.wait_for_command_response.assert_called_with(
+                "set_energy_measurement", TEST_TRANSACTION_ID)
+            assert ret_val is TEST_COMMAND_RESPONSE
+
+    @staticmethod
+    @pytest.mark.parametrize("posted, do_not_wait", [(True, True), (False, True), (False, False)])
+    def test_set_energy_measurement_return_none(client, posted, do_not_wait):
+        with patch("gsy_framework.client_connections.utils.post_request",
+                   return_value=posted):
+            ret_val = client.set_energy_measurement(energy_measurement_kWh={},
+                                                    do_not_wait=do_not_wait)
+            assert ret_val is None
