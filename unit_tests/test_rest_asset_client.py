@@ -53,11 +53,11 @@ def fixture_rest_asset_client(mock_environment_use_functions):  # pylint: disabl
     return RestAssetClient(asset_uuid=TEST_ASSET_UUID)
 
 
-@pytest.mark.usefixtures("mock_environment_use_functions")
 class TestRestAssetClient:
     """Test methods for RestAssetClient class."""
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_environment_use_functions")
     @pytest.mark.parametrize("simulation_id, exp_sim_id, domain_name, "
                              "exp_dom_name, wss_domain, exp_wss_domain",
                              [("sim_id_explicit", "sim_id_explicit",
@@ -78,6 +78,7 @@ class TestRestAssetClient:
         assert client.websockets_domain_name == exp_wss_domain
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_environment_use_functions")
     @pytest.mark.parametrize("set_value, expected_call_val",
                              [(None, TEST_DOMAIN_NAME),
                               ("test_sim_api_name", "test_sim_api_name")])
@@ -89,6 +90,7 @@ class TestRestAssetClient:
             mocked_func.assert_called_with(expected_call_val)
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_environment_use_functions")
     def test_start_websocket_connection_device_websocket_message_receiver_instantiated():
         device_websocket_msg_rec_mock = MagicMock()
         with patch("gsy_e_sdk.clients.rest_asset_client.DeviceWebsocketMessageReceiver",
@@ -97,6 +99,7 @@ class TestRestAssetClient:
             assert client.dispatcher is device_websocket_msg_rec_mock
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_environment_use_functions")
     def test_start_websocket_connection_websocket_thread_instantiated_and_started():
         websocket_thread_mock = MagicMock()
         with patch("gsy_e_sdk.clients.rest_asset_client.WebsocketThread",
@@ -112,6 +115,7 @@ class TestRestAssetClient:
             client.websocket_thread.start.assert_called()
 
     @staticmethod
+    @pytest.mark.usefixtures("mock_environment_use_functions")
     def test_start_websocket_connection_thread_pool_executor_instantiated():
         thread_pool_executor_mock = MagicMock()
         with patch("gsy_e_sdk.clients.rest_asset_client.ThreadPoolExecutor",
