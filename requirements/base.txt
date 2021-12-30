@@ -6,13 +6,10 @@
 #
 -e git+https://github.com/gridsingularity/gsy-framework@feature/D3ASIM-3669#egg=gsy_framework
     # via -r requirements/base.in
-astroid==2.8.4
-    # via pylint
 attrs==21.2.0
     # via
     #   gsy-framework
     #   jsonschema
-    #   pytest
 awesome-slugify==1.6.5
     # via -r requirements/base.in
 backports.entry-points-selectable==1.1.0
@@ -21,8 +18,6 @@ backports.entry-points-selectable==1.1.0
     #   virtualenv
 bcrypt==3.2.0
     # via paramiko
-behave==1.2.6
-    # via -r requirements/base.in
 certifi==2021.10.8
     # via
     #   gsy-framework
@@ -81,21 +76,14 @@ idna==2.10
     # via
     #   gsy-framework
     #   requests
-iniconfig==1.1.1
-    # via pytest
-isort==5.10.1
-    # via pylint
 jsonschema==4.1.2
     # via gsy-framework
 kafka-python==2.0.2
     # via gsy-framework
-lazy-object-proxy==1.6.0
-    # via astroid
 mccabe==0.6.1
     # via
     #   flake8
     #   gsy-framework
-    #   pylint
 nodeenv==1.6.0
     # via
     #   gsy-framework
@@ -103,38 +91,26 @@ nodeenv==1.6.0
 packaging==21.2
     # via
     #   gsy-framework
-    #   pytest
     #   tox
 parameterized==0.8.1
     # via -r requirements/base.in
 paramiko==2.8.0
     # via fabric3
-parse==1.19.0
-    # via
-    #   behave
-    #   parse-type
-parse-type==0.5.2
-    # via behave
 pendulum==2.1.2
     # via gsy-framework
 platformdirs==2.4.0
     # via
     #   gsy-framework
-    #   pylint
     #   virtualenv
 pluggy==1.0.0
     # via
     #   gsy-framework
-    #   pytest
     #   tox
 pre-commit==2.15.0
-    # via
-    #   -r requirements/base.in
-    #   gsy-framework
+    # via gsy-framework
 py==1.10.0
     # via
     #   gsy-framework
-    #   pytest
     #   tox
 pycodestyle==2.5.0
     # via
@@ -146,8 +122,6 @@ pyflakes==2.1.1
     # via
     #   flake8
     #   gsy-framework
-pylint==2.11.1
-    # via -r requirements/base.in
 pynacl==1.4.0
     # via paramiko
 pyparsing==2.4.7
@@ -158,8 +132,6 @@ pyrsistent==0.18.0
     # via
     #   gsy-framework
     #   jsonschema
-pytest==6.2.5
-    # via -r requirements/base.in
 python-dateutil==2.8.2
     # via
     #   gsy-framework
@@ -183,11 +155,9 @@ sgqlc==14.1
 six==1.16.0
     # via
     #   bcrypt
-    #   behave
     #   fabric3
     #   flake8-tuple
     #   gsy-framework
-    #   parse-type
     #   pynacl
     #   python-dateutil
     #   tox
@@ -198,15 +168,9 @@ toml==0.10.2
     # via
     #   gsy-framework
     #   pre-commit
-    #   pylint
-    #   pytest
     #   tox
 tox==3.24.4
     # via gsy-framework
-typing-extensions==3.10.0.2
-    # via
-    #   astroid
-    #   pylint
 unidecode==0.4.21
     # via awesome-slugify
 urllib3==1.26.7
@@ -222,8 +186,3 @@ websockets==10.0
     # via
     #   -r requirements/base.in
     #   gsy-framework
-wrapt==1.13.3
-    # via astroid
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools

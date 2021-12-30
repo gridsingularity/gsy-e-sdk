@@ -6,6 +6,7 @@ from gsy_e_sdk.redis_market import RedisMarketClient
 
 
 class MarketAggregator(TestAggregatorBase):
+    """Test Aggregator for market connections."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.grid_fee_cents_kwh = 5
@@ -36,13 +37,13 @@ class MarketAggregator(TestAggregatorBase):
                             transactions["responses"], "dso_market_stats")
                         assert len(stats_requests) == 1
                         assert set(stats_requests[0]["market_stats"]) == \
-                            {"min_trade_rate", "max_trade_rate", "avg_trade_rate",
-                             "median_trade_rate", "total_traded_energy_kWh", "market_bill",
-                             "market_fee_revenue", "area_throughput", "self_sufficiency",
-                             "self_consumption"}
+                            {"total_traded_energy_kWh", "max_trade_rate", "min_trade_rate",
+                             "avg_trade_rate", "market_bill", "market_fee_revenue",
+                             "self_sufficiency", "median_trade_rate", "self_consumption",
+                             "market_energy_deviance", "area_throughput"}
                         self._has_tested_market = True
 
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except
             error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
             logging.error(error_message)
             self.errors.append(error_message)
