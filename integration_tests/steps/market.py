@@ -1,12 +1,11 @@
-from time import sleep
+# pylint: disable=missing-function-docstring
 
-from behave import given
+from behave import step  # pylint: disable=no-name-in-module
 
 from integration_tests.test_aggregator_market import MarketAggregator
 
 
-@given('the external client is started that connects to {area_id} market')
+@step("the gsy-e-sdk is connected {area_id} market on gsy-e")
 def step_impl(context, area_id):
-    sleep(5)
     context.aggregator = MarketAggregator(area_id)
-
+    assert context.aggregator.is_active

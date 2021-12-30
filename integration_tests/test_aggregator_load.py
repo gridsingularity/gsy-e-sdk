@@ -15,7 +15,7 @@ class LoadAggregator(TestAggregatorBase):
         self._has_tested_offers = True
 
     def _setup(self):
-        load = RedisAssetClient("load")
+        load = RedisAssetClient("load", pubsub_thread=self.pubsub)
         load.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):

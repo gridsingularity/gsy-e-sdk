@@ -12,7 +12,7 @@ class EssAggregator(TestAggregatorBase):
         super().__init__(*args, **kwargs)
 
     def _setup(self):
-        storage = RedisAssetClient("storage")
+        storage = RedisAssetClient("storage", pubsub_thread=self.pubsub)
         storage.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):

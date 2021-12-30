@@ -13,7 +13,7 @@ class PVAggregator(TestAggregatorBase):
         self._has_tested_bids = True
 
     def _setup(self):
-        pv = RedisAssetClient("pv")
+        pv = RedisAssetClient("pv", pubsub_thread=self.pubsub)
         pv.select_aggregator(self.aggregator_uuid)
 
     def on_market_cycle(self, market_info):

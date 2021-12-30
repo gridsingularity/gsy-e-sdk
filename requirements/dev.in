@@ -1,0 +1,6 @@
+-r base.txt
+pylint
+pytest
+pre-commit
+behave
+pytest-mock
