@@ -1,7 +1,7 @@
 # pylint: disable=missing-function-docstring, no-member, too-many-public-methods
+# pylint: disable=too-many-arguments
 import uuid
 from unittest.mock import patch, MagicMock
-# import os
 
 import pytest
 from gsy_e_sdk.constants import MAX_WORKER_THREADS
@@ -58,31 +58,24 @@ class TestRestAssetClient:
     """Test methods for RestAssetClient class."""
 
     @staticmethod
-    @pytest.mark.parametrize("set_value, expected_ret_val",
-                             [(TEST_SIMULATION_ID, TEST_SIMULATION_ID),
-                              (None, TEST_SIMULATION_ID)])
-    def test_constructor_simulation_id_setup(set_value, expected_ret_val):
+    @pytest.mark.parametrize("simulation_id, exp_sim_id, domain_name, "
+                             "exp_dom_name, wss_domain, exp_wss_domain",
+                             [("sim_id_explicit", "sim_id_explicit",
+                               "dom_name_explicit", "dom_name_explicit",
+                               "wss_domain_explicit", "wss_domain_explicit"),
+                              (None, TEST_SIMULATION_ID, None, TEST_DOMAIN_NAME,
+                               None, TEST_WEBSOCKETS_DOMAIN_NAME)])
+    def test_constructor_setup_variables_from_env(simulation_id, exp_sim_id, domain_name,
+                                                  exp_dom_name, wss_domain, exp_wss_domain):
+        """Test whether simulation_id, domain_name and websockets_domain_name attributes
+        are properly set when explicitly specified and when they are not (call env variables)."""
         client = RestAssetClient(asset_uuid=TEST_ASSET_UUID,
-                                 simulation_id=set_value)
-        assert client.simulation_id == expected_ret_val
-
-    @staticmethod
-    @pytest.mark.parametrize("set_value, expected_ret_val",
-                             [(TEST_DOMAIN_NAME, TEST_DOMAIN_NAME),
-                              (None, TEST_DOMAIN_NAME)])
-    def test_constructor_domain_name_setup(set_value, expected_ret_val):
-        client = RestAssetClient(asset_uuid=TEST_ASSET_UUID,
-                                 domain_name=set_value)
-        assert client.domain_name == expected_ret_val
-
-    @staticmethod
-    @pytest.mark.parametrize("set_value, expected_ret_val",
-                             [(TEST_WEBSOCKETS_DOMAIN_NAME, TEST_WEBSOCKETS_DOMAIN_NAME),
-                              (None, TEST_WEBSOCKETS_DOMAIN_NAME)])
-    def test_constructor_websockets_domain_name_setup(set_value, expected_ret_val):
-        client = RestAssetClient(asset_uuid=TEST_ASSET_UUID,
-                                 websockets_domain_name=set_value)
-        assert client.websockets_domain_name == expected_ret_val
+                                 simulation_id=simulation_id,
+                                 domain_name=domain_name,
+                                 websockets_domain_name=wss_domain)
+        assert client.simulation_id == exp_sim_id
+        assert client.domain_name == exp_dom_name
+        assert client.websockets_domain_name == exp_wss_domain
 
     @staticmethod
     @pytest.mark.parametrize("set_value, expected_call_val",
