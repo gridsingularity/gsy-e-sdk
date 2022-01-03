@@ -110,8 +110,8 @@ def get_area_uuid_from_area_name_and_collaboration_id(
     Fire a request to get the scenario representation of the collaboration and
     search for the uuid of the area that name matches area_name.
     """
-    query = ("query { readConfiguration(uuid: '{" + collab_id +
-             "}') { scenarioData { latest { serialized } } } }")
+    query = '''query { readConfiguration(uuid: "''' + collab_id + '''")
+                { scenarioData { latest { serialized } } } }'''
     data = execute_graphql_request(domain_name=domain_name, query=query)
     area_uuid = get_area_uuid_from_area_name(
         json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]),
@@ -128,8 +128,8 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id) -> dict:
     Fire a request to get the scenario representation of the collaboration and
     map for the uuid of the areas to their names.
     """
-    query = ("query { readConfiguration(uuid: '{" + collab_id +
-             "}') { scenarioData { latest { serialized } } } }")
+    query = '''query { readConfiguration(uuid: "''' + collab_id + '''")
+                { scenarioData { latest { serialized } } } }'''
 
     data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
     if data.get("errors"):
