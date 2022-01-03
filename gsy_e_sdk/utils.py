@@ -7,7 +7,6 @@ from typing import Optional, Dict
 
 import requests
 from gsy_framework.api_simulation_config.validators import validate_api_simulation_config
-from gsy_framework.utils import get_area_name_uuid_mapping
 from sgqlc.endpoint.http import HTTPEndpoint
 
 from gsy_e_sdk import __version__
@@ -110,8 +109,9 @@ def get_area_uuid_from_area_name_and_collaboration_id(
     Fire a request to get the scenario representation of the collaboration and
     search for the uuid of the area that name matches area_name.
     """
-    query = ("query { readConfiguration(uuid: '{" + collab_id +
-             "}') { scenarioData { latest { serialized } } } }")
+    query = '''query { readConfiguration(uuid: "''' + collab_id + '''")
+                { scenarioData { latest { serialized } } } }'''
+
     data = execute_graphql_request(domain_name=domain_name, query=query)
     area_uuid = get_area_uuid_from_area_name(
         json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"]),
@@ -121,23 +121,6 @@ def get_area_uuid_from_area_name_and_collaboration_id(
         raise AreaNotFoundException(f"Area with name {area_name} is not part of the "
                                     f"collaboration with UUID {collab_id}")
     return area_uuid
-
-
-def get_area_uuid_and_name_mapping_from_simulation_id(collab_id) -> dict:
-    """
-    Fire a request to get the scenario representation of the collaboration and
-    map for the uuid of the areas to their names.
-    """
-    query = ("query { readConfiguration(uuid: '{" + collab_id +
-             "}') { scenarioData { latest { serialized } } } }")
-
-    data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
-    if data.get("errors"):
-        return ast.literal_eval(data["errors"][0]["message"])
-    area_name_uuid_map = get_area_name_uuid_mapping(
-        json.loads(data["data"]["readConfiguration"]["scenarioData"]["latest"]["serialized"])
-    )
-    return area_name_uuid_map
 
 
 def get_aggregators_list(domain_name: Optional[str] = None) -> list:
