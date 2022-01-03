@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 from gsy_e_sdk.constants import MAX_WORKER_THREADS
 
-from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
+from gsy_e_sdk.clients.rest_asset_client import RestAssetClient, REGISTER_COMMAND_TIMEOUT
 
 TEST_ASSET_UUID = str(uuid.uuid4())
 TEST_SIMULATION_ID = str(uuid.uuid4())
@@ -49,8 +49,11 @@ def mock_transaction_id_and_timeout_blocking(mocker):
 
 
 @pytest.fixture(name="client")
-def fixture_rest_asset_client(mock_environment_use_functions):  # pylint: disable=unused-argument
-    return RestAssetClient(asset_uuid=TEST_ASSET_UUID)
+def fixture_rest_asset_client():
+    return RestAssetClient(asset_uuid=TEST_ASSET_UUID,
+                           simulation_id=TEST_SIMULATION_ID,
+                           domain_name=TEST_DOMAIN_NAME,
+                           websockets_domain_name=TEST_WEBSOCKETS_DOMAIN_NAME)
 
 
 class TestRestAssetClient:
@@ -160,7 +163,7 @@ class TestRestAssetClient:
 
             assert client.register() == TEST_COMMAND_RESPONSE
             client.dispatcher.wait_for_command_response.assert_called_with(
-                "register", TEST_TRANSACTION_ID, timeout=15 * 60)
+                "register", TEST_TRANSACTION_ID, timeout=REGISTER_COMMAND_TIMEOUT)
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id")
