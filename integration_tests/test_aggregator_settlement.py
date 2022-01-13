@@ -28,8 +28,6 @@ class SettlementAggregator(TestAggregatorBase):
         self._has_tested_settlement_posts = False
         super().__init__(*args, **kwargs)
 
-        # self._set_first_measurement_forecast()
-
     def _setup(self):
         load_client = RedisAssetClient("forecast-measurement-load", pubsub_thread=self.pubsub)
         load_client.select_aggregator(self.aggregator_uuid)
@@ -38,22 +36,6 @@ class SettlementAggregator(TestAggregatorBase):
         pv_client = RedisAssetClient("forecast-measurement-pv", pubsub_thread=self.pubsub)
         pv_client.select_aggregator(self.aggregator_uuid)
         self.pv_uuid = pv_client.area_uuid
-
-    def _set_first_measurement_forecast(self):
-        self.add_to_batch_commands.set_energy_forecast(
-            asset_uuid=self.load_uuid,
-            energy_forecast_kWh={"2022-01-12T01:00": self.base_forecast_load}) \
-            .set_energy_forecast(
-            asset_uuid=self.pv_uuid,
-            energy_forecast_kWh={"2022-01-12T01:00": self.base_forecast_pv}) \
-            .set_energy_measurement(
-            asset_uuid=self.load_uuid,
-            energy_measurement_kWh={"2022-01-12T00:00": self.base_measurement_load}) \
-            .set_energy_measurement(
-            asset_uuid=self.pv_uuid,
-            energy_measurement_kWh={"2022-01-12T00:00": self.base_measurement_pv})
-
-        self.send_batch_commands()
 
     @staticmethod
     def _calculate_random_deviated_energy(energy, off_percentage):
