@@ -11,6 +11,7 @@ from integration_tests.test_aggregator_batch_commands import BatchAggregator
 from integration_tests.test_aggregator_ess import EssAggregator
 from integration_tests.test_aggregator_load import LoadAggregator
 from integration_tests.test_aggregator_pv import PVAggregator
+from integration_tests.test_aggregator_settlement import SettlementAggregator
 from integration_tests.utils import wait_for_log_to_appear_in_container_logs
 
 REDIS_HOST = "redis.container"
@@ -106,3 +107,9 @@ def step_impl(context):
 @then("the energy bills of the load report the required energy was bought by the load")
 def step_impl(context):
     assert isclose(context.aggregator.device_bills["bought"], 22 * 0.2)
+
+
+@when("the gsy-e-sdk is connecting to gsy-e with test_aggregator_settlement")
+def step_impl(context):
+    context.aggregator = SettlementAggregator("settlement_aggregator")
+    assert context.aggregator.is_active
