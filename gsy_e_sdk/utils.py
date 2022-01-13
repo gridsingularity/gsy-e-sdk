@@ -123,7 +123,8 @@ def get_area_uuid_from_area_name_and_collaboration_id(
     return area_uuid
 
 
-def get_area_uuid_and_name_mapping_from_simulation_id(collab_id) -> dict:
+def get_area_uuid_and_name_mapping_from_simulation_id(
+        collab_id: str, domain_name: str = None) -> dict:
     """
     Fire a request to get the scenario representation of the collaboration and
     map for the uuid of the areas to their names.
@@ -131,7 +132,7 @@ def get_area_uuid_and_name_mapping_from_simulation_id(collab_id) -> dict:
     query = '''query { readConfiguration(uuid: "''' + collab_id + '''")
                 { scenarioData { latest { serialized } } } }'''
 
-    data = execute_graphql_request(domain_name=domain_name_from_env(), query=query)
+    data = execute_graphql_request(domain_name=domain_name or domain_name_from_env(), query=query)
     if data.get("errors"):
         return ast.literal_eval(data["errors"][0]["message"])
     area_name_uuid_map = get_area_name_uuid_mapping(
@@ -201,7 +202,7 @@ def log_bid_offer_confirmation(message: dict) -> None:
         if message.get("status") == "ready" and message.get("command") in ["bid", "offer"]:
             event = "bid" if "bid" in message.get("command") else "offer"
             data_dict = json.loads(message.get(event))
-            market_type = data_dict.get("market_type")
+            market_type = message.get("market_type")
             energy = data_dict.get("energy")
             price = data_dict.get("price")
             rate = price / energy
