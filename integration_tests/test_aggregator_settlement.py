@@ -2,6 +2,7 @@
 import logging
 import traceback
 import random
+import json
 
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from pendulum import from_format
@@ -26,6 +27,7 @@ class SettlementAggregator(TestAggregatorBase):
             self.base_forecast_pv, 5)
 
         self._has_tested_settlement_posts = False
+        self._has_tested_energy_exposure = False
         super().__init__(*args, **kwargs)
 
     def _setup(self):
@@ -84,20 +86,16 @@ class SettlementAggregator(TestAggregatorBase):
                     continue
 
                 # manage forecast and measurement information
-
                 current_market_slot = market_info["market_slot"]
                 forecast_market_slot = self._next_market_slot(market_info)
-
                 if self._can_place_forecast_measurements(area_dict):
                     self._manage_forecasts_measurements(area_uuid, area_dict,
                                                         forecast_market_slot,
                                                         current_market_slot)
-
                     response = self.send_batch_commands()
                     logging.info("forecast/measurement placed on the new market: %s", response)
 
                 # manage bids and offers in spot market
-
                 asset_info = area_dict["asset_info"]
                 if self._can_place_offer(asset_info):
                     energy = asset_info["available_energy_kWh"] / 2
@@ -113,30 +111,35 @@ class SettlementAggregator(TestAggregatorBase):
                     logging.info("bid/offer placed on the spot market: %s", response)
 
                 # manage bids and offers in settlement markets
-
                 if self._can_place_in_settlement_market(asset_info):
-
                     for market_slot, energy in asset_info["unsettled_deviation_kWh"].items():
-
                         if energy and energy > 0:
                             self.add_to_batch_commands.bid_energy(asset_uuid=area_uuid,
-                                                                  energy=energy / 2, price=30,
+                                                                  energy=energy, price=30,
                                                                   time_slot=market_slot)
                         elif energy and energy < 0:
                             self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid,
-                                                                    energy=-energy / 2, price=1,
+                                                                    energy=-energy, price=1,
                                                                     time_slot=market_slot)
-
-                    transactions = self.send_batch_commands()
-
-                    if transactions:
-                        self._test_settlement_posts(transactions)
-                        self._has_tested_settlement_posts = True
+                        transactions = self.send_batch_commands()
+                        if transactions:
+                            self._test_settlement_posts(transactions)
+                            self._has_tested_settlement_posts = True
+                            self._test_unsettled_energy_exposure(transactions, energy)
+                            self._has_tested_energy_exposure = True
 
         except Exception as ex:
             error_message = f"Raised exception: {ex}. Traceback: {traceback.format_exc()}"
             logging.error(error_message)
             self.errors.append(error_message)
+
+    @staticmethod
+    def _test_unsettled_energy_exposure(transactions, energy):
+        for response in transactions["responses"].values():
+            for command_dict in response:
+                command = command_dict["command"]
+                posted_energy = json.loads(command_dict[command])["energy"]
+                assert posted_energy in (energy, -energy)
 
     @staticmethod
     def _test_settlement_posts(transactions):
