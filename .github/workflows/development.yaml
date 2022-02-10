@@ -23,4 +23,4 @@
           TOXENV: ci
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          INTEGRATION_TESTS_REPO_URL: https://gsydev:${{ secrets.GSYDEV_TOKEN }}@github.com/gridsingularity/gsy-backend-integration-tests.git
+          INTEGRATION_TESTS_REPO: https://gsydev:${{ secrets.GSYDEV_TOKEN }}@github.com/gridsingularity/gsy-backend-integration-tests.git
