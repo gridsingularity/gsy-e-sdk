@@ -1,6 +1,6 @@
 # flake8: noqa
 """
-Template file for a trading strategy through the d3a API client
+Template file for a trading strategy through the gsy-e-sdk api client
 """
 
 import os
