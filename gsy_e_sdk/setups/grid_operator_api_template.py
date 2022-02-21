@@ -1,6 +1,6 @@
 # flake8: noqa
 """
-Template file for markets management through the d3a API client
+Template file for markets management through the gsy-e-sdk api client
 """
 
 from tabulate import tabulate
