@@ -2,7 +2,6 @@
 """
 Template file for a trading strategy through the gsy-e-sdk api client
 
-
 """
 import json
 import logging
