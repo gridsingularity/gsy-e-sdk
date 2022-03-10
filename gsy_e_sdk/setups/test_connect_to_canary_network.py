@@ -29,27 +29,22 @@ class TestAggregator(Aggregator):
         if self.is_finished is True:
             return
 
-        market_uuid = self.get_uuid_from_area_name("Home 2")
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            logging.info(
-                "current_market_fee: %s",
-                self.grid_fee_calculation.calculate_grid_fee(area_uuid, market_uuid))
-            if not area_dict.get("asset_info"):
-                if area_uuid == market_uuid:
-                    self.add_to_batch_commands.last_market_dso_stats(
-                        area_uuid=area_uuid).grid_fees(area_uuid=area_uuid, fee_cents_kwh=5)
-            else:
+
+            if area_dict.get("asset_info"):
                 if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
                                                                   "available_energy_kWh"):
                     energy = area_dict["asset_info"]["available_energy_kWh"] / 2
                     self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid, price=1,
                                                             energy=energy)
+                    logging.info("Energy OFFER command added to batch.")
 
                 if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
                                                                   "energy_requirement_kWh"):
                     energy = area_dict["asset_info"]["energy_requirement_kWh"] / 2
                     self.add_to_batch_commands.bid_energy(asset_uuid=area_uuid, price=30,
                                                           energy=energy)
+                    logging.info("Energy BID command added to batch.")
 
         response = self.execute_batch_commands()
         logging.info("Batch command placed on the new market: %s", response)
