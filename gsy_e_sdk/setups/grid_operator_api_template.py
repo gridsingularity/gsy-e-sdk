@@ -24,7 +24,7 @@ print(current_dir)
 automatic = True
 
 # List of market the Grid Operators connect to
-market_names = ["Grid", "Community"]  # TODO list the market names as they are in the collaboration
+market_names = ["Grid Market", "Community"]  # TODO list the market names as they are in the collaboration
 
 # Name of your aggregator
 oracle_name = "dso"
@@ -40,11 +40,11 @@ slot_length = 15  # leave as is
 
 def fee_strategy():
     if TimeOfUse:
-        market_prices = pd.read_excel(os.path.join(current_dir,"resources/ToU.xlsx"))  # TODO upload an Excel/CSV file with prices of every market at each time slot (based on given template)
+        market_prices = pd.read_excel(os.path.join(current_dir, "resources/ToU.xlsx"))  # TODO upload an Excel/CSV file with prices of every market at each time slot (based on given template)
 
-        planned_fee = {}                     
-        for i in range(len(market_prices)):  
-            for j in market_names:           
+        planned_fee = {}
+        for i in range(len(market_prices)):
+            for j in market_names:
                 planned_fee.update({(str(market_prices["Time"][i])[0:5], j): market_prices[j][i]})
 
     if Aziiz:
