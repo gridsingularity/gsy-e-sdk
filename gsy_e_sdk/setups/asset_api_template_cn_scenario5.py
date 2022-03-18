@@ -23,10 +23,10 @@ print(current_dir)
 # TODO update each of the below according to the assets the API will manage
 AUTOMATIC = False
 
-ORACLE_NAME = "oracle_edu_aggregator"
+ORACLE_NAME = "oracle_sarah_aggregator_s5"
 
-load_names = ["Load1"]
-pv_names = ["PV1"]
+load_names = ["Load 1513"]
+pv_names = ["OLI_7"]
 storage_names = []
 
 # set market parameters
