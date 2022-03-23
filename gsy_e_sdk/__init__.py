@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 # *IMPORTANT*: Don't manually change the version here. Use the 'bumpversion' utility.
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 
 class APIClientInterface(ABC):
