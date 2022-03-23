@@ -32,6 +32,7 @@ storage_names = []
 # set market parameters
 TICKS = 10  # leave as is
 
+
 ################################################
 # ORACLE STRUCTURE
 ################################################
@@ -93,9 +94,9 @@ class Oracle(aggregator_client_type):
                     "available_energy_kWh"]
             if "used_storage" in area_dict["asset_info"]:
                 self.storage_soc[area_uuid] = (
-                    area_dict["asset_info"]["used_storage"]
-                    / (area_dict["asset_info"]["used_storage"]
-                    + area_dict["asset_info"]["free_storage"]))
+                        area_dict["asset_info"]["used_storage"]
+                        / (area_dict["asset_info"]["used_storage"]
+                           + area_dict["asset_info"]["free_storage"]))
 
         ################################################
         # SET ASSETS' STRATEGIES
@@ -124,7 +125,7 @@ class Oracle(aggregator_client_type):
                     if i < TICKS - 2:
                         load_strategy.append(round(
                             FiT_rate - self.asset_strategy[area_uuid]["fee_to_market_maker"] +
-                            (Market_Maker_rate + 2*self.asset_strategy[area_uuid][
+                            (Market_Maker_rate + 2 * self.asset_strategy[area_uuid][
                                 "fee_to_market_maker"] - FiT_rate) * (i / TICKS), 3))
                     else:
                         load_strategy.append(round(
@@ -141,7 +142,7 @@ class Oracle(aggregator_client_type):
                             0,
                             Market_Maker_rate + self.asset_strategy[area_uuid][
                                 "fee_to_market_maker"] -
-                            (Market_Maker_rate + 2*self.asset_strategy[area_uuid][
+                            (Market_Maker_rate + 2 * self.asset_strategy[area_uuid][
                                 "fee_to_market_maker"] - FiT_rate) * (i / TICKS)), 3))
                     else:
                         gen_strategy.append(round(max(
@@ -157,12 +158,12 @@ class Oracle(aggregator_client_type):
                     batt_buy_strategy.append(round(
                         FiT_rate - self.asset_strategy[area_uuid][
                             "fee_to_market_maker"] + (Med_price - (FiT_rate - self.asset_strategy[
-                                area_uuid]["fee_to_market_maker"])) * (i / TICKS), 3))
+                            area_uuid]["fee_to_market_maker"])) * (i / TICKS), 3))
 
                     batt_sell_strategy.append(round(
-                        Market_Maker_rate+self.asset_strategy[area_uuid][
+                        Market_Maker_rate + self.asset_strategy[area_uuid][
                             "fee_to_market_maker"] - (Market_Maker_rate + self.asset_strategy[
-                                area_uuid]["fee_to_market_maker"] - Med_price) * (i / TICKS), 3))
+                            area_uuid]["fee_to_market_maker"] - Med_price) * (i / TICKS), 3))
 
                 self.asset_strategy[area_uuid]["buy_rates"] = batt_buy_strategy
                 self.asset_strategy[area_uuid]["sell_rates"] = batt_sell_strategy
@@ -232,15 +233,11 @@ class Oracle(aggregator_client_type):
         ################################################
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
 
-
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
 
-            logging.info(f"area_uuid= {area_uuid}")
-            logging.info(f"area_dict = \n{json.dumps(area_dict, indent = 4, sort_keys=False)}")
-            if area_uuid in self.asset_strategy.keys():
-                logging.info(f"asset_strategy = \n{json.dumps(self.asset_strategy[area_uuid], indent = 4, sort_keys=False)}")
-
+            logging.info(f"area_name= {area_dict['area_name']}")
+            logging.info(f"asset_info = \n{json.dumps(area_dict['asset_info'], indent=2, sort_keys=False)}")
 
             # Load Strategy
             if "energy_requirement_kWh" in area_dict["asset_info"] and area_dict["asset_info"][
@@ -255,17 +252,17 @@ class Oracle(aggregator_client_type):
                 "available_energy_kWh"] > 0.0:
                 rate = self.asset_strategy[area_uuid]["sell_rates"][i]
                 energy = area_dict["asset_info"]["available_energy_kWh"]
-                self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid, price=rate*energy,
+                self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid, price=rate * energy,
                                                         energy=energy, replace_existing=True)
 
             # Battery strategy
             if "energy_to_buy" in area_dict["asset_info"]:
                 buy_energy = (
-                    area_dict["asset_info"]["energy_to_buy"]
-                    + area_dict["asset_info"]["energy_active_in_offers"])
+                        area_dict["asset_info"]["energy_to_buy"]
+                        + area_dict["asset_info"]["energy_active_in_offers"])
                 sell_energy = (
-                    area_dict["asset_info"]["energy_to_sell"]
-                    + area_dict["asset_info"]["energy_active_in_bids"])
+                        area_dict["asset_info"]["energy_to_sell"]
+                        + area_dict["asset_info"]["energy_active_in_bids"])
 
                 # Battery buy strategy
                 if buy_energy > 0.0:
@@ -277,7 +274,7 @@ class Oracle(aggregator_client_type):
                 if sell_energy > 0.0:
                     sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
                     self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid,
-                                                            price=sell_rate*sell_energy,
+                                                            price=sell_rate * sell_energy,
                                                             energy=sell_energy,
                                                             replace_existing=True)
 
@@ -340,7 +337,7 @@ else:
     simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
     domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
     websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
-    asset_args = {"autoregister": False, "start_websocket": False}
+    asset_args = {"autoregister": True, "start_websocket": True}
     if AUTOMATIC:
         registry = aggr.get_configuration_registry()
         registered_assets = get_assets_name(registry)

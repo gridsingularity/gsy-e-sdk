@@ -1,89 +1,454 @@
 import json
 import logging
+import os
+import random
+import sys
 from time import sleep
 
-from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
+from gsy_framework.constants_limits import DATE_TIME_FORMAT
+from pendulum import from_format
 
-from gsy_e_sdk.aggregator import Aggregator
-
+from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
-from gsy_e_sdk.utils import (
-    get_area_uuid_from_area_name_and_collaboration_id, get_sim_id_and_domain_names)
+from gsy_e_sdk.types import aggregator_client_type
+from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
+
+current_dir = os.path.dirname(__file__)
+print(current_dir)
+
+################################################
+# CONFIGURATIONS
+################################################
+
+# pylint: disable=fixme
+# TODO update each of the below according to the assets the API will manage
+AUTOMATIC = False
+
+ORACLE_NAME = "oracle_sarah_aggregator_s4_2"
+
+load_names = ["Load_S4_2"]
+pv_names = ["PV_S4_2"]
+storage_names = []
+
+# set market parameters
+TICKS = 10  # leave as is
 
 
-class TestAggregator(Aggregator):
-    """Aggregator that automatically reacts on market cycle events with bids and offers."""
+class Oracle(aggregator_client_type):
+    """Class that defines the behaviour of an "oracle" aggregator."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_finished = False
+        # initialise variables
+        self.asset_strategy = {}  # dict containing information and pricing strategy for each asset
+        self.load_energy_requirements = {}
+        self.generation_energy_available = {}
+        self.storage_soc = {}
 
+        self.base_forecast_load = 10
+        self.base_measurement_load = self._calculate_random_deviated_energy(
+            self.base_forecast_load, 5)
+        self.base_forecast_pv = 5
+        self.base_measurement_pv = self._calculate_random_deviated_energy(
+            self.base_forecast_pv, 5)
+
+    @staticmethod
+    def _calculate_random_deviated_energy(energy, off_percentage):
+        delta = energy * off_percentage / 100
+        sign = 1 if random.random() < 0.5 else -1
+        return energy + sign * delta
+
+    @staticmethod
+    def _can_place_forecast_measurements(area_dict):
+        return "area_name" in area_dict and ("forecast-measurement" in area_dict["area_name"])
+
+    def _manage_forecasts(self, asset_name, asset, forecast_market_slot):
+        if "Load" in asset_name:
+            energy_forecast = self.base_forecast_load
+        if "PV" in asset_name:
+            energy_forecast = self.base_forecast_pv
+
+        response = asset.set_energy_forecast(energy_forecast_kWh={
+            forecast_market_slot: energy_forecast
+        }, do_not_wait=False)
+        return response
+
+    def _manage_measurements(self, asset_name, asset, current_market_slot):
+        if "Load" in asset_name:
+            energy_measurement = self.base_measurement_load
+        if "PV" in asset_name:
+            energy_measurement = self.base_measurement_pv
+
+        asset.set_energy_measurement(energy_measurement_kWh={
+            current_market_slot: energy_measurement
+        })
+
+    @staticmethod
+    def _next_market_slot(market_info):
+        return from_format(market_info["market_slot"], DATE_TIME_FORMAT) \
+            .add(minutes=15).format(DATE_TIME_FORMAT)
+
+    ################################################
+    # TRIGGERS EACH MARKET CYCLE
+    ################################################
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     def on_market_cycle(self, market_info):
         """
         Places a bid or an offer whenever a new market is created. The amount of energy
-        for the bid/offer depends on the available energy of the PV, or on the required
-        energy of the load.
+        for the bid/offer depends on the available energy of the PV, the required
+        energy of the load, or the amount of energy in the battery.
         :param market_info: Incoming message containing the newly-created market info
         :return: None
         """
+        # termination conditions (leave as is)
         if self.is_finished is True:
             return
 
+        ################################################
+        # GET MARKET AND ENERGY FEATURES
+        ################################################
+        FiT_rate = market_info["feed_in_tariff_rate"]
+        Market_Maker_rate = market_info["market_maker_rate"]
+        Med_price = (Market_Maker_rate - FiT_rate) / 2 + FiT_rate
+
+        print("Market maker rate: ", Market_Maker_rate)
+        print("Feed-in Tariff: ", FiT_rate)
+
+        # TODO do something with the arrays if needed:
+        #   - load_energy_requirements
+        #   - pv_energy_availabilities
+        #   - battery_soc
+
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+                continue
+            if "energy_requirement_kWh" in area_dict["asset_info"]:
+                self.load_energy_requirements[area_uuid] = area_dict["asset_info"][
+                    "energy_requirement_kWh"]
+            if "available_energy_kWh" in area_dict["asset_info"]:
+                self.generation_energy_available[area_uuid] = area_dict["asset_info"][
+                    "available_energy_kWh"]
+            if "used_storage" in area_dict["asset_info"]:
+                self.storage_soc[area_uuid] = (
+                        area_dict["asset_info"]["used_storage"]
+                        / (area_dict["asset_info"]["used_storage"]
+                           + area_dict["asset_info"]["free_storage"]))
 
-            if area_dict.get("asset_info"):
-                if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
-                                                                  "available_energy_kWh"):
-                    energy = area_dict["asset_info"]["available_energy_kWh"] / 2
-                    self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid, price=1,
-                                                            energy=energy)
-                    logging.info("Energy OFFER command added to batch.")
+        ################################################
+        # SEND ASSETS' LIVE DATA FOR CANARY NETWORKS
+        ################################################
+        # TODO configure sending forecasts / measurements for the present and next market slots.
+        #
+        for asset_name, asset in assets_dict.items():
 
-                if key_in_dict_and_not_none_and_greater_than_zero(area_dict["asset_info"],
-                                                                  "energy_requirement_kWh"):
-                    energy = area_dict["asset_info"]["energy_requirement_kWh"] / 2
-                    self.add_to_batch_commands.bid_energy(asset_uuid=area_uuid, price=30,
-                                                          energy=energy)
-                    logging.info("Energy BID command added to batch.")
+            # manage forecast and measurement information
+            current_market_slot = market_info["market_slot"]
+            forecast_market_slot = self._next_market_slot(market_info)
+            try:
+                forecast_response = self._manage_forecasts(asset_name, asset, forecast_market_slot)
+                logging.info("Forecast sent for the future market: %s, asset: %s",
+                             forecast_market_slot, asset_name)
+                logging.info("Response: %s", forecast_response)
+                # self._manage_measurements(asset_name, asset, current_market_slot)
+                # logging.info("Measurement sent for current market: %s", current_market_slot)
+            except AssertionError:
+                logging.warning(f"No energy forecast / measurement have been sent "
+                                f"for current market {current_market_slot} and "
+                                f"future market {forecast_market_slot} for asset "
+                                f"{asset_name}.")
+                logging.error(f"{sys.exc_info()}")
 
-        response = self.execute_batch_commands()
-        logging.info("Batch command placed on the new market: %s", response)
-
-    def on_tick(self, tick_info):
-        logging.debug("Progress information on the device: %s", tick_info)
+        # TODO configure bidding / offer strategy for each tick
+        # A dictionary is created to store values for each assets such as the grid fee to the
+        # market maker, the buy and sell price strategies,... current strategy is a simple ramp
+        # between 2 thresholds: Feed-in Tariff and Market Maker including grid fees. buy and sell
+        # strategies are stored in array of length 10, which are posted in TICKS 0 through 9 the
+        # default is that each asset type you control has the same strategy, adapted with the
+        # grid fees.
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
 
-            # Information logging
-            logging.info(f"area_uuid = \n {json.dumps(area_uuid, indent=3)}")
-            logging.info(f"area_dict = \n {json.dumps(area_dict, indent=3)}")
+            self.asset_strategy[area_uuid] = {}
+            self.asset_strategy[area_uuid]["asset_name"] = area_dict["area_name"]
+            # TODO change "Market Maker" with the name defined in the grid config, if needed
+            self.asset_strategy[area_uuid]["fee_to_market_maker"] = self.calculate_grid_fee(
+                area_uuid, self.get_uuid_from_area_name("Grid Market"), "current_market_fee")
 
-    def on_trade(self, trade_info):
-        logging.debug("Trade info: %s", trade_info)
+            # Load strategy
+            if "energy_requirement_kWh" in area_dict["asset_info"]:
+                load_strategy = []
+                for i in range(0, TICKS):
+                    if i < TICKS - 2:
+                        load_strategy.append(round(
+                            FiT_rate - self.asset_strategy[area_uuid]["fee_to_market_maker"] +
+                            (Market_Maker_rate + 2 * self.asset_strategy[area_uuid][
+                                "fee_to_market_maker"] - FiT_rate) * (i / TICKS), 3))
+                    else:
+                        load_strategy.append(round(
+                            Market_Maker_rate + self.asset_strategy[area_uuid][
+                                "fee_to_market_maker"], 3))
+                self.asset_strategy[area_uuid]["buy_rates"] = load_strategy
 
+            # Generation strategy
+            if "available_energy_kWh" in area_dict["asset_info"]:
+                gen_strategy = []
+                for i in range(0, TICKS):
+                    if i < TICKS - 2:
+                        gen_strategy.append(round(max(
+                            0,
+                            Market_Maker_rate + self.asset_strategy[area_uuid][
+                                "fee_to_market_maker"] -
+                            (Market_Maker_rate + 2 * self.asset_strategy[area_uuid][
+                                "fee_to_market_maker"] - FiT_rate) * (i / TICKS)), 3))
+                    else:
+                        gen_strategy.append(round(max(
+                            0,
+                            FiT_rate - self.asset_strategy[area_uuid]["fee_to_market_maker"]), 3))
+                self.asset_strategy[area_uuid]["sell_rates"] = gen_strategy
+
+            # Storage strategy
+            if "used_storage" in area_dict["asset_info"]:
+                batt_buy_strategy = []
+                batt_sell_strategy = []
+                for i in range(0, TICKS):
+                    batt_buy_strategy.append(round(
+                        FiT_rate - (
+                            self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                        ) + (Med_price - FiT_rate - (
+                            self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                        )) * (i / TICKS), 3)
+                    )
+
+                    batt_sell_strategy.append(round(
+                        Market_Maker_rate + (
+                            self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                        ) - (Market_Maker_rate + (
+                            self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                        ) - Med_price) * (i / TICKS), 3)
+                    )
+
+                self.asset_strategy[area_uuid]["buy_rates"] = batt_buy_strategy
+                self.asset_strategy[area_uuid]["sell_rates"] = batt_sell_strategy
+
+        ################################################
+        # POST INITIAL BIDS AND OFFERS FOR MARKET SLOT
+        ################################################
+        # takes the first element in each asset strategy to post the first bids and offers
+        # all bids and offers are aggregated in a single batch and then executed
+        # TODO how would you self-balance your managed energy assets?
+        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+                continue
+
+            # Load strategy
+            if (
+                    "energy_requirement_kWh" in area_dict["asset_info"]
+                    and area_dict["asset_info"]["energy_requirement_kWh"] > 0.0):
+                rate = self.asset_strategy[area_uuid]["buy_rates"][0]
+                energy = area_dict["asset_info"]["energy_requirement_kWh"]
+                self.add_to_batch_commands.bid_energy_rate(
+                    asset_uuid=area_uuid, rate=rate, energy=energy)
+
+            # Generation strategy
+            if (
+                    "available_energy_kWh" in area_dict["asset_info"]
+                    and area_dict["asset_info"]["available_energy_kWh"] > 0.0):
+                rate = self.asset_strategy[area_uuid]["sell_rates"][0]
+                energy = area_dict["asset_info"]["available_energy_kWh"]
+                self.add_to_batch_commands.offer_energy_rate(
+                    asset_uuid=area_uuid, rate=rate, energy=energy)
+
+            # Battery strategy
+            if "energy_to_buy" in area_dict["asset_info"]:
+                buy_energy = area_dict["asset_info"]["energy_to_buy"]
+                sell_energy = area_dict["asset_info"]["energy_to_sell"]
+                # Battery buy strategy
+                if buy_energy > 0.0:
+                    buy_rate = self.asset_strategy[area_uuid]["buy_rates"][0]
+                    self.add_to_batch_commands.bid_energy_rate(
+                        asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
+                # Battery sell strategy
+                if sell_energy > 0.0:
+                    sell_rate = self.asset_strategy[area_uuid]["sell_rates"][0]
+                    self.add_to_batch_commands.offer_energy_rate(
+                        asset_uuid=area_uuid, rate=sell_rate, energy=sell_energy)
+
+        self.execute_batch_commands()
+
+    ################################################
+    # TRIGGERS EACH TICK
+    ################################################
+    # Places a bid or an offer 10% of the market slot progression. The amount of energy
+    # for the bid/offer depends on the available energy of the PV, the required
+    # energy of the load, or the amount of energy in the battery and the energy already traded.
+    def on_tick(self, tick_info):
+        i = int(float(tick_info["slot_completion"].strip("%")) / TICKS)  # tick num for index
+
+        ################################################
+        # ADJUST BID AND OFFER STRATEGY (if needed)
+        ################################################
+        # TODO manipulate tick strategy if required
+        self.asset_strategy = self.asset_strategy
+
+        ################################################
+        # UPDATE/REPLACE BIDS AND OFFERS EACH TICK
+        ################################################
+        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+
+            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+                continue
+
+            logging.info(f"area_name= {area_dict['area_name']}")
+            logging.info("asset_info = "
+                         f"\n{json.dumps(area_dict['asset_info'], indent=2, sort_keys=False)}")
+
+            # Load Strategy
+            if "energy_requirement_kWh" in area_dict["asset_info"] and (
+                    area_dict["asset_info"]["energy_requirement_kWh"] >= 0.0):
+                rate = self.asset_strategy[area_uuid]["buy_rates"][i]
+                energy = area_dict["asset_info"]["energy_requirement_kWh"]
+                self.add_to_batch_commands.bid_energy_rate(
+                    asset_uuid=area_uuid, rate=rate, energy=energy)
+
+            # Generation strategy
+            if "available_energy_kWh" in area_dict["asset_info"] and (
+                    area_dict["asset_info"]["available_energy_kWh"] >= 0.0):
+                rate = self.asset_strategy[area_uuid]["sell_rates"][i]
+                energy = area_dict["asset_info"]["available_energy_kWh"]
+                self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid, price=rate * energy,
+                                                        energy=energy, replace_existing=True)
+
+            # Battery strategy
+            if "energy_to_buy" in area_dict["asset_info"]:
+                buy_energy = (
+                        area_dict["asset_info"]["energy_to_buy"]
+                        + area_dict["asset_info"]["energy_active_in_offers"])
+                sell_energy = (
+                        area_dict["asset_info"]["energy_to_sell"]
+                        + area_dict["asset_info"]["energy_active_in_bids"])
+
+                # Battery buy strategy
+                if buy_energy > 0.0:
+                    buy_rate = self.asset_strategy[area_uuid]["buy_rates"][i]
+                    self.add_to_batch_commands.bid_energy_rate(
+                        asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy)
+
+                # Battery sell strategy
+                if sell_energy > 0.0:
+                    sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
+                    self.add_to_batch_commands.offer_energy(asset_uuid=area_uuid,
+                                                            price=sell_rate * sell_energy,
+                                                            energy=sell_energy,
+                                                            replace_existing=True)
+
+        self.execute_batch_commands()
+
+    ################################################
+    # TRIGGERS EACH COMMAND RESPONSE AND EVENT
+    ################################################
+    def on_event_or_response(self, message):
+        # print("message",message)
+        pass
+
+    ################################################
+    # SIMULATION TERMINATION CONDITION
+    ################################################
     def on_finish(self, finish_info):
+        # TODO export relevant information stored during the simulation (if needed)
         self.is_finished = True
 
 
-simulation_id, domain_name, websockets_domain_name = get_sim_id_and_domain_names()
+################################################
+# REGISTER FOR ASSETS AND MARKETS
+################################################
+def get_assets_name(indict: dict) -> dict:
+    """
+    This function is used to parse the grid tree and returned all registered assets
+    wrapper for _get_assets_name
+    """
+    if indict == {}:
+        return {}
+    outdict = {"Area": [], "Load": [], "PV": [], "Storage": []}
+    _get_assets_name(indict, outdict)
+    return outdict
 
-aggr = TestAggregator(aggregator_name="oracle_sarah_aggregator_s4_2")
 
-load2_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    simulation_id, "Load_S4_2", domain_name)
-load2 = RestAssetClient(load2_uuid)
+def _get_assets_name(indict: dict, outdict: dict):
+    """
+    Parse the collaboration / Canary Network registry
+    Returns a list of the Market, Load, PV and Storage names the user is registered to
+    """
+    for key, value in indict.items():
+        if key == "name":
+            name = value
+        if key == "type":
+            area_type = value
+        if key == "registered" and value:
+            outdict[area_type].append(name)
+        if "children" in key:
+            for children in indict[key]:
+                _get_assets_name(children, outdict)
 
-pv2_uuid = get_area_uuid_from_area_name_and_collaboration_id(
-    simulation_id, "PV_S4_2", domain_name)
-pv2 = RestAssetClient(pv2_uuid)
 
-load2.select_aggregator(aggr.aggregator_uuid)
-pv2.select_aggregator(aggr.aggregator_uuid)
-# load2.unselect_aggregator(aggr.aggregator_uuid)
-# pv2.unselect_aggregator(aggr.aggregator_uuid)
+aggr = Oracle(aggregator_name=ORACLE_NAME)
 
-print("'Load_S4_2' & 'PV_S4_2' assets have been registered.")
+if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
+    AssetClient = RedisAssetClient
+    asset_args = {"autoregister": True, "pubsub_thread": aggr.pubsub}
+else:
+    AssetClient = RestAssetClient
+    simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
+    domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
+    websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
+    #    asset_args = {"autoregister": False, "start_websocket": False}
+    asset_args = {}
+    if AUTOMATIC:
+        registry = aggr.get_configuration_registry()
+        registered_assets = get_assets_name(registry)
+        load_names = registered_assets["Load"]
+        pv_names = registered_assets["PV"]
+        storage_names = registered_assets["Storage"]
 
+
+def register_asset_list(asset_names, asset_params, asset_uuid_map, asset_dict):
+    """Register the provided list of assets with the aggregator."""
+    for asset_name in asset_names:
+        print("Registered asset:", asset_name)
+        if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
+            asset_params["area_id"] = asset_name
+        else:
+            uuid = get_area_uuid_from_area_name_and_collaboration_id(
+                simulation_id, asset_name, domain_name)
+            asset_params["asset_uuid"] = uuid
+            asset_uuid_map[uuid] = asset_name
+        asset = AssetClient(**asset_params)
+        if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
+            asset_uuid_map[asset.area_uuid] = asset.area_id
+        asset.select_aggregator(aggr.aggregator_uuid)
+        asset_dict[asset_name] = asset
+    return asset_uuid_map, asset_dict
+
+
+print()
+print("Registering assets ...")
+asset_uuid_mapping = {}
+assets_dict = {}
+asset_uuid_mapping, assets_dict = register_asset_list(
+    load_names, asset_args, asset_uuid_mapping, assets_dict)
+asset_uuid_mapping, assets_dict = register_asset_list(
+    pv_names, asset_args, asset_uuid_mapping, assets_dict)
+asset_uuid_mapping, assets_dict = register_asset_list(
+    storage_names, asset_args, asset_uuid_mapping, assets_dict)
+
+print()
+print("Summary of assets/markets registered:")
+print()
+print(asset_uuid_mapping)
+
+# loop to allow persistence
 while not aggr.is_finished:
     sleep(0.5)

@@ -236,11 +236,8 @@ class Oracle(aggregator_client_type):
             if "asset_info" not in area_dict or area_dict["asset_info"] is None:
                 continue
 
-            logging.info(f"area_uuid= {area_uuid}")
-            logging.info(f"area_dict = \n{json.dumps(area_dict, indent = 4, sort_keys=False)}")
-            if area_uuid in self.asset_strategy.keys():
-                logging.info(f"asset_strategy = \n{json.dumps(self.asset_strategy[area_uuid], indent = 4, sort_keys=False)}")
-
+            logging.info(f"area_name= {area_dict['area_name']}")
+            logging.info(f"asset_info = \n{json.dumps(area_dict['asset_info'], indent=2, sort_keys=False)}")
 
             # Load Strategy
             if "energy_requirement_kWh" in area_dict["asset_info"] and area_dict["asset_info"][
