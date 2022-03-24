@@ -2,6 +2,7 @@
 """
 Template file for markets management through the gsy-e-sdk api client
 """
+import logging
 
 from tabulate import tabulate
 import pandas as pd
@@ -192,6 +193,7 @@ class Oracle(aggregator_client_type):
                 if TimeOfUse:
                     self.next_market_fee[area_dict["area_name"]] = self.scheduled_fee(self.market_time, planned_fee,
                                                                                       area_dict["area_name"])
+                    logging.info(f"Next market fee for {area_dict['area_name']}: {self.next_market_fee[area_dict['area_name']]}")
 
                 ###################################################################
                 # AZIIZ STRATEGY
@@ -218,7 +220,7 @@ class Oracle(aggregator_client_type):
                                 "area_name"]] = 2000  # TODO set the last value if all the previous ones are not fulfilled
 
                 self.add_to_batch_commands.grid_fees(area_uuid=area_uuid,
-                                                     fee_cents_kwh=int(self.next_market_fee[area_dict["area_name"]]))
+                                                     fee_cents_kwh=float(self.next_market_fee[area_dict["area_name"]]))
 
         next_fee_response = self.execute_batch_commands()  # send batch command
 
