@@ -129,7 +129,7 @@ class Oracle(aggregator_client_type):
             except:
                 self.balance[market_event[0]['name']] = 0
 
-        self.balance_hist = self.balance_hist.append(self.balance,ignore_index=True)  # DataFrame that gets updated and grows at each market slot and contains the balance (import - export) for the areas
+        self.balance_hist = self.balance_hist.append(self.balance, ignore_index=True)  # DataFrame that gets updated and grows at each market slot and contains the balance (import - export) for the areas
 
         # Print information in the terminal
         print('LAST MARKET STATISTICS')
@@ -217,7 +217,8 @@ class Oracle(aggregator_client_type):
                             self.next_market_fee[area_dict[
                                 "area_name"]] = 2000  # TODO set the last value if all the previous ones are not fulfilled
 
-                self.add_to_batch_commands.grid_fees(area_uuid=area_uuid,fee_cents_kwh=self.next_market_fee[area_dict["area_name"]])
+                self.add_to_batch_commands.grid_fees(area_uuid=area_uuid,
+                                                     fee_cents_kwh=int(self.next_market_fee[area_dict["area_name"]]))
 
         next_fee_response = self.execute_batch_commands()  # send batch command
 
