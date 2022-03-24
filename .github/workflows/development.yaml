@@ -47,4 +47,4 @@
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           INTEGRATION_TESTS_REPO: https://gsydev:${{ secrets.GSYDEV_TOKEN }}@github.com/gridsingularity/gsy-backend-integration-tests.git
-          INTEGRATION_TESTS_BRANCH: ${{ steps.parse_branch.outputs.INTEGRATION_TESTS_BRANCH }}
+          INTEGRATION_TESTS_BRANCH: ${{ steps.validated_branch.outputs.INTEGRATION_TESTS_BRANCH }}
