@@ -26,7 +26,7 @@ AUTOMATIC = False
 ORACLE_NAME = "oracle_sarah_aggregator_s5"
 
 load_names = ["Load 1513"]
-pv_names = ["OLI_7"]
+pv_names = []
 storage_names = []
 
 # set market parameters
@@ -337,7 +337,7 @@ else:
     simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
     domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
     websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
-    asset_args = {"autoregister": True, "start_websocket": True}
+    asset_args = {"autoregister": False, "start_websocket": True}
     if AUTOMATIC:
         registry = aggr.get_configuration_registry()
         registered_assets = get_assets_name(registry)
@@ -360,7 +360,7 @@ def register_asset_list(asset_names, asset_params, asset_uuid_map):
         asset = AssetClient(**asset_params)
         if os.environ["API_CLIENT_RUN_ON_REDIS"] == "true":
             asset_uuid_map[asset.area_uuid] = asset.area_id
-        asset.select_aggregator(aggr.aggregator_uuid)
+        asset.unselect_aggregator(aggr.aggregator_uuid)
     return asset_uuid_map
 
 

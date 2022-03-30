@@ -25,7 +25,7 @@ AUTOMATIC = False
 
 ORACLE_NAME = "oracle_edu_aggregator_s10"
 
-load_names = []
+load_names = ["Load_S10"]
 pv_names = ["PV_S10"]
 storage_names = ["Battery_S10"]
 

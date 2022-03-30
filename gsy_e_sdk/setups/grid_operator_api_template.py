@@ -104,13 +104,14 @@ class Oracle(aggregator_client_type):
         # STORE MARKET INFORMATION
         ################################################
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if area_dict["area_name"] in market_names:
+            if area_dict["area_name"] in market_names and area_dict.get("last_market_stats") is not None:
+
                 self.add_to_batch_commands.last_market_dso_stats(area_uuid)
 
         self.dso_stats_response = self.execute_batch_commands()
 
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if area_dict["area_name"] in market_names:
+            if area_dict["area_name"] in market_names and area_dict.get("last_market_stats") is not None:
                 self.last_market_fee[area_dict["area_name"]] = area_dict["last_market_fee"]
                 self.current_market_fee[area_dict["area_name"]] = area_dict["current_market_fee"]
 
@@ -186,7 +187,7 @@ class Oracle(aggregator_client_type):
         ################################################
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
 
-            if area_dict["area_name"] in market_names:
+            if area_dict["area_name"] in market_names and area_dict.get("last_market_stats") is not None:
                 ###################################################################
                 # TIME OF USE STRATEGY
                 ###################################################################

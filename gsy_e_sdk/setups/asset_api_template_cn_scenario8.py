@@ -26,7 +26,7 @@ AUTOMATIC = False
 ORACLE_NAME = "oracle_edu_aggregator_s8"
 
 load_names = ["Load 1521"]
-pv_names = ["OLI_6"]
+pv_names = []
 storage_names = []
 
 # set market parameters
