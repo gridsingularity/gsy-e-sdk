@@ -1,0 +1,54 @@
+{
+    "Grid":[
+        {
+            "Import / Export threshold": 10,
+            "Grid fee": 0.9
+    },
+    {
+        "Import / Export threshold": 15,
+        "Grid fee": 2.1
+},
+{
+    "Import / Export threshold": 20,
+    "Grid fee": 3
+},
+{
+    "Import / Export threshold": 25,
+    "Grid fee": 3.9
+},
+{
+    "Import / Export threshold": 30,
+    "Grid fee": 6
+},
+{
+    "Import / Export threshold": 50,
+    "Grid fee": 30
+}
+    ],
+    "Community":[
+        {
+            "Import / Export threshold": 10,
+            "Grid fee": 0.9
+    },
+    {
+        "Import / Export threshold": 15,
+        "Grid fee": 2.1
+},
+{
+    "Import / Export threshold": 20,
+    "Grid fee": 3
+},
+{
+    "Import / Export threshold": 25,
+    "Grid fee": 3.9
+},
+{
+    "Import / Export threshold": 30,
+    "Grid fee": 6
+},
+{
+    "Import / Export threshold": 50,
+    "Grid fee": 30
+}
+    ]
+}
