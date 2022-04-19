@@ -77,3 +77,4 @@
           INTEGRATION_TESTS_REPO: https://gsydev:${{ secrets.GSYDEV_TOKEN }}@github.com/gridsingularity/gsy-backend-integration-tests.git
           INTEGRATION_TESTS_BRANCH: ${{ steps.validated_integration_tests_branch.outputs.INTEGRATION_TESTS_BRANCH }}
           GSY_E_TARGET_BRANCH: ${{ steps.validated_gsye_target_branch.outputs.GSY_E_TARGET_BRANCH }}
+          GSY_FRAMEWORK_BRANCH: ${{ steps.validated_gsye_target_branch.outputs.GSY_FRAMEWORK_BRANCH }}
