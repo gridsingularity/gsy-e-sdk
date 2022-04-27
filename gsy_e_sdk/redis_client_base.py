@@ -5,7 +5,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from gsy_framework.utils import (
     execute_function_util, wait_until_timeout_blocking, key_in_dict_and_not_none)
-from redis import StrictRedis
+from redis import Redis
 
 from gsy_e_sdk import APIClientInterface
 from gsy_e_sdk.constants import MAX_WORKER_THREADS, LOCAL_REDIS_URL
@@ -20,7 +20,7 @@ class RedisClientBase(APIClientInterface):
                  pubsub_thread=None):
         super().__init__(area_id, autoregister, redis_url)
         self.area_uuid = None
-        self.redis_db = StrictRedis.from_url(redis_url)
+        self.redis_db = Redis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         self.area_id = area_id
         self.device_uuid = None
