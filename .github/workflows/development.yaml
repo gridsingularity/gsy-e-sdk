@@ -36,14 +36,14 @@
         env:
           PARSED_INTEGRATION_TESTS_BRANCH: ${{ steps.parse_integration_tests_branch.outputs.PARSED_INTEGRATION_TESTS_BRANCH }}
         run: |
-          echo "::set-output name=INTEGRATION_TESTS_BRANCH::${PARSED_INTEGRATION_TESTS_BRANCH:-'master'}"
+          echo "::set-output name=INTEGRATION_TESTS_BRANCH::${PARSED_INTEGRATION_TESTS_BRANCH:-master}"
         id: validated_integration_tests_branch
 
       - name: Validate parsed gsy-e target branch
         env:
           PARSED_GSY_E_TARGET_BRANCH: ${{ steps.parse_gsye_target_branch.outputs.PARSED_GSY_E_TARGET_BRANCH }}
         run: |
-          echo "::set-output name=GSY_E_TARGET_BRANCH::${PARSED_GSY_E_TARGET_BRANCH:-'master'}"
+          echo "::set-output name=GSY_E_TARGET_BRANCH::${PARSED_GSY_E_TARGET_BRANCH:-master}"
         id: validated_gsye_target_branch
 
       - name: parse framework branch
@@ -57,7 +57,7 @@
         env:
           PARSED_GSY_FRAMEWORK_BRANCH: ${{ steps.parse_branch_framework.outputs.PARSED_GSY_FRAMEWORK_BRANCH }}
         run: |
-          echo "::set-output name=GSY_FRAMEWORK_BRANCH::${PARSED_GSY_FRAMEWORK_BRANCH:-'master'}"
+          echo "::set-output name=GSY_FRAMEWORK_BRANCH::${PARSED_GSY_FRAMEWORK_BRANCH:-master}"
         id: validated_branch_framework
 
       - name: Setup Python
