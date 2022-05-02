@@ -18,9 +18,8 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
-from redis import StrictRedis
+from redis import Redis
 
-import gsy_e_sdk
 from gsy_e_sdk.redis_client_base import RedisClientBase, RedisAPIException
 
 AREA_ID = str(uuid.uuid4())
@@ -34,10 +33,10 @@ class TestRedisClientBase:
 
     @staticmethod
     @pytest.fixture()
-    @patch("gsy_e_sdk.redis_client_base.StrictRedis")
+    @patch("gsy_e_sdk.redis_client_base.Redis")
     def redis_client_auto_register(strict_redis_mock):
         """Create the fixture for redis client base."""
-        strict_redis_mock.return_value = MagicMock(spec=StrictRedis)
+        strict_redis_mock.return_value = MagicMock(spec=Redis)
         return RedisClientBase(area_id=AREA_ID, autoregister=False)
 
     @staticmethod
@@ -199,7 +198,7 @@ class TestRedisClientBase:
             message = {"data": json.dumps(data)}
             redis_client_auto_register._on_unregister(message)
 
-        assert redis_client_auto_register.is_active == True
+        assert redis_client_auto_register.is_active
 
     @staticmethod
     def test_select_aggregator(redis_client_auto_register):
