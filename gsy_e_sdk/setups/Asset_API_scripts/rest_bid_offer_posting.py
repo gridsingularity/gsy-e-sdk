@@ -32,7 +32,6 @@ class Oracle(aggregator_client_type):
         if self.is_finished is True:
             return
         self.post_bid_offer()
-        self.execute_batch_commands()
 
     def on_tick(self, tick_info):
         pass
@@ -74,6 +73,8 @@ class Oracle(aggregator_client_type):
                 self.add_to_batch_commands.offer_energy_rate(
                     asset_uuid=area_uuid, rate=10, energy=sell_energy
                 )
+
+            self.execute_batch_commands()
 
     def on_event_or_response(self, message):
         pass
