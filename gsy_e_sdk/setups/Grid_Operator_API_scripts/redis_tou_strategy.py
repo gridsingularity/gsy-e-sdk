@@ -28,6 +28,17 @@ class Oracle(aggregator_client_type):
         super().__init__(*args, **kwargs)
         self.is_finished = False
 
+    def on_market_cycle(self, market_info):
+        current_market_fee = {}
+        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            if area_dict["area_name"] in market_names:
+                self.add_to_batch_commands.last_market_dso_stats(area_uuid)
+                current_market_fee[area_dict["area_name"]] = area_dict[
+                    "current_market_fee"
+                ]
+        next_market_fee = self.set_new_market_fee(market_info)
+        log_grid_fees_information(market_names, current_market_fee, next_market_fee)
+
     def set_new_market_fee(self, market_info):
         """Return the market fees for each market for the next time slot."""
         next_market_fee = {}
@@ -42,19 +53,9 @@ class Oracle(aggregator_client_type):
                     area_uuid=area_uuid,
                     fee_cents_kwh=next_market_fee[area_dict["area_name"]],
                 )
+        self.execute_batch_commands()
         return next_market_fee
 
-    def on_market_cycle(self, market_info):
-        current_market_fee = {}
-        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if area_dict["area_name"] in market_names:
-                self.add_to_batch_commands.last_market_dso_stats(area_uuid)
-                current_market_fee[area_dict["area_name"]] = area_dict[
-                    "current_market_fee"
-                ]
-        next_market_fee = self.set_new_market_fee(market_info)
-        self.execute_batch_commands()
-        log_grid_fees_information(market_names, current_market_fee, next_market_fee)
 
     def on_event_or_response(self, message):
         pass
@@ -62,11 +63,10 @@ class Oracle(aggregator_client_type):
     def on_finish(self, finish_info):
         self.is_finished = True
 
-
 def read_fee_strategy():
     "Return a dictionary containing the Time of Use strategy loaded from the CSV input file."
     with open(
-        os.path.join(current_dir, "resources/ToU.csv"), newline="", encoding="utf-8"
+            os.path.join(current_dir, "resources/ToU.csv"), newline="", encoding="utf-8"
     ) as csvfile:
         csv_rows = csv.reader(csvfile, delimiter=" ", quotechar="|")
         headers = next(csv_rows)[0].split(";")
@@ -79,7 +79,6 @@ def read_fee_strategy():
             for market in market_names:
                 planned_fee.update({(row[0], market): row[market_indexes[market]]})
     return planned_fee
-
 
 def calculate_next_slot_market_fee(market_time, market_name):
     """Return the market fee for the next time slot."""

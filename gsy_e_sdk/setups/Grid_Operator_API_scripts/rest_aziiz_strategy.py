@@ -38,6 +38,18 @@ class Oracle(aggregator_client_type):
         self.balance = {}
         self.dso_stats_response = {}
 
+    def on_market_cycle(self, market_info):
+        current_market_fee = {}
+        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
+            if area_dict["area_name"] in market_names:
+                self.add_to_batch_commands.last_market_dso_stats(area_uuid)
+                current_market_fee[area_dict["area_name"]] = area_dict[
+                    "current_market_fee"
+                ]
+        self.calculate_import_export_balance()
+        next_market_fee = self.set_new_market_fee()
+        log_grid_fees_information(market_names, current_market_fee, next_market_fee)
+
     def calculate_import_export_balance(self):
         """Calculate the balance (import - export) for each market."""
         self.dso_stats_response = self.execute_batch_commands()
@@ -89,20 +101,8 @@ class Oracle(aggregator_client_type):
                     area_uuid=area_uuid,
                     fee_cents_kwh=next_market_fee[area_dict["area_name"]],
                 )
-        return next_market_fee
-
-    def on_market_cycle(self, market_info):
-        current_market_fee = {}
-        for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if area_dict["area_name"] in market_names:
-                self.add_to_batch_commands.last_market_dso_stats(area_uuid)
-                current_market_fee[area_dict["area_name"]] = area_dict[
-                    "current_market_fee"
-                ]
-        self.calculate_import_export_balance()
-        next_market_fee = self.set_new_market_fee()
         self.execute_batch_commands()
-        log_grid_fees_information(market_names, current_market_fee, next_market_fee)
+        return next_market_fee
 
     def on_event_or_response(self, message):
         pass
