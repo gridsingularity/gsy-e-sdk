@@ -32,7 +32,7 @@ class Oracle(aggregator_client_type):
             return
         self.send_forecasts(market_info)
         self.send_measurements(market_info)
-        self.post_energy_deviations()
+        self.settle_energy_deviations()
         self.post_bid_offer()
         self.execute_batch_commands()
 
@@ -84,7 +84,7 @@ class Oracle(aggregator_client_type):
                     energy_measurement_kWh={market_info["market_slot"]: 0.87},
                 )
 
-    def post_energy_deviations(self):
+    def settle_energy_deviations(self):
         """Post the energy deviations between forecasts
         and measurements in the Settlement market."""
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
