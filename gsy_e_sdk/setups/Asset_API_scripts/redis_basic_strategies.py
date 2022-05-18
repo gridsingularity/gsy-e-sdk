@@ -55,6 +55,13 @@ class Oracle(aggregator_client_type):
                 continue
             self.asset_strategy[area_uuid] = {}
             self.asset_strategy[area_uuid]["asset_name"] = area_dict["area_name"]
+            self.asset_strategy[area_uuid][
+                "fee_to_market_maker"
+            ] = self.calculate_grid_fee(
+                area_uuid,
+                self.get_uuid_from_area_name("Market Maker"),
+                "current_market_fee",
+            )
 
             # Consumption strategy
             if "energy_requirement_kWh" in area_dict["asset_info"]:
@@ -63,12 +70,28 @@ class Oracle(aggregator_client_type):
                     if i < TICKS - 2:
                         load_strategy.append(
                             round(
-                                fit_rate + (market_maker_rate - fit_rate) * (i / TICKS),
+                                fit_rate
+                                - self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                                + (
+                                        market_maker_rate
+                                        + 2
+                                        * self.asset_strategy[area_uuid][
+                                            "fee_to_market_maker"
+                                        ]
+                                        - fit_rate
+                                )
+                                * (i / TICKS),
                                 3,
                             )
                         )
                     else:
-                        load_strategy.append(round(market_maker_rate, 3))
+                        load_strategy.append(
+                            round(
+                                market_maker_rate
+                                + self.asset_strategy[area_uuid]["fee_to_market_maker"],
+                                3,
+                            )
+                        )
                 self.asset_strategy[area_uuid]["buy_rates"] = load_strategy
 
             # Generation strategy
@@ -81,13 +104,35 @@ class Oracle(aggregator_client_type):
                                 max(
                                     0,
                                     market_maker_rate
-                                    - (market_maker_rate - fit_rate) * (i / TICKS),
+                                    + self.asset_strategy[area_uuid][
+                                        "fee_to_market_maker"
+                                    ]
+                                    - (
+                                            market_maker_rate
+                                            + 2
+                                            * self.asset_strategy[area_uuid][
+                                                "fee_to_market_maker"
+                                            ]
+                                            - fit_rate
+                                    )
+                                    * (i / TICKS),
                                 ),
                                 3,
                             )
                         )
                     else:
-                        gen_strategy.append(round(max(0, fit_rate), 3))
+                        gen_strategy.append(
+                            round(
+                                max(
+                                    0,
+                                    fit_rate
+                                    - self.asset_strategy[area_uuid][
+                                        "fee_to_market_maker"
+                                    ],
+                                ),
+                                3,
+                            )
+                        )
                 self.asset_strategy[area_uuid]["sell_rates"] = gen_strategy
 
             # Storage strategy
@@ -96,12 +141,32 @@ class Oracle(aggregator_client_type):
                 batt_sell_strategy = []
                 for i in range(0, TICKS):
                     batt_buy_strategy.append(
-                        round(fit_rate + (med_price - fit_rate) * (i / TICKS), 3)
+                        round(
+                            fit_rate
+                            - self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                            + (
+                                    med_price
+                                    - (
+                                            fit_rate
+                                            - self.asset_strategy[area_uuid][
+                                                "fee_to_market_maker"
+                                            ]
+                                    )
+                            )
+                            * (i / TICKS),
+                            3,
+                        )
                     )
                     batt_sell_strategy.append(
                         round(
                             market_maker_rate
-                            - (market_maker_rate - med_price) * (i / TICKS),
+                            + self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                            - (
+                                    market_maker_rate
+                                    + self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                                    - med_price
+                            )
+                            * (i / TICKS),
                             3,
                         )
                     )
