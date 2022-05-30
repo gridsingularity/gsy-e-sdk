@@ -1,26 +1,26 @@
 # flake8: noqa
 # pylint: disable=duplicate-code
 """
-Template file for a trading strategy through the gsy-e-sdk api client
+Template file for a trading strategy through the gsy-e-sdk api client using Rest.
 """
 
 import os
 from time import sleep
 from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
-from gsy_e_sdk.types import aggregator_client_type
+from gsy_e_sdk.aggregator import Aggregator
 from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
-load_names = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
-pv_names = ["PV 1 (4kW)", "PV 3 (5kW)"]
-storage_names = ["Tesla Powerwall 3"]
+LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
+PV_NAMES = ["PV 1 (4kW)", "PV 3 (5kW)"]
+STORAGE_NAMES = ["Tesla Powerwall 3"]
 AUTOMATIC = True
 
 
-class Oracle(aggregator_client_type):
+class Oracle(Aggregator):
     """Class that defines the behaviour of an "oracle" aggregator."""
 
     def __init__(self, *args, **kwargs):
@@ -112,14 +112,13 @@ def _get_assets_name(indict: dict, outdict: dict):
                 _get_assets_name(children, outdict)
 
 
-aggr = Oracle(aggregator_name=ORACLE_NAME)
-AssetClient = RestAssetClient
+aggregator = Oracle(aggregator_name=ORACLE_NAME)
 simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
 domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
 websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
 asset_args = {"autoregister": False, "start_websocket": False}
 if AUTOMATIC:
-    registry = aggr.get_configuration_registry()
+    registry = aggregator.get_configuration_registry()
     registered_assets = get_assets_name(registry)
     load_names = registered_assets["Load"]
     pv_names = registered_assets["PV"]
@@ -135,17 +134,17 @@ def register_asset_list(asset_names, asset_params, asset_uuid_map):
         )
         asset_params["asset_uuid"] = uuid
         asset_uuid_map[uuid] = asset_name
-        asset = AssetClient(**asset_params)
-        asset.select_aggregator(aggr.aggregator_uuid)
+        asset = RestAssetClient(**asset_params)
+        asset.select_aggregator(aggregator.aggregator_uuid)
     return asset_uuid_map
 
 
 print()
 print("Registering assets ...")
 asset_uuid_mapping = {}
-asset_uuid_mapping = register_asset_list(load_names, asset_args, asset_uuid_mapping)
-asset_uuid_mapping = register_asset_list(pv_names, asset_args, asset_uuid_mapping)
-asset_uuid_mapping = register_asset_list(storage_names, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(LOAD_NAMES, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(PV_NAMES, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(STORAGE_NAMES, asset_args, asset_uuid_mapping)
 
 
 print()
@@ -154,5 +153,5 @@ print()
 print(asset_uuid_mapping)
 
 # loop to allow persistence
-while not aggr.is_finished:
+while not aggregator.is_finished:
     sleep(0.5)
