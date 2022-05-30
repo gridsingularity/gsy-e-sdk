@@ -6,7 +6,6 @@ Template file for a trading strategy through the gsy-e-sdk api client using Rest
 
 import os
 from time import sleep
-from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
 from gsy_e_sdk.aggregator import Aggregator
 from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
@@ -39,37 +38,33 @@ class Oracle(Aggregator):
     def post_bid_offer(self):
         """Post a bid or an offer to the exchange."""
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+            asset_info = area_dict["asset_info"]
+            if not asset_info:
                 continue
 
             # Consumption assets
-            if key_in_dict_and_not_none_and_greater_than_zero(
-                area_dict["asset_info"], "energy_requirement_kWh"
-            ):
-                energy = area_dict["asset_info"]["energy_requirement_kWh"]
+            required_energy = asset_info.get("energy_requirement_kWh")
+            if required_energy:
                 self.add_to_batch_commands.bid_energy_rate(
-                    asset_uuid=area_uuid, rate=10, energy=energy
+                    asset_uuid=area_uuid, rate=10, energy=required_energy
                 )
 
             # Generation assets
-            if key_in_dict_and_not_none_and_greater_than_zero(
-                area_dict["asset_info"], "available_energy_kWh"
-            ):
-                energy = area_dict["asset_info"]["available_energy_kWh"]
+            available_energy = asset_info.get("available_energy_kWh")
+            if available_energy:
                 self.add_to_batch_commands.offer_energy_rate(
-                    asset_uuid=area_uuid, rate=10, energy=energy
+                    asset_uuid=area_uuid, rate=10, energy=available_energy
                 )
 
             # Storage assets
-            if key_in_dict_and_not_none_and_greater_than_zero(
-                area_dict["asset_info"], "energy_to_buy"
-            ):
-                buy_energy = area_dict["asset_info"]["energy_to_buy"]
+            buy_energy = asset_info.get("energy_to_buy")
+            if buy_energy:
                 self.add_to_batch_commands.bid_energy_rate(
                     asset_uuid=area_uuid, rate=10, energy=buy_energy
                 )
 
-                sell_energy = area_dict["asset_info"]["energy_to_sell"]
+            sell_energy = asset_info.get("energy_to_sell")
+            if sell_energy:
                 self.add_to_batch_commands.offer_energy_rate(
                     asset_uuid=area_uuid, rate=10, energy=sell_energy
                 )
