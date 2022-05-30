@@ -94,6 +94,9 @@ print()
 print("Registering assets ...")
 asset_uuid_mapping = {}
 asset_uuid_mapping = register_asset_list(LOAD_NAMES, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(PV_NAMES, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(STORAGE_NAMES, asset_args, asset_uuid_mapping)
+
 print()
 print("Summary of assets registered:")
 print()
