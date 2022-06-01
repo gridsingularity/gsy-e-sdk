@@ -5,7 +5,6 @@ Template file for a trading strategy through the gsy-e-sdk api client using Redi
 
 import os
 from time import sleep
-from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
 from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 
@@ -33,13 +32,11 @@ class Oracle(RedisAggregator):
             return
         self.build_strategies(market_info)
         self.post_bid_offer()
-        self.execute_batch_commands()
 
     def on_tick(self, tick_info):
         """Place a bid or an offer each 10% of the market slot progression."""
         i = int(float(tick_info["slot_completion"].strip("%")) / TICKS)
         self.post_bid_offer(i)
-        self.execute_batch_commands()
 
     def build_strategies(self, market_info):
         """
@@ -177,44 +174,42 @@ class Oracle(RedisAggregator):
     def post_bid_offer(self, i=0):
         """Post a bid or an offer to the exchange."""
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+            asset_info = area_dict.get("asset_info")
+            if not asset_info:
                 continue
 
             # Consumption assets
-            if key_in_dict_and_not_none_and_greater_than_zero(
-                area_dict["asset_info"], "energy_requirement_kWh"
-            ):
+            required_energy = asset_info.get("energy_requirement_kWh")
+            if required_energy:
                 rate = self.asset_strategy[area_uuid]["buy_rates"][i]
-                energy = area_dict["asset_info"]["energy_requirement_kWh"]
                 self.add_to_batch_commands.bid_energy_rate(
-                    asset_uuid=area_uuid, rate=rate, energy=energy
+                    asset_uuid=area_uuid, rate=rate, energy=required_energy
                 )
 
             # Generation assets
-            if key_in_dict_and_not_none_and_greater_than_zero(
-                area_dict["asset_info"], "available_energy_kWh"
-            ):
+            available_energy = asset_info.get("available_energy_kWh")
+            if available_energy:
                 rate = self.asset_strategy[area_uuid]["sell_rates"][i]
-                energy = area_dict["asset_info"]["available_energy_kWh"]
                 self.add_to_batch_commands.offer_energy_rate(
-                    asset_uuid=area_uuid, rate=rate, energy=energy
+                    asset_uuid=area_uuid, rate=rate, energy=available_energy
                 )
 
             # Storage assets
-            if "energy_to_buy" in area_dict["asset_info"]:
-                buy_energy = area_dict["asset_info"]["energy_to_buy"]
-                if buy_energy > 0.0:
-                    buy_rate = self.asset_strategy[area_uuid]["buy_rates"][i]
-                    self.add_to_batch_commands.bid_energy_rate(
-                        asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy
-                    )
-                sell_energy = area_dict["asset_info"]["energy_to_sell"]
-                if sell_energy > 0.0:
-                    sell_energy = area_dict["asset_info"]["energy_to_sell"]
-                    sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
-                    self.add_to_batch_commands.offer_energy_rate(
-                        asset_uuid=area_uuid, rate=sell_rate, energy=sell_energy
-                    )
+            buy_energy = asset_info.get("energy_to_buy")
+            if buy_energy:
+                buy_rate = self.asset_strategy[area_uuid]["buy_rates"][i]
+                self.add_to_batch_commands.bid_energy_rate(
+                    asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy
+                )
+
+            sell_energy = asset_info.get("energy_to_sell")
+            if sell_energy:
+                sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
+                self.add_to_batch_commands.offer_energy_rate(
+                    asset_uuid=area_uuid, rate=sell_rate, energy=sell_energy
+                )
+
+            self.execute_batch_commands()
 
     def on_event_or_response(self, message):
         pass
