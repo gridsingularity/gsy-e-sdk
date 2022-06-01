@@ -48,29 +48,27 @@ class Oracle(RedisAggregator):
     def post_bid(self):
         """Post a bid to the exchange."""
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+            asset_info = area_dict.get("asset_info")
+            if not asset_info:
                 continue
-            if (
-                "energy_requirement_kWh" in area_dict["asset_info"]
-                and area_dict["asset_info"]["energy_requirement_kWh"] > 0.0
-            ):
+            required_energy = asset_info.get("energy_requirement_kWh")
+            if required_energy:
                 rate = 10
-                energy = area_dict["asset_info"]["energy_requirement_kWh"]
                 if area_dict["area_name"] in self.degrees_of_freedom:
                     requirements = self.build_requirements_dict(
-                        rate, energy, area_dict["area_name"]
+                        rate, required_energy, area_dict["area_name"]
                     )
                     self.add_to_batch_commands.bid_energy_rate(
                         asset_uuid=area_uuid,
                         rate=rate,
-                        energy=energy,
+                        energy=required_energy,
                         requirements=requirements,
                         replace_existing=True,
                     )
 
                 else:
                     self.add_to_batch_commands.bid_energy_rate(
-                        asset_uuid=area_uuid, rate=rate, energy=energy
+                        asset_uuid=area_uuid, rate=rate, energy=required_energy
                     )
 
     def build_requirements_dict(self, rate, energy, area_name):
