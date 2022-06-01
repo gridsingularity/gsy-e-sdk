@@ -73,33 +73,28 @@ class Oracle(Aggregator):
         self.is_finished = True
 
 
-def get_assets_name(indict: dict) -> dict:
+def get_assets_name(node: dict) -> dict:
     """
     Parse the grid tree and return all registered assets
     wrapper for _get_assets_name
     """
-    if indict == {}:
+    if node == {}:
         return {}
-    outdict = {"Area": [], "Load": [], "PV": [], "Storage": []}
-    _get_assets_name(indict, outdict)
-    return outdict
+    reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
+    _get_assets_name(node, reg_assets)
+    return registered_assets
 
 
-def _get_assets_name(indict: dict, outdict: dict):
+def _get_assets_name(node: dict, reg_assets: dict):
     """
     Parse the Collaboration / Canary Network registry
     Return a list of the Market nodes the user is registered to
     """
-    for key, value in indict.items():
-        if key == "name":
-            name = value
-        if key == "type":
-            area_type = value
-        if key == "registered" and value:
-            outdict[area_type].append(name)
-        if "children" in key:
-            for children in indict[key]:
-                _get_assets_name(children, outdict)
+    if node.get("registered") is True:
+        area_type = node["type"]
+        reg_assets[area_type].append(node["name"])
+    for child in node.get("children", []):
+        _get_assets_name(child, reg_assets)
 
 
 aggregator = Oracle(aggregator_name=ORACLE_NAME)
