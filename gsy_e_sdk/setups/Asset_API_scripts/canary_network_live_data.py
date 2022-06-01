@@ -82,7 +82,7 @@ def get_assets_name(node: dict) -> dict:
         return {}
     reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
     _get_assets_name(node, reg_assets)
-    return registered_assets
+    return reg_assets
 
 
 def _get_assets_name(node: dict, reg_assets: dict):
