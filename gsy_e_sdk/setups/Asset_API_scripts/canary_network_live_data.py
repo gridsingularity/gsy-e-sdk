@@ -31,7 +31,6 @@ class Oracle(Aggregator):
         if self.is_finished is True:
             return
         self.send_forecasts(market_info)
-        self.execute_batch_commands()
 
     def on_tick(self, tick_info):
         pass
@@ -45,22 +44,27 @@ class Oracle(Aggregator):
         )
         # pylint: disable=unused-variable
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if "asset_info" not in area_dict or area_dict["asset_info"] is None:
+            asset_info = area_dict.get("asset_info")
+            if not asset_info:
                 continue
+
             # Consumption assets
-            if "energy_requirement_kWh" in area_dict["asset_info"]:
+            if "energy_requirement_kWh" in asset_info:
                 asset_name = area_dict["area_name"]
                 globals()[f"{asset_name}"].set_energy_forecast(
                     energy_forecast_kWh={forecast_market_slot: 1.2},
                     do_not_wait=False,
                 )
+
             # Generation assets
-            if "available_energy_kWh" in area_dict["asset_info"]:
+            if "available_energy_kWh" in asset_info:
                 asset_name = area_dict["area_name"]
                 globals()[f"{asset_name}"].set_energy_forecast(
                     energy_forecast_kWh={forecast_market_slot: 0.86},
                     do_not_wait=False,
                 )
+
+            self.execute_batch_commands()
 
     def on_event_or_response(self, message):
         pass
