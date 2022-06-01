@@ -110,9 +110,9 @@ asset_args = {"autoregister": False, "start_websocket": False}
 if AUTOMATIC:
     registry = aggregator.get_configuration_registry()
     registered_assets = get_assets_name(registry)
-    load_names = registered_assets["Load"]
-    pv_names = registered_assets["PV"]
-    storage_names = registered_assets["Storage"]
+    LOAD_NAMES = registered_assets["Load"]
+    PV_NAMES = registered_assets["PV"]
+    STORAGE_NAMES = registered_assets["Storage"]
 
 
 def register_asset_list(asset_names, asset_params, asset_uuid_map):
