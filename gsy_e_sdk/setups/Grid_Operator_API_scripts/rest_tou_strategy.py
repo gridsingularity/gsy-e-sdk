@@ -2,21 +2,22 @@
 # pylint: disable=duplicate-code
 
 """
-Template file for markets management through the gsy-e-sdk api client
+Template file to implement Time of Use grid fees
+strategy through the gsy-e-sdk api client using Rest.
 """
 import os
 import csv
 from time import sleep
 from pendulum import from_format
 from gsy_framework.constants_limits import DATE_TIME_FORMAT, TIME_FORMAT_SECONDS
-from gsy_e_sdk.types import aggregator_client_type
+from gsy_e_sdk.aggregator import Aggregator
 from gsy_e_sdk.rest_market import RestMarketClient
 from gsy_e_sdk.utils import log_grid_fees_information
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 current_dir = os.path.dirname(__file__)
 
-market_names = [
+MARKET_NAMES = [
     "Grid",
     "Community",
 ]
@@ -25,7 +26,7 @@ SLOT_LENGTH = 15  # leave as is
 AUTOMATIC = True
 
 
-class Oracle(aggregator_client_type):
+class Oracle(Aggregator):
     """Class to represent the Grid Operator client type."""
 
     def __init__(self, *args, **kwargs):
@@ -35,21 +36,21 @@ class Oracle(aggregator_client_type):
     def on_market_cycle(self, market_info):
         current_market_fee = {}
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if area_dict["area_name"] in market_names:
+            if area_dict["area_name"] in MARKET_NAMES:
                 self.add_to_batch_commands.last_market_dso_stats(area_uuid)
                 current_market_fee[area_dict["area_name"]] = area_dict[
                     "current_market_fee"
                 ]
         self.execute_batch_commands()
         next_market_fee = self.set_new_market_fee(market_info)
-        log_grid_fees_information(market_names, current_market_fee, next_market_fee)
+        log_grid_fees_information(MARKET_NAMES, current_market_fee, next_market_fee)
 
     def set_new_market_fee(self, market_info):
         """Return the market fees for each market for the next time slot."""
         next_market_fee = {}
         market_time = from_format(market_info["market_slot"], DATE_TIME_FORMAT)
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            if area_dict["area_name"] in market_names:
+            if area_dict["area_name"] in MARKET_NAMES:
                 next_market_fee[
                     area_dict["area_name"]
                 ] = calculate_next_slot_market_fee(market_time, area_dict["area_name"])
@@ -77,11 +78,11 @@ def read_fee_strategy():
         headers = next(csv_rows)[0].split(";")
         market_indexes = {}
         planned_fee = {}
-        for market_name in market_names:
+        for market_name in MARKET_NAMES:
             market_indexes.update({(market_name, headers.index(market_name))})
         for row in csv_rows:
             row = row[0].split(";")
-            for market in market_names:
+            for market in MARKET_NAMES:
                 planned_fee.update({(row[0], market): row[market_indexes[market]]})
     return planned_fee
 
@@ -129,35 +130,34 @@ def _get_assets_name(indict: dict, outdict: dict):
                 _get_assets_name(children, outdict)
 
 
-MarketClient = RestMarketClient
 market_args = {
     "simulation_id": os.environ["API_CLIENT_SIMULATION_ID"],
     "domain_name": os.environ["API_CLIENT_DOMAIN_NAME"],
     "websockets_domain_name": os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"],
 }
 
-aggr = Oracle(aggregator_name=ORACLE_NAME, **market_args)
+aggregator = Oracle(aggregator_name=ORACLE_NAME, **market_args)
 if AUTOMATIC:
-    registry = aggr.get_configuration_registry()
-    market_names = get_assets_name(registry)["Area"]
+    registry = aggregator.get_configuration_registry()
+    MARKET_NAMES = get_assets_name(registry)["Area"]
 
 fee_strategy = read_fee_strategy()
 
 print()
 print("Connecting to markets ...")
 
-for i in market_names:
+for i in MARKET_NAMES:
     market_uuid = get_area_uuid_from_area_name_and_collaboration_id(
         market_args["simulation_id"], i, market_args["domain_name"]
     )
     market_args["area_id"] = market_uuid
     market_registered = RestMarketClient(**market_args)
-    market_registered.select_aggregator(aggr.aggregator_uuid)
+    market_registered.select_aggregator(aggregator.aggregator_uuid)
     print("----> Connected to ", i)
     sleep(0.3)
 
-print(aggr.device_uuid_list)
+print(aggregator.device_uuid_list)
 
 # loop to allow persistence
-while not aggr.is_finished:
+while not aggregator.is_finished:
     sleep(0.5)
