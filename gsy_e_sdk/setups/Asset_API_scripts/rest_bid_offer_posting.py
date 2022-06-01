@@ -38,7 +38,7 @@ class Oracle(Aggregator):
     def post_bid_offer(self):
         """Post a bid or an offer to the exchange."""
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
-            asset_info = area_dict["asset_info"]
+            asset_info = area_dict.get("asset_info")
             if not asset_info:
                 continue
 
