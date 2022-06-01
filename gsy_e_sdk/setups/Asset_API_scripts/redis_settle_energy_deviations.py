@@ -1,6 +1,7 @@
 # flake8: noqa
 """
-Template file for a trading strategy through the gsy-e-sdk api client
+Template file to post energy deviations as bids
+and offers in the Settlement Market with Redis.
 """
 
 import os
@@ -8,18 +9,18 @@ from time import sleep
 from pendulum import from_format
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from gsy_framework.utils import key_in_dict_and_not_none_and_greater_than_zero
-from gsy_e_sdk.types import aggregator_client_type
+from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 
 current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
-load_names = ["H1 General Load", "H2 General Load"]
-pv_names = ["H1 PV", "H2 PV"]
-storage_names = []
+LOAD_NAMES = ["H1 General Load", "H2 General Load"]
+PV_NAMES = ["H1 PV", "H2 PV"]
+STORAGE_NAMES = []
 
 
-class Oracle(aggregator_client_type):
+class Oracle(RedisAggregator):
     """Class that defines the behaviour of an "oracle" aggregator."""
 
     def __init__(self, *args, **kwargs):
@@ -160,9 +161,8 @@ class Oracle(aggregator_client_type):
         self.is_finished = True
 
 
-aggr = Oracle(aggregator_name=ORACLE_NAME)
-AssetClient = RedisAssetClient
-asset_args = {"autoregister": True, "pubsub_thread": aggr.pubsub}
+aggregator = Oracle(aggregator_name=ORACLE_NAME)
+asset_args = {"autoregister": True, "pubsub_thread": aggregator.pubsub}
 
 
 def register_asset_list(asset_names, asset_params, asset_uuid_map):
@@ -170,23 +170,25 @@ def register_asset_list(asset_names, asset_params, asset_uuid_map):
     for asset_name in asset_names:
         print("Registered asset:", asset_name)
         asset_params["area_id"] = asset_name
-        globals()[f"{asset_name}"] = AssetClient(**asset_params)
+        globals()[f"{asset_name}"] = RedisAssetClient(**asset_params)
         asset_uuid_map[globals()[f"{asset_name}"].area_uuid] = globals()[
             f"{asset_name}"
         ].area_id
-        globals()[f"{asset_name}"].select_aggregator(aggr.aggregator_uuid)
+        globals()[f"{asset_name}"].select_aggregator(aggregator.aggregator_uuid)
     return asset_uuid_map
 
 
 print()
 print("Registering assets ...")
 asset_uuid_mapping = {}
-asset_uuid_mapping = register_asset_list(load_names, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(LOAD_NAMES, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(PV_NAMES, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(STORAGE_NAMES, asset_args, asset_uuid_mapping)
 print()
 print("Summary of assets registered:")
 print()
 print(asset_uuid_mapping)
 
 # loop to allow persistence
-while not aggr.is_finished:
+while not aggregator.is_finished:
     sleep(0.5)
