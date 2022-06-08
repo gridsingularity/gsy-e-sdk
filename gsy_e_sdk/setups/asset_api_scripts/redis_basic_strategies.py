@@ -11,6 +11,7 @@ from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
+# List of assets's names to be connected with the API
 LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
 PV_NAMES = ["PV 1 (4kW)", "PV 3 (5kW)"]
 STORAGE_NAMES = ["Tesla Powerwall 3"]
@@ -35,8 +36,8 @@ class Oracle(RedisAggregator):
 
     def on_tick(self, tick_info):
         """Place a bid or an offer each 10% of the market slot progression."""
-        i = int(float(tick_info["slot_completion"].strip("%")) / TICKS)
-        self.post_bid_offer(i)
+        rate_index = int(float(tick_info["slot_completion"].strip("%")) / TICKS)
+        self.post_bid_offer(rate_index)
 
     def build_strategies(self, market_info):
         """
@@ -63,115 +64,64 @@ class Oracle(RedisAggregator):
             # Consumption strategy
             if "energy_requirement_kWh" in area_dict["asset_info"]:
                 load_strategy = []
-                for i in range(0, TICKS):
-                    if i < TICKS - 2:
-                        load_strategy.append(
-                            round(
-                                fit_rate
-                                - self.asset_strategy[area_uuid]["fee_to_market_maker"]
-                                + (
-                                        market_maker_rate
-                                        + 2
-                                        * self.asset_strategy[area_uuid][
-                                            "fee_to_market_maker"
-                                        ]
-                                        - fit_rate
-                                )
-                                * (i / TICKS),
-                                3,
-                            )
-                        )
+                for tick in range(0, TICKS):
+                    if tick < TICKS - 2:
+                        buy_rate = (fit_rate -
+                                    self.asset_strategy[area_uuid]["fee_to_market_maker"] +
+                                    (market_maker_rate +
+                                     2 * self.asset_strategy[area_uuid]["fee_to_market_maker"] -
+                                     fit_rate) * (tick / TICKS)
+                                    )
+                        load_strategy.append(buy_rate)
                     else:
-                        load_strategy.append(
-                            round(
-                                market_maker_rate
-                                + self.asset_strategy[area_uuid]["fee_to_market_maker"],
-                                3,
-                            )
-                        )
+                        buy_rate = (market_maker_rate +
+                                    self.asset_strategy[area_uuid]["fee_to_market_maker"])
+                        load_strategy.append(buy_rate)
                 self.asset_strategy[area_uuid]["buy_rates"] = load_strategy
 
             # Generation strategy
             if "available_energy_kWh" in area_dict["asset_info"]:
                 gen_strategy = []
-                for i in range(0, TICKS):
-                    if i < TICKS - 2:
-                        gen_strategy.append(
-                            round(
-                                max(
-                                    0,
-                                    market_maker_rate
-                                    + self.asset_strategy[area_uuid][
-                                        "fee_to_market_maker"
-                                    ]
-                                    - (
-                                            market_maker_rate
-                                            + 2
-                                            * self.asset_strategy[area_uuid][
-                                                "fee_to_market_maker"
-                                            ]
-                                            - fit_rate
-                                    )
-                                    * (i / TICKS),
-                                ),
-                                3,
-                            )
-                        )
+                for tick in range(0, TICKS):
+                    if tick < TICKS - 2:
+                        sell_rate = (market_maker_rate +
+                                     self.asset_strategy[area_uuid]["fee_to_market_maker"] -
+                                     (market_maker_rate +
+                                      2 * self.asset_strategy[area_uuid]["fee_to_market_maker"] -
+                                      fit_rate) * (tick / TICKS)
+                                     )
+                        gen_strategy.append(max(0, sell_rate))
                     else:
-                        gen_strategy.append(
-                            round(
-                                max(
-                                    0,
-                                    fit_rate
-                                    - self.asset_strategy[area_uuid][
-                                        "fee_to_market_maker"
-                                    ],
-                                ),
-                                3,
-                            )
-                        )
+                        sell_rate = fit_rate - (
+                            self.asset_strategy[area_uuid]["fee_to_market_maker"])
+                        gen_strategy.append(max(0, sell_rate))
                 self.asset_strategy[area_uuid]["sell_rates"] = gen_strategy
 
             # Storage strategy
             if "used_storage" in area_dict["asset_info"]:
                 batt_buy_strategy = []
                 batt_sell_strategy = []
-                for i in range(0, TICKS):
-                    batt_buy_strategy.append(
-                        round(
-                            fit_rate
-                            - self.asset_strategy[area_uuid]["fee_to_market_maker"]
-                            + (
-                                    med_price
-                                    - (
-                                            fit_rate
-                                            - self.asset_strategy[area_uuid][
-                                                "fee_to_market_maker"
-                                            ]
-                                    )
-                            )
-                            * (i / TICKS),
-                            3,
-                        )
-                    )
-                    batt_sell_strategy.append(
-                        round(
-                            market_maker_rate
-                            + self.asset_strategy[area_uuid]["fee_to_market_maker"]
-                            - (
-                                    market_maker_rate
-                                    + self.asset_strategy[area_uuid]["fee_to_market_maker"]
-                                    - med_price
-                            )
-                            * (i / TICKS),
-                            3,
-                        )
-                    )
-
+                for tick in range(0, TICKS):
+                    buy_rate = (fit_rate -
+                                self.asset_strategy[area_uuid]["fee_to_market_maker"] +
+                                (med_price -
+                                 (fit_rate -
+                                  self.asset_strategy[area_uuid]["fee_to_market_maker"]
+                                  )
+                                 ) * (tick / TICKS)
+                                )
+                    batt_buy_strategy.append(buy_rate)
+                    sell_rate = (market_maker_rate +
+                                 self.asset_strategy[area_uuid]["fee_to_market_maker"] -
+                                 (market_maker_rate +
+                                  self.asset_strategy[area_uuid]["fee_to_market_maker"] -
+                                  med_price) * (tick / TICKS)
+                                 )
+                    batt_sell_strategy.append(sell_rate)
                 self.asset_strategy[area_uuid]["buy_rates"] = batt_buy_strategy
                 self.asset_strategy[area_uuid]["sell_rates"] = batt_sell_strategy
 
-    def post_bid_offer(self, i=0):
+    def post_bid_offer(self, rate_index=0):
         """Post a bid or an offer to the exchange."""
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             asset_info = area_dict.get("asset_info")
@@ -181,7 +131,7 @@ class Oracle(RedisAggregator):
             # Consumption assets
             required_energy = asset_info.get("energy_requirement_kWh")
             if required_energy:
-                rate = self.asset_strategy[area_uuid]["buy_rates"][i]
+                rate = self.asset_strategy[area_uuid]["buy_rates"][rate_index]
                 self.add_to_batch_commands.bid_energy_rate(
                     asset_uuid=area_uuid, rate=rate, energy=required_energy
                 )
@@ -189,7 +139,7 @@ class Oracle(RedisAggregator):
             # Generation assets
             available_energy = asset_info.get("available_energy_kWh")
             if available_energy:
-                rate = self.asset_strategy[area_uuid]["sell_rates"][i]
+                rate = self.asset_strategy[area_uuid]["sell_rates"][rate_index]
                 self.add_to_batch_commands.offer_energy_rate(
                     asset_uuid=area_uuid, rate=rate, energy=available_energy
                 )
@@ -197,14 +147,14 @@ class Oracle(RedisAggregator):
             # Storage assets
             buy_energy = asset_info.get("energy_to_buy")
             if buy_energy:
-                buy_rate = self.asset_strategy[area_uuid]["buy_rates"][i]
+                buy_rate = self.asset_strategy[area_uuid]["buy_rates"][rate_index]
                 self.add_to_batch_commands.bid_energy_rate(
                     asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy
                 )
 
             sell_energy = asset_info.get("energy_to_sell")
             if sell_energy:
-                sell_rate = self.asset_strategy[area_uuid]["sell_rates"][i]
+                sell_rate = self.asset_strategy[area_uuid]["sell_rates"][rate_index]
                 self.add_to_batch_commands.offer_energy_rate(
                     asset_uuid=area_uuid, rate=sell_rate, energy=sell_energy
                 )
