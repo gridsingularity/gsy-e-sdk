@@ -15,7 +15,7 @@ from gsy_e_sdk.rest_market import RestMarketClient
 from gsy_e_sdk.utils import log_grid_fees_information
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
-current_dir = os.path.dirname(__file__)
+module_dir = os.path.dirname(__file__)
 
 MARKET_NAMES = [
     "Grid",
@@ -72,7 +72,7 @@ class Oracle(Aggregator):
 def read_fee_strategy():
     "Return a dictionary containing the Time of Use strategy loaded from the CSV input file."
     with open(
-        os.path.join(current_dir, "resources/ToU.csv"), newline="", encoding="utf-8"
+        os.path.join(module_dir, "resources/ToU.csv"), newline="", encoding="utf-8"
     ) as csvfile:
         csv_rows = csv.reader(csvfile, delimiter=" ", quotechar="|")
         headers = next(csv_rows)[0].split(";")

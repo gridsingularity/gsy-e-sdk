@@ -4,13 +4,10 @@
 """
 Template file for markets management through the gsy-e-sdk api client using Rest.
 """
-import os
 from time import sleep
 from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.redis_market import RedisMarketClient
 from gsy_e_sdk.utils import log_grid_fees_information
-
-current_dir = os.path.dirname(__file__)
 
 MARKET_NAMES = [
     "Grid",

@@ -14,7 +14,7 @@ from gsy_e_sdk.utils import log_grid_fees_information
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 
-current_dir = os.path.dirname(__file__)
+module_dir = os.path.dirname(__file__)
 
 MARKET_NAMES = [
     "Grid",
@@ -115,11 +115,11 @@ class Oracle(Aggregator):
 def read_fee_strategy():
     "Return a dictionary containing the Aziiz strategy loaded from the JSON input file."
     with open(
-        os.path.join(current_dir, "resources/Aziiz.json"),
+        os.path.join(module_dir, "resources/aziiz.json"),
         "r",
         encoding="utf-8",
     ) as file:
-        aziiz_fee = json.loads(file.read())
+        aziiz_fee = json.load(file)
     return aziiz_fee
 
 

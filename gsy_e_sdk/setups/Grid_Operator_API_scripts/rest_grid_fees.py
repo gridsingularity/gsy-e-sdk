@@ -11,8 +11,6 @@ from gsy_e_sdk.rest_market import RestMarketClient
 from gsy_e_sdk.utils import log_grid_fees_information
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
-current_dir = os.path.dirname(__file__)
-
 MARKET_NAMES = ["Grid", "Community"]
 ORACLE_NAME = "dso"
 SLOT_LENGTH = 15  # leave as is

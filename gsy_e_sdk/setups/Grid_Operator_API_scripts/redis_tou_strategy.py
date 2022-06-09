@@ -12,7 +12,7 @@ from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.redis_market import RedisMarketClient
 from gsy_e_sdk.utils import log_grid_fees_information
 
-current_dir = os.path.dirname(__file__)
+module_dir = os.path.dirname(__file__)
 
 MARKET_NAMES = [
     "Grid",
@@ -67,7 +67,7 @@ class Oracle(RedisAggregator):
 def read_fee_strategy():
     "Return a dictionary containing the Time of Use strategy loaded from the CSV input file."
     with open(
-            os.path.join(current_dir, "resources/ToU.csv"), newline="", encoding="utf-8"
+            os.path.join(module_dir, "resources/ToU.csv"), newline="", encoding="utf-8"
     ) as csvfile:
         csv_rows = csv.reader(csvfile, delimiter=" ", quotechar="|")
         headers = next(csv_rows)[0].split(";")
