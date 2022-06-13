@@ -6,7 +6,7 @@ strategy through the gsy-e-sdk api client using Redis.
 import os
 import csv
 from time import sleep
-from pendulum import from_format
+from pendulum import from_format, DateTime
 from gsy_framework.constants_limits import DATE_TIME_FORMAT, TIME_FORMAT_SECONDS
 from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.redis_market import RedisMarketClient
@@ -82,11 +82,9 @@ def read_fee_strategy():
     return planned_fee
 
 
-def calculate_next_slot_market_fee(market_time, market_name):
+def calculate_next_slot_market_fee(market_time: DateTime, market_name:str) -> float:
     """Return the market fee for the next time slot."""
-    slot_time = (
-        market_time.add(minutes=1 * SLOT_LENGTH).time().format(TIME_FORMAT_SECONDS)
-    )
+    slot_time = market_time.add(minutes=SLOT_LENGTH).format(TIME_FORMAT_SECONDS)
     if (slot_time, market_name) in fee_strategy:
         next_fee = fee_strategy[(slot_time, market_name)]
         if not isinstance(next_fee, (int, float)):
