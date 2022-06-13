@@ -14,6 +14,7 @@ from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
+# List of assets's names to be connected with the API
 LOAD_NAMES = ["H1 General Load", "H2 General Load"]
 PV_NAMES = ["H1 PV", "H2 PV"]
 STORAGE_NAMES = []
@@ -52,14 +53,14 @@ class Oracle(RedisAggregator):
 
                 asset_name = area_dict["area_name"]
                 self.add_to_batch_commands.set_energy_forecast(
-                    asset_uuid=globals()[f"{asset_name}"].area_uuid,
+                    asset_uuid=area_uuid,
                     energy_forecast_kWh={forecast_market_slot: 1.2},
                 )
             # Generation assets
             if "available_energy_kWh" in area_dict["asset_info"]:
                 asset_name = area_dict["area_name"]
                 self.add_to_batch_commands.set_energy_forecast(
-                    asset_uuid=globals()[f"{asset_name}"].area_uuid,
+                    asset_uuid=area_uuid,
                     energy_forecast_kWh={forecast_market_slot: 0.86},
                 )
 
@@ -73,14 +74,14 @@ class Oracle(RedisAggregator):
             if "energy_requirement_kWh" in area_dict["asset_info"]:
                 asset_name = area_dict["area_name"]
                 self.add_to_batch_commands.set_energy_measurement(
-                    asset_uuid=globals()[f"{asset_name}"].area_uuid,
+                    asset_uuid=area_uuid,
                     energy_measurement_kWh={market_info["market_slot"]: 1.23},
                 )
             # Generation assets
             if "available_energy_kWh" in area_dict["asset_info"]:
                 asset_name = area_dict["area_name"]
                 self.add_to_batch_commands.set_energy_measurement(
-                    asset_uuid=globals()[f"{asset_name}"].area_uuid,
+                    asset_uuid=area_uuid,
                     energy_measurement_kWh={market_info["market_slot"]: 0.87},
                 )
 
@@ -90,22 +91,19 @@ class Oracle(RedisAggregator):
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if not area_dict.get("asset_info"):
                 continue
-            time_slot = list(area_dict["asset_info"]["unsettled_deviation_kWh"].keys())[
-                -1
-            ]
+            time_slot = (
+                list(area_dict["asset_info"]["unsettled_deviation_kWh"].keys())[-1])
             unsettled_deviation = area_dict["asset_info"][
                 "unsettled_deviation_kWh"
             ].get(time_slot)
-            if unsettled_deviation is None or unsettled_deviation == 0:
-                pass
-            elif unsettled_deviation > 0:
+            if unsettled_deviation > 0:
                 self.add_to_batch_commands.bid_energy_rate(
                     asset_uuid=area_uuid,
                     rate=5,
                     energy=unsettled_deviation,
                     time_slot=time_slot,
                 )
-            elif unsettled_deviation < 0:
+            if unsettled_deviation < 0:
                 self.add_to_batch_commands.offer_energy_rate(
                     asset_uuid=area_uuid,
                     rate=10,
