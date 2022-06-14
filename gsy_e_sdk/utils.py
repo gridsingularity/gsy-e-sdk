@@ -362,19 +362,19 @@ def log_grid_fees_information(market_names, current_market_fee, next_market_fee)
     )
 
 
-def get_assets_name(node: dict) -> dict:
+def get_assets_name(registry: Dict) -> Dict:
     """
     Parse the grid tree and return all registered assets / markets
     Wrapper for _get_assets_name
     """
-    if node == {}:
+    if registry == {}:
         return {}
     reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
-    _get_assets_name(node, reg_assets)
+    _get_assets_name(registry, reg_assets)
     return reg_assets
 
 
-def _get_assets_name(node: dict, reg_assets: dict):
+def _get_assets_name(node: Dict, reg_assets: Dict):
     """
     Parse the Collaboration / Canary Network registry
     Return a list of the Asset / Market nodes the user is registered to
