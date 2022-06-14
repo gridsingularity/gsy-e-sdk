@@ -8,14 +8,16 @@ from pendulum import from_format
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from gsy_e_sdk.aggregator import Aggregator
 from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
-from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
+from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id, get_assets_name
 
 current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
+# List of assets's names to be connected with the API
 LOAD_NAMES = ["Load 1", "Load 2"]
 PV_NAMES = ["PV 1", "PV 2"]
 STORAGE_NAMES = []
+
 AUTOMATIC = False
 
 
@@ -71,30 +73,6 @@ class Oracle(Aggregator):
 
     def on_finish(self, finish_info):
         self.is_finished = True
-
-
-def get_assets_name(node: dict) -> dict:
-    """
-    Parse the grid tree and return all registered assets
-    wrapper for _get_assets_name
-    """
-    if node == {}:
-        return {}
-    reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
-    _get_assets_name(node, reg_assets)
-    return reg_assets
-
-
-def _get_assets_name(node: dict, reg_assets: dict):
-    """
-    Parse the Collaboration / Canary Network registry
-    Return a list of the Market nodes the user is registered to
-    """
-    if node.get("registered") is True:
-        area_type = node["type"]
-        reg_assets[area_type].append(node["name"])
-    for child in node.get("children", []):
-        _get_assets_name(child, reg_assets)
 
 
 aggregator = Oracle(aggregator_name=ORACLE_NAME)
