@@ -11,6 +11,7 @@ from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
+# List of assets's names to be connected with the API
 LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
 PV_NAMES = ["PV 1 (4kW)", "PV 3 (5kW)"]
 STORAGE_NAMES = ["Tesla Powerwall 3"]
