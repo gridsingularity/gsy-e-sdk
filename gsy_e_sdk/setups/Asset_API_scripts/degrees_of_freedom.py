@@ -1,4 +1,3 @@
-# flake8: noqa
 """
 Template file for the implementation of the Degrees of
 Freedom through the gsy-e-sdk api client using Redis.
@@ -7,12 +6,14 @@ Freedom through the gsy-e-sdk api client using Redis.
 import os
 import json
 from time import sleep
+from typing import List, Dict
 from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 
-current_dir = os.path.dirname(__file__)
+module_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
+# List of assets's names to be connected with the API
 LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
 PV_NAMES = ["PV 9 (15kW)", "PV 5 (10kW)"]
 
@@ -39,11 +40,11 @@ class Oracle(RedisAggregator):
     def read_requirements(self):
         """Load the JSON file containing the list of requirements for each asset."""
         with open(
-            os.path.join(current_dir, "resources/requirements.json"),
+            os.path.join(module_dir, "resources/requirements.json"),
             "r",
             encoding="utf-8",
         ) as file:
-            self.degrees_of_freedom = json.loads(file.read())
+            self.degrees_of_freedom = json.load(file)
 
     def post_bid(self):
         """Post a bid to the exchange."""
@@ -112,7 +113,7 @@ def get_partner_ids(partners):
     return [asset_ids[p] for p in partners]
 
 
-def register_asset_list(asset_names, asset_params, asset_uuid_map):
+def register_asset_list(asset_names: List, asset_params: Dict, asset_uuid_map: Dict) -> Dict:
     """Register the provided list of assets with the aggregator."""
     for asset_name in asset_names:
         print("Registered asset:", asset_name)
@@ -126,8 +127,7 @@ def register_asset_list(asset_names, asset_params, asset_uuid_map):
 print()
 print("Registering assets ...")
 asset_uuid_mapping = {}
-asset_uuid_mapping = register_asset_list(LOAD_NAMES, asset_args, asset_uuid_mapping)
-asset_uuid_mapping = register_asset_list(PV_NAMES, asset_args, asset_uuid_mapping)
+asset_uuid_mapping = register_asset_list(LOAD_NAMES + PV_NAMES, asset_args, asset_uuid_mapping)
 print()
 print("Summary of assets registered:")
 print()
