@@ -1,16 +1,15 @@
-# flake8: noqa
 """
 Template file to send live data to a Canary Network using Rest.
 """
 import os
 from time import sleep
+from typing import List, Dict
 from pendulum import from_format
 from gsy_framework.constants_limits import DATE_TIME_FORMAT
 from gsy_e_sdk.aggregator import Aggregator
 from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id, get_assets_name
 
-current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
 # List of assets's names to be connected with the API
@@ -18,7 +17,7 @@ LOAD_NAMES = ["Load 1", "Load 2"]
 PV_NAMES = ["PV 1", "PV 2"]
 STORAGE_NAMES = []
 
-AUTOMATIC = False
+CONNECT_TO_ALL_ASSETS = False
 
 
 class Oracle(Aggregator):
@@ -80,7 +79,7 @@ simulation_id = os.environ["API_CLIENT_SIMULATION_ID"]
 domain_name = os.environ["API_CLIENT_DOMAIN_NAME"]
 websockets_domain_name = os.environ["API_CLIENT_WEBSOCKET_DOMAIN_NAME"]
 asset_args = {}
-if AUTOMATIC:
+if CONNECT_TO_ALL_ASSETS:
     registry = aggregator.get_configuration_registry()
     registered_assets = get_assets_name(registry)
     LOAD_NAMES = registered_assets["Load"]
@@ -88,7 +87,7 @@ if AUTOMATIC:
     STORAGE_NAMES = registered_assets["Storage"]
 
 
-def register_asset_list(asset_names, asset_params, asset_uuid_map):
+def register_asset_list(asset_names: List, asset_params: Dict, asset_uuid_map: Dict) -> Dict:
     """Register the provided list of assets with the aggregator."""
     for asset_name in asset_names:
         print("Registered asset:", asset_name)
@@ -106,11 +105,8 @@ print()
 print("Registering assets ...")
 asset_uuid_mapping = {}
 assets_dict = {}
-asset_uuid_mapping = register_asset_list(LOAD_NAMES, asset_args, asset_uuid_mapping)
-asset_uuid_mapping = register_asset_list(PV_NAMES, asset_args, asset_uuid_mapping)
-asset_uuid_mapping = register_asset_list(STORAGE_NAMES, asset_args, asset_uuid_mapping)
-
-
+asset_uuid_mapping = register_asset_list(LOAD_NAMES + PV_NAMES + STORAGE_NAMES,
+                                         asset_args, asset_uuid_mapping)
 print()
 print("Summary of assets registered:")
 print()
