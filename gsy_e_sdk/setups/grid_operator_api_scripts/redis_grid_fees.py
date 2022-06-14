@@ -68,7 +68,6 @@ for i in MARKET_NAMES:
     market_registered = RedisMarketClient(area_id=i)
     market_registered.select_aggregator(aggregator.aggregator_uuid)
     print("----> Connected to ", i)
-    sleep(0.3)
 
 print(aggregator.device_uuid_list)
 

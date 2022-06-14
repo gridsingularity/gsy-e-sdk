@@ -73,7 +73,7 @@ class Oracle(RedisAggregator):
                 if MOVING_AVERAGE_PEAK:
                     fees = []
                     # pylint: disable=unused-variable
-                    for j,k in enumerate(self.balance_hist):
+                    for j, k in enumerate(self.balance_hist):
                         fees.append(k[area_dict["area_name"]])
                     max_ext_energy_kwh = abs(
                         sum(fees[-LOOK_BACK_INDEX:]) / len(fees[-LOOK_BACK_INDEX:])
@@ -125,7 +125,6 @@ for i in MARKET_NAMES:
     market_registered = RedisMarketClient(area_id=i)
     market_registered.select_aggregator(aggregator.aggregator_uuid)
     print("----> Connected to ", i)
-    sleep(0.3)
 
 print(aggregator.device_uuid_list)
 

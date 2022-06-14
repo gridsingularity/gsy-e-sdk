@@ -125,7 +125,6 @@ for i in MARKET_NAMES:
     market_registered = RestMarketClient(**market_args)
     market_registered.select_aggregator(aggregator.aggregator_uuid)
     print("----> Connected to ", i)
-    sleep(0.3)
 
 print(aggregator.device_uuid_list)
 
