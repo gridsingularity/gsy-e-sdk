@@ -1,14 +1,12 @@
-# flake8: noqa
 """
 Template file for a trading strategy through the gsy-e-sdk api client using Redis.
 """
 
-import os
 from time import sleep
+from typing import List, Dict
 from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 
-current_dir = os.path.dirname(__file__)
 ORACLE_NAME = "oracle"
 
 # List of assets's names to be connected with the API
@@ -172,7 +170,7 @@ aggregator = Oracle(aggregator_name=ORACLE_NAME)
 asset_args = {"autoregister": True, "pubsub_thread": aggregator.pubsub}
 
 
-def register_asset_list(asset_names, asset_params, asset_uuid_map):
+def register_asset_list(asset_names: List, asset_params: Dict, asset_uuid_map: Dict) -> Dict:
     """Register the provided list of assets with the aggregator."""
     for asset_name in asset_names:
         print("Registered asset:", asset_name)
@@ -186,10 +184,8 @@ def register_asset_list(asset_names, asset_params, asset_uuid_map):
 print()
 print("Registering assets ...")
 asset_uuid_mapping = {}
-asset_uuid_mapping = register_asset_list(LOAD_NAMES, asset_args, asset_uuid_mapping)
-asset_uuid_mapping = register_asset_list(PV_NAMES, asset_args, asset_uuid_mapping)
-asset_uuid_mapping = register_asset_list(STORAGE_NAMES, asset_args, asset_uuid_mapping)
-
+asset_uuid_mapping = register_asset_list(LOAD_NAMES + PV_NAMES + STORAGE_NAMES,
+                                         asset_args, asset_uuid_mapping)
 print()
 print("Summary of assets registered:")
 print()
