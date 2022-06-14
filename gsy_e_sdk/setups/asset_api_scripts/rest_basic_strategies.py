@@ -7,6 +7,7 @@ Template file for a trading strategy through the gsy-e-sdk api client using Rest
 import os
 from time import sleep
 from gsy_e_sdk.aggregator import Aggregator
+from gsy_e_sdk.utils import get_assets_name
 from gsy_e_sdk.clients.rest_asset_client import RestAssetClient
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
@@ -171,30 +172,6 @@ class Oracle(Aggregator):
 
     def on_finish(self, finish_info):
         self.is_finished = True
-
-
-def get_assets_name(node: dict) -> dict:
-    """
-    Parse the grid tree and return all registered assets
-    wrapper for _get_assets_name
-    """
-    if node == {}:
-        return {}
-    reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
-    _get_assets_name(node, reg_assets)
-    return reg_assets
-
-
-def _get_assets_name(node: dict, reg_assets: dict):
-    """
-    Parse the Collaboration / Canary Network registry
-    Return a list of the Market nodes the user is registered to
-    """
-    if node.get("registered") is True:
-        area_type = node["type"]
-        reg_assets[area_type].append(node["name"])
-    for child in node.get("children", []):
-        _get_assets_name(child, reg_assets)
 
 
 aggregator = Oracle(aggregator_name=ORACLE_NAME)
