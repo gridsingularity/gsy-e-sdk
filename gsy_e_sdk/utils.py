@@ -360,3 +360,27 @@ def log_grid_fees_information(market_names, current_market_fee, next_market_fee)
         "\n%s",
         tabulate(current_market_table, current_market_headers, tablefmt="fancy_grid"),
     )
+
+
+def get_assets_name(node: dict) -> dict:
+    """
+    Parse the grid tree and return all registered assets / markets
+    Wrapper for _get_assets_name
+    """
+    if node == {}:
+        return {}
+    reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
+    _get_assets_name(node, reg_assets)
+    return reg_assets
+
+
+def _get_assets_name(node: dict, reg_assets: dict):
+    """
+    Parse the Collaboration / Canary Network registry
+    Return a list of the Asset / Market nodes the user is registered to
+    """
+    if node.get("registered") is True:
+        area_type = node["type"]
+        reg_assets[area_type].append(node["name"])
+    for child in node.get("children", []):
+        _get_assets_name(child, reg_assets)

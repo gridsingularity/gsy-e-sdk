@@ -13,10 +13,12 @@ from gsy_e_sdk.utils import log_grid_fees_information
 
 module_dir = os.path.dirname(__file__)
 
+# List of market's names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",
 ]
+
 ORACLE_NAME = "dso"
 SLOT_LENGTH = 15
 MOVING_AVERAGE_PEAK = True

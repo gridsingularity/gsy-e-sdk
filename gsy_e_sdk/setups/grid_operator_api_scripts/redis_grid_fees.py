@@ -9,10 +9,12 @@ from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.redis_market import RedisMarketClient
 from gsy_e_sdk.utils import log_grid_fees_information
 
+# List of market's names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",
 ]
+
 ORACLE_NAME = "dso"
 SLOT_LENGTH = 15  # leave as is
 

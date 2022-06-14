@@ -12,15 +12,17 @@ from pendulum import from_format, DateTime
 from gsy_framework.constants_limits import DATE_TIME_FORMAT, TIME_FORMAT_SECONDS
 from gsy_e_sdk.aggregator import Aggregator
 from gsy_e_sdk.rest_market import RestMarketClient
-from gsy_e_sdk.utils import log_grid_fees_information
+from gsy_e_sdk.utils import log_grid_fees_information, get_assets_name
 from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 module_dir = os.path.dirname(__file__)
 
+# List of market's names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",
 ]
+
 ORACLE_NAME = "dso"
 SLOT_LENGTH = 15  # leave as is
 AUTOMATIC = True
@@ -97,30 +99,6 @@ def calculate_next_slot_market_fee(market_time: DateTime, market_name:str) -> fl
     else:
         next_fee = None
     return next_fee
-
-
-def get_assets_name(node: dict) -> dict:
-    """
-    Parse the grid tree and return all registered assets
-    wrapper for _get_assets_name
-    """
-    if node == {}:
-        return {}
-    reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
-    _get_assets_name(node, reg_assets)
-    return reg_assets
-
-
-def _get_assets_name(node: dict, reg_assets: dict):
-    """
-    Parse the Collaboration / Canary Network registry
-    Return a list of the Market nodes the user is registered to
-    """
-    if node.get("registered") is True:
-        area_type = node["type"]
-        reg_assets[area_type].append(node["name"])
-    for child in node.get("children", []):
-        _get_assets_name(child, reg_assets)
 
 
 market_args = {
