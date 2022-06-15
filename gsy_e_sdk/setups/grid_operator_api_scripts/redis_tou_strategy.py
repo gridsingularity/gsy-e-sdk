@@ -14,7 +14,7 @@ from gsy_e_sdk.utils import log_grid_fees_information
 
 module_dir = os.path.dirname(__file__)
 
-# List of market's names to be connected with the API
+# List of markets' names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",

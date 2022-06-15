@@ -9,7 +9,7 @@ from gsy_e_sdk.redis_aggregator import RedisAggregator
 from gsy_e_sdk.redis_market import RedisMarketClient
 from gsy_e_sdk.utils import log_grid_fees_information
 
-# List of market's names to be connected with the API
+# List of markets' names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",

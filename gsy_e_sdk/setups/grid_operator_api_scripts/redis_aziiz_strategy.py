@@ -13,7 +13,7 @@ from gsy_e_sdk.utils import log_grid_fees_information
 
 module_dir = os.path.dirname(__file__)
 
-# List of market's names to be connected with the API
+# List of markets' names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",
@@ -72,9 +72,8 @@ class Oracle(RedisAggregator):
             if area_dict["area_name"] in MARKET_NAMES:
                 if MOVING_AVERAGE_PEAK:
                     fees = []
-                    # pylint: disable=unused-variable
-                    for j, k in enumerate(self.balance_hist):
-                        fees.append(k[area_dict["area_name"]])
+                    for balance in self.balance_hist:
+                        fees.append(balance[area_dict["area_name"]])
                     max_ext_energy_kwh = abs(
                         sum(fees[-LOOK_BACK_INDEX:]) / len(fees[-LOOK_BACK_INDEX:])
                     )

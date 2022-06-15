@@ -17,7 +17,7 @@ from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 module_dir = os.path.dirname(__file__)
 
-# List of market's names to be connected with the API
+# List of markets' names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",
@@ -25,7 +25,7 @@ MARKET_NAMES = [
 
 ORACLE_NAME = "dso"
 SLOT_LENGTH = 15  # leave as is
-AUTOMATIC = True
+CONNECT_TO_ALL_MARKETS = True
 
 
 class Oracle(Aggregator):
@@ -108,7 +108,7 @@ market_args = {
 }
 
 aggregator = Oracle(aggregator_name=ORACLE_NAME, **market_args)
-if AUTOMATIC:
+if CONNECT_TO_ALL_MARKETS:
     registry = aggregator.get_configuration_registry()
     MARKET_NAMES = get_assets_name(registry)["Area"]
 

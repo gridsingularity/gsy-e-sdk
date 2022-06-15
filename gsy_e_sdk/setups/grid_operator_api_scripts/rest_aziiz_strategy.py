@@ -15,7 +15,7 @@ from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 module_dir = os.path.dirname(__file__)
 
-# List of market's names to be connected with the API
+# List of markets' names to be connected with the API
 MARKET_NAMES = [
     "Grid",
     "Community",
@@ -25,7 +25,7 @@ ORACLE_NAME = "dso"
 SLOT_LENGTH = 15
 MOVING_AVERAGE_PEAK = True
 LOOK_BACK_INDEX = 4
-AUTOMATIC = True
+CONNECT_TO_ALL_MARKETS = True
 
 
 class Oracle(Aggregator):
@@ -75,9 +75,8 @@ class Oracle(Aggregator):
             if area_dict["area_name"] in MARKET_NAMES:
                 if MOVING_AVERAGE_PEAK:
                     fees = []
-                    # pylint: disable=unused-variable
-                    for j, k in enumerate(self.balance_hist):
-                        fees.append(k[area_dict["area_name"]])
+                    for balance in self.balance_hist:
+                        fees.append(balance[area_dict["area_name"]])
                     max_ext_energy_kwh = abs(
                         sum(fees[-LOOK_BACK_INDEX:]) / len(fees[-LOOK_BACK_INDEX:])
                     )
@@ -124,7 +123,7 @@ market_args = {
 }
 
 aggregator = Oracle(aggregator_name=ORACLE_NAME, **market_args)
-if AUTOMATIC:
+if CONNECT_TO_ALL_MARKETS:
     registry = aggregator.get_configuration_registry()
     MARKET_NAMES = get_assets_name(registry)["Area"]
 
