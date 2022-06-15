@@ -9,12 +9,12 @@ from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 
 ORACLE_NAME = "oracle"
 
-# List of assets's names to be connected with the API
+# List of assets' names to be connected with the API
 LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
 PV_NAMES = ["PV 1 (4kW)", "PV 3 (5kW)"]
 STORAGE_NAMES = ["Tesla Powerwall 3"]
 
-TICKS = 10  # leave as is
+TICKS = 10  # Frequency of bids/offers posting in a market slot - to leave as it is
 
 
 class Oracle(RedisAggregator):
