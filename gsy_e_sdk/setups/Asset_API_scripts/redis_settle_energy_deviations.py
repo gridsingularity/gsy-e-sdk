@@ -12,7 +12,7 @@ from gsy_e_sdk.clients.redis_asset_client import RedisAssetClient
 
 ORACLE_NAME = "oracle"
 
-# List of assets's names to be connected with the API
+# List of assets' names to be connected with the API
 LOAD_NAMES = ["H1 General Load", "H2 General Load"]
 PV_NAMES = ["H1 PV", "H2 PV"]
 STORAGE_NAMES = []
