@@ -13,7 +13,7 @@ from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 
 ORACLE_NAME = "oracle"
 
-# List of assets's names to be connected with the API
+# List of assets' names to be connected with the API
 LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
 PV_NAMES = ["PV 1 (4kW)", "PV 3 (5kW)"]
 STORAGE_NAMES = ["Tesla Powerwall 3"]
