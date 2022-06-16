@@ -18,7 +18,9 @@ LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
 PV_NAMES = ["PV 1 (4kW)", "PV 3 (5kW)"]
 STORAGE_NAMES = ["Tesla Powerwall 3"]
 
-TICKS = 10  # Frequency of bids/offers posting in a market slot - to leave as it is
+# Frequency of bids/offers posting in a market slot - to leave as it is
+TICK_DISPATCH_FREQUENCY_PERCENT = 10
+
 CONNECT_TO_ALL_ASSETS = True
 
 
@@ -40,7 +42,8 @@ class Oracle(Aggregator):
 
     def on_tick(self, tick_info):
         """Place a bid or an offer each 10% of the market slot progression."""
-        rate_index = int(float(tick_info["slot_completion"].strip("%")) / TICKS)
+        rate_index = int(float(tick_info["slot_completion"].strip("%")) /
+                         TICK_DISPATCH_FREQUENCY_PERCENT)
         self.post_bid_offer(rate_index)
         self.execute_batch_commands()
 
@@ -69,13 +72,13 @@ class Oracle(Aggregator):
             # Consumption strategy
             if "energy_requirement_kWh" in area_dict["asset_info"]:
                 load_strategy = []
-                for tick in range(0, TICKS):
-                    if tick < TICKS - 2:
+                for tick in range(0, TICK_DISPATCH_FREQUENCY_PERCENT):
+                    if tick < TICK_DISPATCH_FREQUENCY_PERCENT - 2:
                         buy_rate = (fit_rate -
                                     self.asset_strategy[area_uuid]["fee_to_market_maker"] +
                                     (market_maker_rate +
                                      2 * self.asset_strategy[area_uuid]["fee_to_market_maker"] -
-                                     fit_rate) * (tick / TICKS)
+                                     fit_rate) * (tick / TICK_DISPATCH_FREQUENCY_PERCENT)
                                     )
                         load_strategy.append(buy_rate)
                     else:
@@ -87,13 +90,13 @@ class Oracle(Aggregator):
             # Generation strategy
             if "available_energy_kWh" in area_dict["asset_info"]:
                 gen_strategy = []
-                for tick in range(0, TICKS):
-                    if tick < TICKS - 2:
+                for tick in range(0, TICK_DISPATCH_FREQUENCY_PERCENT):
+                    if tick < TICK_DISPATCH_FREQUENCY_PERCENT - 2:
                         sell_rate = (market_maker_rate +
                                      self.asset_strategy[area_uuid]["fee_to_market_maker"] -
                                      (market_maker_rate +
                                       2 * self.asset_strategy[area_uuid]["fee_to_market_maker"] -
-                                      fit_rate) * (tick / TICKS)
+                                      fit_rate) * (tick / TICK_DISPATCH_FREQUENCY_PERCENT)
                                      )
                         gen_strategy.append(max(0, sell_rate))
                     else:
@@ -106,21 +109,21 @@ class Oracle(Aggregator):
             if "used_storage" in area_dict["asset_info"]:
                 batt_buy_strategy = []
                 batt_sell_strategy = []
-                for tick in range(0, TICKS):
+                for tick in range(0, TICK_DISPATCH_FREQUENCY_PERCENT):
                     buy_rate = (fit_rate -
                                 self.asset_strategy[area_uuid]["fee_to_market_maker"] +
                                 (med_price -
                                  (fit_rate -
                                   self.asset_strategy[area_uuid]["fee_to_market_maker"]
                                   )
-                                 ) * (tick / TICKS)
+                                 ) * (tick / TICK_DISPATCH_FREQUENCY_PERCENT)
                                 )
                     batt_buy_strategy.append(buy_rate)
                     sell_rate = (market_maker_rate +
                                  self.asset_strategy[area_uuid]["fee_to_market_maker"] -
                                  (market_maker_rate +
                                   self.asset_strategy[area_uuid]["fee_to_market_maker"] -
-                                  med_price) * (tick / TICKS)
+                                  med_price) * (tick / TICK_DISPATCH_FREQUENCY_PERCENT)
                                  )
                     batt_sell_strategy.append(sell_rate)
                 self.asset_strategy[area_uuid]["buy_rates"] = batt_buy_strategy
