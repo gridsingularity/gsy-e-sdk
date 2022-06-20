@@ -66,7 +66,7 @@ _setup_modules = iterate_over_all_modules(modules_path)
 @main.command()
 @click.option("-b", "--base-setup-path", default=None, type=str,
               help="Accept absolute or relative path for client script")
-@click.option("--setup", "setup_module_name", default="auto_offer_bid_on_device",
+@click.option("--setup", "setup_module_name", required=True,
               help="Setup module of client script. Available modules: ["
                    f"{', '.join(_setup_modules)}]")
 @click.option("-u", "--username", default=None, type=str, help="D3A username")
