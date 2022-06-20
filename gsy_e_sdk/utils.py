@@ -367,7 +367,7 @@ def get_assets_name(registry: Dict) -> Dict:
     Parse the grid tree and return all registered assets / markets
     Wrapper for _get_assets_name
     """
-    if registry == {}:
+    if not registry:
         return {}
     reg_assets = {"Area": [], "Load": [], "PV": [], "Storage": []}
     _get_assets_name(registry, reg_assets)
