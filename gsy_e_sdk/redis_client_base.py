@@ -5,7 +5,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 from gsy_framework.utils import (
     execute_function_util, wait_until_timeout_blocking, key_in_dict_and_not_none)
-from redis import StrictRedis
+from redis import Redis
 
 from gsy_e_sdk import APIClientInterface
 from gsy_e_sdk.constants import MAX_WORKER_THREADS, LOCAL_REDIS_URL
@@ -20,7 +20,7 @@ class RedisClientBase(APIClientInterface):
                  pubsub_thread=None):
         super().__init__(area_id, autoregister, redis_url)
         self.area_uuid = None
-        self.redis_db = StrictRedis.from_url(redis_url)
+        self.redis_db = Redis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         self.area_id = area_id
         self.device_uuid = None
@@ -52,7 +52,9 @@ class RedisClientBase(APIClientInterface):
             self._subscribed_aggregator_response_cb(message)
         data = json.loads(message['data'])
         if not self._is_transaction_response_received(data['transaction_id']):
-            self._transaction_id_buffer.pop(self._transaction_id_buffer.index(data['transaction_id']))
+            self._transaction_id_buffer.pop(
+                self._transaction_id_buffer.index(data['transaction_id'])
+            )
 
     def _check_buffer_message_matching_command_and_id(self, message):
         if key_in_dict_and_not_none(message, "transaction_id"):
@@ -60,7 +62,9 @@ class RedisClientBase(APIClientInterface):
             if not any(command in ["register", "unregister"] and "transaction_id" in data and
                        data["transaction_id"] == transaction_id
                        for command, data in self._blocking_command_responses.items()):
-                raise RedisAPIException("There is no matching command response in _blocking_command_responses.")
+                raise RedisAPIException(
+                    "There is no matching command response in _blocking_command_responses."
+                )
         else:
             raise RedisAPIException(
                 "The answer message does not contain a valid 'transaction_id' member.")
@@ -71,7 +75,7 @@ class RedisClientBase(APIClientInterface):
     def register(self, is_blocking=True):
         logging.info(f"Trying to register to {self.area_id}")
         if self.is_active:
-            raise RedisAPIException(f'API is already registered to the market.')
+            raise RedisAPIException('API is already registered to the market.')
         data = {"name": self.area_id, "transaction_id": str(uuid.uuid4())}
         self._blocking_command_responses["register"] = data
         self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
@@ -81,15 +85,15 @@ class RedisClientBase(APIClientInterface):
                 wait_until_timeout_blocking(lambda: self.is_active, timeout=120)
             except AssertionError:
                 raise RedisAPIException(
-                    f'API registration process timed out. Server will continue processing your '
-                    f'request on the background and will notify you as soon as the registration '
-                    f'has been completed.')
+                    'API registration process timed out. Server will continue processing your '
+                    'request on the background and will notify you as soon as the registration '
+                    'has been completed.')
 
     def unregister(self, is_blocking=True):
         logging.info(f"Trying to unregister from {self.area_id}")
 
         if not self.is_active:
-            raise RedisAPIException(f'API is already unregistered from the market.')
+            raise RedisAPIException('API is already unregistered from the market.')
 
         data = {"name": self.area_id, "transaction_id": str(uuid.uuid4())}
         self._blocking_command_responses["unregister"] = data
@@ -100,9 +104,9 @@ class RedisClientBase(APIClientInterface):
                 wait_until_timeout_blocking(lambda: not self.is_active, timeout=120)
             except AssertionError:
                 raise RedisAPIException(
-                    f'API unregister process timed out. Server will continue processing your '
-                    f'request on the background and will notify you as soon as the unregistration '
-                    f'has been completed.')
+                    'API unregister process timed out. Server will continue processing your '
+                    'request on the background and will notify you as soon as the unregistration '
+                    'has been completed.')
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
@@ -154,7 +158,7 @@ class RedisClientBase(APIClientInterface):
                 logging.info(f"{self.area_id} has selected AGGREGATOR: {aggregator_uuid}")
                 return transaction_id
             except AssertionError:
-                raise RedisAPIException(f'API has timed out.')
+                raise RedisAPIException('API has timed out.')
 
     def unselect_aggregator(self, aggregator_uuid):
         raise NotImplementedError("unselect_aggregator hasn't been implemented yet.")

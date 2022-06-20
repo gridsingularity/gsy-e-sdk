@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements/dev.txt requirements/dev.in
 #
--e git+https://github.com/gridsingularity/gsy-framework@feature/D3ASIM-3669#egg=gsy_framework
+-e git+https://github.com/gridsingularity/gsy-framework@master#egg=gsy_framework
     # via -r requirements/base.txt
 astroid==2.9.0
     # via pylint
@@ -16,7 +16,7 @@ attrs==21.2.0
     #   pytest
 awesome-slugify==1.6.5
     # via -r requirements/base.txt
-backports.entry-points-selectable==1.1.0
+backports-entry-points-selectable==1.1.0
     # via
     #   -r requirements/base.txt
     #   gsy-framework
@@ -65,11 +65,6 @@ distlib==0.3.3
     #   -r requirements/base.txt
     #   gsy-framework
     #   virtualenv
-entrypoints==0.3
-    # via
-    #   -r requirements/base.txt
-    #   flake8
-    #   gsy-framework
 fabric3==1.14.post1
     # via -r requirements/base.txt
 filelock==3.3.2
@@ -78,7 +73,7 @@ filelock==3.3.2
     #   gsy-framework
     #   tox
     #   virtualenv
-flake8==3.7.9
+flake8==4.0.1
     # via
     #   -r requirements/base.txt
     #   flake8-tuple
@@ -171,7 +166,7 @@ py==1.10.0
     #   gsy-framework
     #   pytest
     #   tox
-pycodestyle==2.5.0
+pycodestyle==2.8.0
     # via
     #   -r requirements/base.txt
     #   flake8
@@ -180,7 +175,7 @@ pycparser==2.21
     # via
     #   -r requirements/base.txt
     #   cffi
-pyflakes==2.1.1
+pyflakes==2.4.0
     # via
     #   -r requirements/base.txt
     #   flake8

@@ -9,7 +9,7 @@ from typing import Optional, Dict, List
 from gsy_framework.client_connections.utils import (
     log_market_progression, get_slot_completion_percentage_int_from_message)
 from gsy_framework.utils import wait_until_timeout_blocking, execute_function_util
-from redis import StrictRedis
+from redis import Redis
 
 from gsy_e_sdk.commands import ClientCommandBuffer
 from gsy_e_sdk.constants import (
@@ -34,7 +34,7 @@ class RedisAggregator:
                  redis_url=LOCAL_REDIS_URL):
 
         self.grid_fee_calculation = GridFeeCalculation()
-        self.redis_db = StrictRedis.from_url(redis_url)
+        self.redis_db = Redis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
         self.aggregator_uuid = None

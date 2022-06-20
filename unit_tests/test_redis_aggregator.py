@@ -34,7 +34,7 @@ TEST_RESPONSE = {"status": "ready",
 
 @pytest.fixture(autouse=True)
 def fixture_mock_connections(mocker):
-    mocker.patch("gsy_e_sdk.redis_aggregator.StrictRedis")
+    mocker.patch("gsy_e_sdk.redis_aggregator.Redis")
     mocker.patch("gsy_e_sdk.redis_aggregator.ThreadPoolExecutor")
 
 
@@ -83,7 +83,7 @@ class TestRedisAggregator:
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
     def test_constructor_redis_db_instantiated():
         redis_db_mock = MagicMock()
-        with patch("gsy_e_sdk.redis_aggregator.StrictRedis.from_url",
+        with patch("gsy_e_sdk.redis_aggregator.Redis.from_url",
                    return_value=redis_db_mock) as redis_from_url:
             agg = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
             redis_from_url.assert_called_with(LOCAL_REDIS_URL)
