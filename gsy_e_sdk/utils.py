@@ -4,6 +4,7 @@ import logging
 import os
 from functools import wraps
 from typing import Optional, Dict
+from tabulate import tabulate
 
 import requests
 from gsy_framework.api_simulation_config.validators import validate_api_simulation_config
@@ -337,6 +338,28 @@ def get_name_from_area_name_uuid_mapping(area_name_uuid_mapping, asset_uuid):
             if area_uuid == asset_uuid:
                 return area_name
     return None
+
+
+def log_grid_fees_information(market_names, current_market_fee, next_market_fee):
+    """Log information about the current and next grid fees for each market"""
+    current_market_table = []
+    for i in range(len(market_names)):
+        current_market_table.append(
+            [
+                list(current_market_fee.keys())[i],
+                list(current_market_fee.values())[i],
+                list(next_market_fee.values())[i],
+            ]
+        )
+    current_market_headers = [
+        "Market name",
+        "Current fee [€cts/kWh]",
+        "Next fee [€cts/kWh]",
+    ]
+    logging.info(
+        "\n%s",
+        tabulate(current_market_table, current_market_headers, tablefmt="fancy_grid"),
+    )
 
 
 def get_assets_name(registry: Dict) -> Dict:
