@@ -88,9 +88,12 @@ asset_args = {"autoregister": False, "start_websocket": False}
 if CONNECT_TO_ALL_ASSETS:
     registry = aggregator.get_configuration_registry()
     registered_assets = get_assets_name(registry)
-    LOAD_NAMES = registered_assets["Load"]
-    PV_NAMES = registered_assets["PV"]
-    STORAGE_NAMES = registered_assets["Storage"]
+    LOAD_NAMES = registered_assets.get("Load", [])
+    PV_NAMES = registered_assets.get("PV", [])
+    STORAGE_NAMES = registered_assets.get("Storage", [])
+    assert len(LOAD_NAMES + PV_NAMES + STORAGE_NAMES) != 0, (
+        "No assets are registered to the aggregator"
+    )
 
 
 def register_asset_list(asset_names: List, asset_params: Dict, asset_uuid_map: Dict) -> Dict:
