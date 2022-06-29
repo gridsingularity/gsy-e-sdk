@@ -29,7 +29,7 @@ class Oracle(Aggregator):
         super().__init__(*args, **kwargs)
         self.is_finished = False
 
-    def on_market_cycle(self, market_info):
+    def on_market_slot(self, market_info):
         current_market_fee = {}
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if area_dict["area_name"] in MARKET_NAMES:

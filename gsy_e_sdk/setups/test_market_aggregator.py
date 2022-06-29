@@ -14,7 +14,7 @@ class TestAggregator(Aggregator):
         self.is_finished = False
         self.fee_cents_per_kwh = 0
 
-    def on_market_cycle(self, market_info):
+    def on_market_slot(self, market_info):
         """
         market_info contains market_info dicts from all markets
         that are controlled by the aggregator

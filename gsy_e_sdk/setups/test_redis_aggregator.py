@@ -15,7 +15,7 @@ class AutoAggregator(RedisAggregator):
         super().__init__(*args, **kwargs)
         self.is_finished = False
 
-    def on_market_cycle(self, market_info):
+    def on_market_slot(self, market_info):
         for area_uuid, area_dict in self.latest_grid_tree_flat.items():
             if not area_dict.get("asset_info"):
                 if area_uuid == redis_market.area_uuid:

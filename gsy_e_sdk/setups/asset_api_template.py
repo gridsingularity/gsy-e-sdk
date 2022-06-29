@@ -53,7 +53,7 @@ class Oracle(aggregator_client_type):
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    def on_market_cycle(self, market_info):
+    def on_market_slot(self, market_info):
         """
         Places a bid or an offer whenever a new market is created. The amount of energy
         for the bid/offer depends on the available energy of the PV, the required

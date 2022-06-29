@@ -278,6 +278,9 @@ class RedisAggregator:
     def on_market_cycle(self, market_info):
         """Perform actions that should be triggered on market_cycle event."""
 
+    def on_market_slot(self, market_info):
+        """Perform actions that should be triggered on market_cycle event."""
+
     def on_tick(self, tick_info):
         """Perform actions that should be triggered on tick event."""
 

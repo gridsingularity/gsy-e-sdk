@@ -21,7 +21,7 @@ class TestAggregator(Aggregator):
         self.current_pv_energy_measurement_kWh = 0
         self.current_load_energy_measurement_kWh = 0
 
-    def on_market_cycle(self, market_info):
+    def on_market_slot(self, market_info):
         """Execute the following code when a new market was started."""
         # set energy forecasts for the next market for load and pv
         next_market_slot_str = (from_format(market_info["market_slot"], DATE_TIME_FORMAT).

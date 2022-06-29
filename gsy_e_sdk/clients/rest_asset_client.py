@@ -162,6 +162,9 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
         if not self.registered:
             self.register()
 
+    def on_market_slot(self, market_info):
+        self.on_market_cycle(market_info)
+
     def on_tick(self, tick_info):
         """Perform actions that should be triggered on tick event."""
 
