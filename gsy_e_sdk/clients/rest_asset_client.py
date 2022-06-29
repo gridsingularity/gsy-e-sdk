@@ -135,8 +135,8 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
 
     def _on_market_cycle(self, message):
         self.callback_thread.submit(execute_function_util,
-                                    function=lambda: self.on_market_cycle(message),
-                                    function_name="on_market_cycle")
+                                    function=lambda: self.on_market_slot(message),
+                                    function_name="on_market_slot")
 
     def _on_tick(self, message):
         self.callback_thread.submit(execute_function_util,
