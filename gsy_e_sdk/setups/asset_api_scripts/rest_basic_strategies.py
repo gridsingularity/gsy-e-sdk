@@ -32,7 +32,7 @@ class Oracle(Aggregator):
         self.is_finished = False
         self.asset_strategy = {}
 
-    def on_market_cycle(self, market_info):
+    def on_market_slot(self, market_info):
         """Place a bid or an offer whenever a new market is created."""
         if self.is_finished is True:
             return

@@ -10,7 +10,7 @@ class AutoAggregator(RedisAggregator):
         super().__init__(*args, **kwargs)
         self.is_finished = False
 
-    def on_market_cycle(self, market_info):
+    def on_market_slot(self, market_info):
         logging.info("market_info: %s", market_info)
         batch_commands = {}
 

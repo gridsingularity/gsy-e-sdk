@@ -90,7 +90,7 @@ In order to facilitate offer and bid management and scheduling,
 the client will get notified via events.
 It is possible to capture these events and perform operations as a reaction to them
 by overriding the corresponding methods.
-- when a new market cycle is triggered the `on_market_cycle` method is called
+- when a new market slot is created, the `on_market_slot` method is called
 - when a new tick has started, the `on_tick` method is called
 - when the simulation has finished, the `on_finished` method is called
 - when any event arrives , the `on_event_or_response` method is called
