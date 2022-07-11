@@ -121,7 +121,7 @@ def load_client_script(base_setup_path, setup_module_name):
     """Load client script."""
     try:
         if base_setup_path is None:
-            importlib.import_module(f"d3a_api_client.setups.{setup_module_name}")
+            importlib.import_module(f"gsy_e_sdk.setups.{setup_module_name}")
         else:
             sys.path.append(base_setup_path)
             importlib.import_module(setup_module_name)
