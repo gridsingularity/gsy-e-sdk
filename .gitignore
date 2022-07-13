@@ -133,3 +133,6 @@ dmypy.json
 .docker/
 dump.rdb
 *.DS_Store
+
+# iSort configuration
+.isort.cfg
