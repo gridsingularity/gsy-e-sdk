@@ -18,15 +18,16 @@ from gsy_e_sdk.websocket_device import DeviceWebsocketMessageReceiver
 
 REGISTER_COMMAND_TIMEOUT = 15 * 60
 
-#pylint: disable=too-many-instance-attributes
+
+# pylint: disable-next=too-many-instance-attributes
 class RestAssetClient(APIClientInterface, RestCommunicationMixin):
     """Client class for assets to be used while working with REST."""
 
-    # pylint: disable=super-init-not-called
-    # pylint: disable=too-many-arguments
+    # pylint: disable-next=super-init-not-called
+    # pylint: disable-next=too-many-arguments
     def __init__(
             self, asset_uuid, simulation_id=None, domain_name=None, websockets_domain_name=None,
-             autoregister=False, start_websocket=True, sim_api_domain_name=None):
+            autoregister=False, start_websocket=True, sim_api_domain_name=None):
         self.simulation_id = simulation_id if simulation_id else simulation_id_from_env()
         self.domain_name = domain_name if domain_name else domain_name_from_env()
         self.websockets_domain_name = websockets_domain_name or websocket_domain_name_from_env()
