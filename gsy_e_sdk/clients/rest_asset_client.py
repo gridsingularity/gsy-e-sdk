@@ -157,13 +157,16 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
                                     function=lambda: self.on_finish(message),
                                     function_name="on_finish")
 
-    # pylint: disable=unused-argument
-    def on_market_cycle(self, market_info):
-        """Perform actions that should be triggered on market_cycle event."""
+    def on_market_cycle(self, market_info):  # pylint: disable=unused-argument
+        """(DEPRECATED) Perform actions that should be triggered on market_cycle event.
+
+        This method was deprecated in favor of the new `on_market_slot`.
+        """
         if not self.registered:
             self.register()
 
     def on_market_slot(self, market_info):
+        """Perform actions that should be triggered on market event."""
         self.on_market_cycle(market_info)
 
     def on_tick(self, tick_info):
