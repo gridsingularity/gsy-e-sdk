@@ -252,8 +252,10 @@ class RedisAggregator:
         self.area_name_uuid_mapping = \
             create_area_name_uuid_mapping_from_tree_info(self.latest_grid_tree_flat)
         self.grid_fee_calculation.handle_grid_stats(self.latest_grid_tree)
-        self.executor.submit(execute_function_util, function=lambda: self.on_market_cycle(message),
-                             function_name="on_market_cycle")
+        self.executor.submit(
+            execute_function_util,
+            function=lambda: self.on_market_slot(message),
+            function_name="on_market_slot")
 
     @buffer_grid_tree_info
     def _on_tick(self, message: Dict) -> None:
@@ -276,10 +278,14 @@ class RedisAggregator:
                              function_name="on_finish")
 
     def on_market_cycle(self, market_info):
-        """Perform actions that should be triggered on market_cycle event."""
+        """(DEPRECATED) Perform actions that should be triggered on market_cycle event.
+
+        This method was deprecated in favor of the new `on_market_slot`.
+        """
 
     def on_market_slot(self, market_info):
-        """Perform actions that should be triggered on market_cycle event."""
+        """Perform actions that should be triggered on market event."""
+        self.on_market_cycle(market_info)
 
     def on_tick(self, tick_info):
         """Perform actions that should be triggered on tick event."""
