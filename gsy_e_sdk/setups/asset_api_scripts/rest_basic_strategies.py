@@ -14,8 +14,8 @@ from gsy_e_sdk.utils import get_area_uuid_from_area_name_and_collaboration_id
 ORACLE_NAME = "oracle"
 
 # List of assets's names to be connected with the API
-LOAD_NAMES = ["Load 1 L13", "Load 2 L21", "Load 3 L17"]
-PV_NAMES = ["PV 1 (4kW)", "PV 3 (5kW)"]
+LOAD_NAMES = ["Load L13", "Load 2 L21", "Load 3 L17"]
+PV_NAMES = ["PV 2 (1kW)", "PV 3 (5kW)"]
 STORAGE_NAMES = ["Tesla Powerwall 3"]
 
 # Frequency of bids/offers posting in a market slot - to leave as it is
@@ -65,7 +65,7 @@ class Oracle(Aggregator):
                 "fee_to_market_maker"
             ] = self.calculate_grid_fee(
                 area_uuid,
-                self.get_uuid_from_area_name("Market Maker"),
+                self.get_uuid_from_area_name("Grid Market"),
                 "current_market_fee",
             )
 
@@ -153,16 +153,20 @@ class Oracle(Aggregator):
                 )
 
             # Storage assets
-            buy_energy = asset_info.get("energy_to_buy")
-            if buy_energy:
+            buy_energy = asset_info.get("energy_to_buy", 0)
+            bid_energy = asset_info.get("energy_active_in_bids", 0)
+            if buy_energy > 0 or bid_energy > 0:
                 buy_rate = self.asset_strategy[area_uuid]["buy_rates"][rate_index]
-                self.add_to_batch_commands.bid_energy_rate(
+                buy_energy = buy_energy + bid_energy
+                self.add_to_batch_commands.offer_energy_rate(
                     asset_uuid=area_uuid, rate=buy_rate, energy=buy_energy
                 )
 
-            sell_energy = asset_info.get("energy_to_sell")
-            if sell_energy:
+            sell_energy = asset_info.get("energy_to_sell", 0)
+            offered_energy = asset_info.get("energy_active_in_offers", 0)
+            if sell_energy > 0 or offered_energy > 0:
                 sell_rate = self.asset_strategy[area_uuid]["sell_rates"][rate_index]
+                sell_energy = sell_energy + offered_energy
                 self.add_to_batch_commands.offer_energy_rate(
                     asset_uuid=area_uuid, rate=sell_rate, energy=sell_energy
                 )
