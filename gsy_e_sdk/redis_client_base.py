@@ -110,7 +110,11 @@ class RedisClientBase(APIClientInterface):
 
     def _on_register(self, msg):
         message = json.loads(msg["data"])
-        self._check_buffer_message_matching_command_and_id(message)
+        try:
+            self._check_buffer_message_matching_command_and_id(message)
+        except RedisAPIException as exc:
+            logging.debug(f"Ignoring message due to error ({str(exc)}). Message body: {message}")
+            return
         self.area_uuid = message["device_uuid"]
 
         logging.info(f"{self.area_id} was registered")
