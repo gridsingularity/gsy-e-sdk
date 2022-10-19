@@ -145,9 +145,9 @@ class TestRedisAggregator:
         -> Side effects of _subscribe_to_response_channels private method
         """
         aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-        channel_dict_2 = {f"external-aggregator/*/{aggregator.aggregator_uuid}/events"
+        channel_dict_2 = {f"external-aggregator//{aggregator.aggregator_uuid}/events"
                           f"/all": aggregator._events_callback_dict,
-                          f"external-aggregator/*/{aggregator.aggregator_uuid}/response"
+                          f"external-aggregator//{aggregator.aggregator_uuid}/response"
                           f"/batch_commands": aggregator._batch_response,
                           }
 
