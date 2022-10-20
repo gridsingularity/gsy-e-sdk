@@ -1,10 +1,11 @@
 # pylint: disable=missing-function-docstring, protected-access, no-member, too-many-public-methods
 import json
+import os
 import uuid
 from unittest.mock import patch, PropertyMock, MagicMock, call
+
 import pytest
 from gsy_e_sdk.constants import LOCAL_REDIS_URL
-
 from gsy_e_sdk.redis_aggregator import RedisAggregator, RedisAggregatorAPIException
 
 TEST_AGGREGATOR_NAME = "TestAgg"
@@ -144,10 +145,12 @@ class TestRedisAggregator:
         """Test side effects due to the methods called with _connect_and_subscribe().
         -> Side effects of _subscribe_to_response_channels private method
         """
+        os.environ["API_CLIENT_SIMULATION_ID"] = "test_sim"
         aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-        channel_dict_2 = {f"external-aggregator//{aggregator.aggregator_uuid}/events"
+        os.environ.pop("API_CLIENT_SIMULATION_ID")
+        channel_dict_2 = {f"external-aggregator/test_sim/{aggregator.aggregator_uuid}/events"
                           f"/all": aggregator._events_callback_dict,
-                          f"external-aggregator//{aggregator.aggregator_uuid}/response"
+                          f"external-aggregator/test_sim/{aggregator.aggregator_uuid}/response"
                           f"/batch_commands": aggregator._batch_response,
                           }
 
@@ -223,7 +226,9 @@ class TestRedisAggregator:
         batched_command_input = {"type": "BATCHED", "transaction_id": TEST_TRANSACTION_ID,
                                  "aggregator_uuid": TEST_AGGREGATOR_UUID,
                                  "batch_commands": TEST_BATCH_COMMAND_DICT}
-        batched_channel_input = f"external//aggregator/{TEST_AGGREGATOR_UUID}/batch_commands"
+        batched_channel_input = (
+            f"external/{aggregator._simulation_id}/aggregator"
+            f"/{TEST_AGGREGATOR_UUID}/batch_commands")
 
         aggregator.execute_batch_commands(is_blocking=False)
         aggregator.redis_db.publish.assert_called_with(batched_channel_input,
