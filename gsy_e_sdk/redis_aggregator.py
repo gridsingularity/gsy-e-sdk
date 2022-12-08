@@ -81,6 +81,9 @@ class RedisAggregator:
     def _batch_response(self, message: Dict) -> None:
         logging.debug("AGGREGATORS_BATCH_RESPONSE:: %s", message)
         data = json.loads(message["data"])
+        for response in data["responses"].values():
+            if response[0]["status"] == "error":
+                logging.error(response[0]["error_message"])
         if self.aggregator_uuid != data["aggregator_uuid"]:
             return
         with self.lock:
