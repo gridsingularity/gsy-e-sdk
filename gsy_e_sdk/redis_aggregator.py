@@ -71,9 +71,9 @@ class RedisAggregator:
 
     def _subscribe_to_response_channels(self) -> None:
         channel_dict = {f"external-aggregator/*/{self.aggregator_uuid}/events/all":
-                        self._events_callback_dict,
+                            self._events_callback_dict,
                         f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
-                        self._batch_response,
+                            self._batch_response,
                         }
         self.pubsub.psubscribe(**channel_dict)
 
@@ -81,6 +81,9 @@ class RedisAggregator:
     def _batch_response(self, message: Dict) -> None:
         logging.debug("AGGREGATORS_BATCH_RESPONSE:: %s", message)
         data = json.loads(message["data"])
+        for response in data["responses"].values():
+            if response[0]["status"] == "error":
+                logging.error(response[0]["error_message"])
         if self.aggregator_uuid != data["aggregator_uuid"]:
             return
         with self.lock:
