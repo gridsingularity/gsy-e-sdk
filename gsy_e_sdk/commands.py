@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name
 
 import logging
-from typing import Dict, List
+from typing import Dict
 
 from tabulate import tabulate
 
@@ -21,23 +21,23 @@ class ClientCommandBuffer:
 
     def offer_energy(
             self, asset_uuid: str, energy: float, price: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
+            time_slot: str = None):
         """Add a command to issue an offer with the given price and additional parameters."""
         return self._add_to_buffer(
             asset_uuid,
             Commands.OFFER,
             {"energy": energy, "price": price, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
+             "time_slot": time_slot})
 
     def offer_energy_rate(
             self, asset_uuid: str, energy: float, rate: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
+            time_slot: str = None):
         """Add a command to issue an offer with the given energy rate and additional parameters."""
         return self._add_to_buffer(
             asset_uuid,
             Commands.OFFER,
             {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
+             "time_slot": time_slot})
 
     # pylint: disable=unused-argument
     # pylint: disable=no-self-use
@@ -48,23 +48,23 @@ class ClientCommandBuffer:
 
     def bid_energy(
             self, asset_uuid: str, energy: float, price: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
+            time_slot: str = None):
         """Add a command to issue a bid with the given price and additional parameters."""
         return self._add_to_buffer(
             asset_uuid,
             Commands.BID,
             {"energy": energy, "price": price, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
+             "time_slot": time_slot})
 
     def bid_energy_rate(
             self, asset_uuid: str, energy: float, rate: float, replace_existing: bool = True,
-            attributes: Dict = None, requirements: List[Dict] = None, time_slot: str = None):
+            time_slot: str = None):
         """Add a command to issue a bid with the given energy rate and additional parameters."""
         return self._add_to_buffer(
             asset_uuid,
             Commands.BID,
             {"energy": energy, "price": rate * energy, "replace_existing": replace_existing,
-             "attributes": attributes, "requirements": requirements, "time_slot": time_slot})
+             "time_slot": time_slot})
 
     def update_bid(self, *args, **kwargs):
         """Add a command to update a bid."""
@@ -161,7 +161,7 @@ class ClientCommandBuffer:
         batch_command_dict = {}
         for command_dict in self._commands_buffer:
             area_uuid = list(command_dict.keys())[0]
-            if area_uuid not in batch_command_dict.keys():
+            if area_uuid not in batch_command_dict:
                 batch_command_dict[area_uuid] = []
             batch_command_dict[area_uuid].append(command_dict[area_uuid])
         return batch_command_dict
