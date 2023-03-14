@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from copy import copy
@@ -36,6 +37,7 @@ class RedisAggregator:
         self.grid_fee_calculation = GridFeeCalculation()
         self.redis_db = Redis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
+        self._simulation_id = os.environ.get("API_CLIENT_SIMULATION_ID", "")
         self.aggregator_name = aggregator_name
         self.aggregator_uuid = None
         self.accept_all_devices = accept_all_devices
@@ -70,9 +72,11 @@ class RedisAggregator:
             self.aggregator_uuid = aggr_id
 
     def _subscribe_to_response_channels(self) -> None:
-        channel_dict = {f"external-aggregator/*/{self.aggregator_uuid}/events/all":
+        channel_dict = {f"external-aggregator/{self._simulation_id}/"
+                        f"{self.aggregator_uuid}/events/all":
                         self._events_callback_dict,
-                        f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
+                        f"external-aggregator/{self._simulation_id}/"
+                        f"{self.aggregator_uuid}/response/batch_commands":
                         self._batch_response,
                         }
         self.pubsub.psubscribe(**channel_dict)
@@ -210,7 +214,9 @@ class RedisAggregator:
         batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
                            "aggregator_uuid": self.aggregator_uuid,
                            "batch_commands": batch_command_dict}
-        batch_channel = f"external//aggregator/{self.aggregator_uuid}/batch_commands"
+
+        batch_channel = (
+            f"external/{self._simulation_id}/aggregator/{self.aggregator_uuid}/batch_commands")
         # IMPORTANT: Order matters in the following two steps because redis could be faster
         # than the appending of the transaction_id to the buffer:
         self._transaction_id_buffer.append(transaction_id)
