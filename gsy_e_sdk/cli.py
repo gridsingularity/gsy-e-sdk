@@ -31,7 +31,7 @@ from gsy_framework.exceptions import GSyException
 from gsy_framework.utils import iterate_over_all_modules
 
 import gsy_e_sdk
-import gsy_e_sdk.setups as setups
+from gsy_e_sdk import setups
 from gsy_e_sdk.constants import SETUP_FILE_PATH
 from gsy_e_sdk.utils import domain_name_from_env, websocket_domain_name_from_env, \
     simulation_id_from_env, read_simulation_config_file
@@ -44,8 +44,15 @@ gsy_e_sdk_path = os.path.dirname(inspect.getsourcefile(gsy_e_sdk))
              context_settings={"max_content_width": 120})
 @click.option("-l", "--log-level", type=Choice(list(logging._nameToLevel.keys())), default="ERROR",
               show_default=True, help="Log level")
-def main(log_level):
-    handler = logging.StreamHandler()
+@click.option("-f", "--log-file", type=str, default="",
+              show_default=True, help="Log file")
+def main(log_level, log_file):
+
+    if log_file:
+        handler = logging.FileHandler(log_file)
+    else:
+        handler = logging.StreamHandler()
+
     handler.setLevel(log_level)
     handler.setFormatter(
         ColoredFormatter(
