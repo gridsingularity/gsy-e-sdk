@@ -171,7 +171,8 @@ def logging_decorator(command_name: str):
     return decorator
 
 
-def list_running_canary_networks_and_devices_with_live_data(domain_name) -> dict:
+def list_running_canary_networks_and_devices_with_live_data(
+        domain_name: str, is_scm: bool = False) -> dict:
     """Return all canary networks with their forecastStreamAreaMapping setting."""
     query = '''
     query {
@@ -182,6 +183,9 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name) -> dict
           scenarioData {
             forecastStreamAreaMapping
           }
+          settingsData {
+            spotMarketType
+          }
         }
       }
     }
@@ -190,10 +194,13 @@ def list_running_canary_networks_and_devices_with_live_data(domain_name) -> dict
 
     logging.debug("Received Canary Network data: %s", data)
 
+    expected_market_types = ["COEFFICIENTS"] if is_scm else ["ONE_SIDED", "TWO_SIDED"]
+
     return {
         cn["uuid"]: cn["scenarioData"]["forecastStreamAreaMapping"]
         for cn in data["data"]["listCanaryNetworks"]["configurations"]
-        if cn["resultsStatus"] == "running"
+        if cn["resultsStatus"] == "running" and (
+                cn["settingsData"]["spotMarketType"] in expected_market_types)
     }
 
 
