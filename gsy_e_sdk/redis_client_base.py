@@ -3,6 +3,7 @@ import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 
+from gsy_framework.redis_channels import ExternalStrategyChannels, AggregatorChannels
 from gsy_framework.utils import (
     execute_function_util, wait_until_timeout_blocking, key_in_dict_and_not_none)
 from redis import Redis
@@ -20,6 +21,7 @@ class RedisClientBase(APIClientInterface):
                  pubsub_thread=None):
         super().__init__(area_id, autoregister, redis_url)
         self.area_uuid = None
+        self.channel_names = ExternalStrategyChannels(False, "", asset_name=area_id)
         self.redis_db = Redis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub() if pubsub_thread is None else pubsub_thread
         self.area_id = area_id
@@ -30,18 +32,20 @@ class RedisClientBase(APIClientInterface):
         self._subscribed_aggregator_response_cb = None
         self._subscribe_to_response_channels(pubsub_thread)
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
+
         if autoregister:
             self.register(is_blocking=True)
 
     def _subscribe_to_response_channels(self, pubsub_thread=None):
         channel_subs = {
-            f"{self.area_id}/response/register_participant": self._on_register,
-            f"{self.area_id}/response/unregister_participant": self._on_unregister,
+            self.channel_names.register_response: self._on_register,
+            self.channel_names.unregister_response: self._on_unregister,
             f"{self.area_id}/*": self._on_event_or_response}
 
-        if b'aggregator_response' in self.pubsub.patterns:
-            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b'aggregator_response']
-        channel_subs["aggregator_response"] = self._aggregator_response_callback
+        b_aggregator_response = AggregatorChannels.response().encode('utf-8')
+        if b_aggregator_response in self.pubsub.patterns:
+            self._subscribed_aggregator_response_cb = self.pubsub.patterns[b_aggregator_response]
+        channel_subs[AggregatorChannels.response()] = self._aggregator_response_callback
 
         self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
@@ -78,7 +82,7 @@ class RedisClientBase(APIClientInterface):
             raise RedisAPIException('API is already registered to the market.')
         data = {"name": self.area_id, "transaction_id": str(uuid.uuid4())}
         self._blocking_command_responses["register"] = data
-        self.redis_db.publish(f'{self.area_id}/register_participant', json.dumps(data))
+        self.redis_db.publish(self.channel_names.register, json.dumps(data))
 
         if is_blocking:
             try:
@@ -97,7 +101,7 @@ class RedisClientBase(APIClientInterface):
 
         data = {"name": self.area_id, "transaction_id": str(uuid.uuid4())}
         self._blocking_command_responses["unregister"] = data
-        self.redis_db.publish(f'{self.area_id}/unregister_participant', json.dumps(data))
+        self.redis_db.publish(self.channel_names.unregister, json.dumps(data))
 
         if is_blocking:
             try:
@@ -148,7 +152,7 @@ class RedisClientBase(APIClientInterface):
                 "type": "SELECT",
                 "transaction_id": transaction_id}
         self._transaction_id_buffer.append(transaction_id)
-        self.redis_db.publish("aggregator", json.dumps(data))
+        self.redis_db.publish(AggregatorChannels.commands, json.dumps(data))
 
         if is_blocking:
             try:

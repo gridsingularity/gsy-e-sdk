@@ -2,9 +2,11 @@
 import json
 import uuid
 from unittest.mock import patch, PropertyMock, MagicMock, call
-import pytest
-from gsy_e_sdk.constants import LOCAL_REDIS_URL
 
+import pytest
+from gsy_framework.redis_channels import AggregatorChannels
+
+from gsy_e_sdk.constants import LOCAL_REDIS_URL
 from gsy_e_sdk.redis_aggregator import RedisAggregator, RedisAggregatorAPIException
 
 TEST_AGGREGATOR_NAME = "TestAgg"
@@ -119,7 +121,7 @@ class TestRedisAggregator:
         """
 
         aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-        channel_dict_1 = {"aggregator_response": aggregator._aggregator_response_callback}
+        channel_dict_1 = {AggregatorChannels.response(): aggregator._aggregator_response_callback}
 
         aggregator.pubsub.run_in_thread.assert_called_with(daemon=True)
         aggregator.pubsub.psubscribe.assert_has_calls([call(**channel_dict_1)])
@@ -134,7 +136,8 @@ class TestRedisAggregator:
         data = {"name": aggregator.aggregator_name, "type": "CREATE",
                 "transaction_id": TEST_TRANSACTION_ID}
 
-        aggregator.redis_db.publish.assert_called_with("aggregator", json.dumps(data))
+        aggregator.redis_db.publish.assert_called_with(
+            AggregatorChannels.commands, json.dumps(data))
         assert TEST_TRANSACTION_ID in aggregator._transaction_id_buffer
         assert aggregator.aggregator_uuid is TEST_TRANSACTION_ID
 
@@ -145,13 +148,11 @@ class TestRedisAggregator:
         -> Side effects of _subscribe_to_response_channels private method
         """
         aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-        channel_dict_2 = {f"external-aggregator/*/{aggregator.aggregator_uuid}/events"
-                          f"/all": aggregator._events_callback_dict,
-                          f"external-aggregator/*/{aggregator.aggregator_uuid}/response"
-                          f"/batch_commands": aggregator._batch_response,
-                          }
+        channels = AggregatorChannels("", aggregator.aggregator_uuid)
+        channel_dict = {channels.events: aggregator._events_callback_dict,
+                        channels.batch_commands_response: aggregator._batch_response}
 
-        aggregator.pubsub.psubscribe.assert_called_with(**channel_dict_2)
+        aggregator.pubsub.psubscribe.assert_called_with(**channel_dict)
 
     @staticmethod
     @pytest.mark.usefixtures("mock_transaction_id_and_timeout_blocking")
@@ -218,15 +219,12 @@ class TestRedisAggregator:
                              "mock_client_command_buffer_attributes")
     def test_execute_batch_commands_batched_command_published(aggregator):
         aggregator.device_uuid_list = [TEST_DEVICE_UUID_1, TEST_DEVICE_UUID_2]
-        aggregator.aggregator_uuid = TEST_AGGREGATOR_UUID
-
         batched_command_input = {"type": "BATCHED", "transaction_id": TEST_TRANSACTION_ID,
-                                 "aggregator_uuid": TEST_AGGREGATOR_UUID,
+                                 "aggregator_uuid": aggregator.aggregator_uuid,
                                  "batch_commands": TEST_BATCH_COMMAND_DICT}
-        batched_channel_input = f"external//aggregator/{TEST_AGGREGATOR_UUID}/batch_commands"
-
+        channels = AggregatorChannels("", aggregator.aggregator_uuid)
         aggregator.execute_batch_commands(is_blocking=False)
-        aggregator.redis_db.publish.assert_called_with(batched_channel_input,
+        aggregator.redis_db.publish.assert_called_with(channels.batch_commands,
                                                        json.dumps(batched_command_input))
 
     @staticmethod

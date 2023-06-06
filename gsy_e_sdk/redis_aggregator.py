@@ -8,6 +8,7 @@ from typing import Optional, Dict, List
 
 from gsy_framework.client_connections.utils import (
     log_market_progression, get_slot_completion_percentage_int_from_message)
+from gsy_framework.redis_channels import AggregatorChannels
 from gsy_framework.utils import wait_until_timeout_blocking, execute_function_util
 from redis import Redis
 
@@ -33,11 +34,12 @@ class RedisAggregator:
     def __init__(self, aggregator_name, accept_all_devices=True,
                  redis_url=LOCAL_REDIS_URL):
 
+        self.is_finished = False
         self.grid_fee_calculation = GridFeeCalculation()
         self.redis_db = Redis.from_url(redis_url)
         self.pubsub = self.redis_db.pubsub()
         self.aggregator_name = aggregator_name
-        self.aggregator_uuid = None
+        self.aggregator_uuid: Optional[str] = None
         self.accept_all_devices = accept_all_devices
         self._transaction_id_buffer = []
         self._transaction_id_response_buffer = {}
@@ -57,10 +59,11 @@ class RedisAggregator:
         # then subscribe to all other channels that contain the aggregator_uuid
         self._subscribe_to_aggregator_response_and_start_redis_thread()
         self._connect_to_simulation()
-        self._subscribe_to_response_channels()
+        self.channel_names = AggregatorChannels("", self.aggregator_uuid)
+        self._subscribe_to_event_and_response_channels()
 
     def _subscribe_to_aggregator_response_and_start_redis_thread(self) -> None:
-        channel_dict = {"aggregator_response": self._aggregator_response_callback}
+        channel_dict = {AggregatorChannels.response(): self._aggregator_response_callback}
         self.pubsub.psubscribe(**channel_dict)
         self.pubsub.run_in_thread(daemon=True)
 
@@ -69,12 +72,10 @@ class RedisAggregator:
             aggr_id = self._create_aggregator(is_blocking=is_blocking)
             self.aggregator_uuid = aggr_id
 
-    def _subscribe_to_response_channels(self) -> None:
-        channel_dict = {f"external-aggregator/*/{self.aggregator_uuid}/events/all":
-                        self._events_callback_dict,
-                        f"external-aggregator/*/{self.aggregator_uuid}/response/batch_commands":
-                        self._batch_response,
-                        }
+    def _subscribe_to_event_and_response_channels(self) -> None:
+        channel_dict = {
+            self.channel_names.events: self._events_callback_dict,
+            self.channel_names.batch_commands_response: self._batch_response}
         self.pubsub.psubscribe(**channel_dict)
 
     # pylint: disable = logging-too-many-args
@@ -99,7 +100,6 @@ class RedisAggregator:
 
     def _aggregator_response_callback(self, message: Dict) -> None:
         data = json.loads(message["data"])
-
         if data["transaction_id"] in self._transaction_id_buffer:
             self._transaction_id_buffer.remove(data["transaction_id"])
         if data["status"] == "SELECTED":
@@ -121,7 +121,7 @@ class RedisAggregator:
         self._on_event_or_response(payload)
 
     def _is_transaction_response_received(self, transaction_id: str) -> bool:
-        return transaction_id not in self._transaction_id_buffer
+        return transaction_id not in self._transaction_id_buffer or self.is_finished
 
     def _create_aggregator(self, is_blocking: bool = True) -> Optional[str]:
         logging.info("Trying to create aggregator %s", self.aggregator_name)
@@ -131,7 +131,7 @@ class RedisAggregator:
         # IMPORTANT: Order matters in the following two steps because redis could be faster
         # than the appending of the transaction_id to the buffer:
         self._transaction_id_buffer.append(transaction_id)
-        self.redis_db.publish("aggregator", json.dumps(data))
+        self.redis_db.publish(AggregatorChannels.commands, json.dumps(data))
 
         if is_blocking:
             try:
@@ -210,11 +210,10 @@ class RedisAggregator:
         batched_command = {"type": "BATCHED", "transaction_id": transaction_id,
                            "aggregator_uuid": self.aggregator_uuid,
                            "batch_commands": batch_command_dict}
-        batch_channel = f"external//aggregator/{self.aggregator_uuid}/batch_commands"
         # IMPORTANT: Order matters in the following two steps because redis could be faster
         # than the appending of the transaction_id to the buffer:
         self._transaction_id_buffer.append(transaction_id)
-        self.redis_db.publish(batch_channel, json.dumps(batched_command))
+        self.redis_db.publish(self.channel_names.batch_commands, json.dumps(batched_command))
 
         if is_blocking:
             try:
@@ -276,6 +275,7 @@ class RedisAggregator:
     def _on_finish(self, message: Dict) -> None:
         self.executor.submit(execute_function_util, function=lambda: self.on_finish(message),
                              function_name="on_finish")
+        self.is_finished = True
 
     def on_market_cycle(self, market_info):
         """(DEPRECATED) Perform actions that should be triggered on market_cycle event.
