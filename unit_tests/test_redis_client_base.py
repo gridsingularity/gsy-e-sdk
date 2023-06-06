@@ -18,10 +18,10 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
+from gsy_framework.redis_channels import ExternalStrategyChannels, AggregatorChannels
 from redis import Redis
 
 from gsy_e_sdk.redis_client_base import RedisClientBase, RedisAPIException
-from gsy_framework.redis_channels import ExternalStrategyChannels, AggregatorChannels
 
 AREA_ID = str(uuid.uuid4())
 TRANSACTION_ID = str(uuid.uuid4())
@@ -242,7 +242,8 @@ class TestRedisClientBase:
             redis_client_auto_register.select_aggregator(aggregator_uuid=aggregator_uuid)
         mock_wait_until_timeout_blocking.assert_called()
 
-    def test_is_transaction_response_received(self, redis_client_auto_register):
+    @staticmethod
+    def test_is_transaction_response_received(redis_client_auto_register):
         """Check the return value of is_transaction_response_received."""
         transaction_id = str(uuid.uuid4())
         redis_client_auto_register._transaction_id_buffer = [transaction_id]
