@@ -63,7 +63,7 @@ class RedisAggregator:
         self._subscribe_to_event_and_response_channels()
 
     def _subscribe_to_aggregator_response_and_start_redis_thread(self) -> None:
-        channel_dict = {AggregatorChannels.response(): self._aggregator_response_callback}
+        channel_dict = {AggregatorChannels("", "").response: self._aggregator_response_callback}
         self.pubsub.psubscribe(**channel_dict)
         self.pubsub.run_in_thread(daemon=True)
 

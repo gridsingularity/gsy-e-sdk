@@ -121,7 +121,8 @@ class TestRedisAggregator:
         """
 
         aggregator = RedisAggregator(aggregator_name=TEST_AGGREGATOR_NAME)
-        channel_dict_1 = {AggregatorChannels.response(): aggregator._aggregator_response_callback}
+        channel_dict_1 = {AggregatorChannels("", "").response:
+                          aggregator._aggregator_response_callback}
 
         aggregator.pubsub.run_in_thread.assert_called_with(daemon=True)
         aggregator.pubsub.psubscribe.assert_has_calls([call(**channel_dict_1)])

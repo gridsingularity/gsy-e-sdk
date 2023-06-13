@@ -49,7 +49,7 @@ class TestRedisClientBase:
             **{channel_names.register_response: redis_client_auto_register._on_register,
                channel_names.unregister_response: redis_client_auto_register._on_unregister,
                f"{AREA_ID}/*": redis_client_auto_register._on_event_or_response,
-               AggregatorChannels.response():
+               AggregatorChannels("", "").response:
                    redis_client_auto_register._aggregator_response_callback})
 
     @staticmethod
@@ -169,7 +169,7 @@ class TestRedisClientBase:
         message = {"data": json.dumps(data)}
         redis_client_auto_register._on_register(message)
 
-        logging_mock.info.assert_called_with(f"{AREA_ID} was registered")
+        logging_mock.info.assert_called_with("%s was registered", AREA_ID)
         redis_client_auto_register.on_register.assert_called()
         assert redis_client_auto_register.is_active is True
         assert redis_client_auto_register.area_uuid == DEVICE_ID
