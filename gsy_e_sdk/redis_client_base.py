@@ -45,10 +45,10 @@ class RedisClientBase(APIClientInterface):
             self.channel_names.unregister_response: self._on_unregister,
             f"{self.area_id}/*": self._on_event_or_response}
 
-        b_aggregator_response = AggregatorChannels("", "").response.encode("utf-8")
+        b_aggregator_response = AggregatorChannels().response.encode("utf-8")
         if b_aggregator_response in self.pubsub.patterns:
             self._subscribed_aggregator_response_cb = self.pubsub.patterns[b_aggregator_response]
-        channel_subs[AggregatorChannels("", "").response] = self._aggregator_response_callback
+        channel_subs[AggregatorChannels().response] = self._aggregator_response_callback
 
         self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:

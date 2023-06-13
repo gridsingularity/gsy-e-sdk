@@ -49,7 +49,7 @@ class TestRedisClientBase:
             **{channel_names.register_response: redis_client_auto_register._on_register,
                channel_names.unregister_response: redis_client_auto_register._on_unregister,
                f"{AREA_ID}/*": redis_client_auto_register._on_event_or_response,
-               AggregatorChannels("", "").response:
+               AggregatorChannels().response:
                    redis_client_auto_register._aggregator_response_callback})
 
     @staticmethod
