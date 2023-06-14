@@ -4,7 +4,7 @@
 
  jobs:
   build:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-20.04
     container: python:3.8
 
     steps:
