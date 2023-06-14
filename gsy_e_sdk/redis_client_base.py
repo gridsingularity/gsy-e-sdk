@@ -156,7 +156,7 @@ class RedisClientBase(APIClientInterface):
                 "type": "SELECT",
                 "transaction_id": transaction_id}
         self._transaction_id_buffer.append(transaction_id)
-        self.redis_db.publish(AggregatorChannels.commands, json.dumps(data))
+        self.redis_db.publish(AggregatorChannels().commands, json.dumps(data))
 
         if is_blocking:
             try:

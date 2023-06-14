@@ -131,7 +131,7 @@ class RedisAggregator:
         # IMPORTANT: Order matters in the following two steps because redis could be faster
         # than the appending of the transaction_id to the buffer:
         self._transaction_id_buffer.append(transaction_id)
-        self.redis_db.publish(AggregatorChannels.commands, json.dumps(data))
+        self.redis_db.publish(AggregatorChannels().commands, json.dumps(data))
 
         if is_blocking:
             try:

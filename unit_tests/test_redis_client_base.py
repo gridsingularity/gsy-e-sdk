@@ -215,7 +215,7 @@ class TestRedisClientBase:
                 "type": "SELECT",
                 "transaction_id": transaction_id}
         redis_client_auto_register.redis_db.publish.assert_called_once_with(
-            AggregatorChannels.commands, json.dumps(data))
+            AggregatorChannels().commands, json.dumps(data))
 
     @staticmethod
     def test_select_aggregator_area_uuid_none_throws_exception(

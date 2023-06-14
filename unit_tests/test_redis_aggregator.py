@@ -138,7 +138,7 @@ class TestRedisAggregator:
                 "transaction_id": TEST_TRANSACTION_ID}
 
         aggregator.redis_db.publish.assert_called_with(
-            AggregatorChannels.commands, json.dumps(data))
+            AggregatorChannels().commands, json.dumps(data))
         assert TEST_TRANSACTION_ID in aggregator._transaction_id_buffer
         assert aggregator.aggregator_uuid is TEST_TRANSACTION_ID
 
