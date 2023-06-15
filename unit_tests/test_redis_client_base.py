@@ -18,6 +18,7 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
+from gsy_framework.redis_channels import ExternalStrategyChannels, AggregatorChannels
 from redis import Redis
 
 from gsy_e_sdk.redis_client_base import RedisClientBase, RedisAPIException
@@ -42,13 +43,14 @@ class TestRedisClientBase:
     @staticmethod
     def test_subscribe_to_response_channels(redis_client_auto_register):
         """Check whether the pubsub.psubcribe is called with correct arguments."""
+        channel_names = ExternalStrategyChannels(False, "", asset_uuid=AREA_ID, asset_name=AREA_ID)
         redis_client_auto_register._subscribe_to_response_channels()
         redis_client_auto_register.pubsub.psubscribe.assert_called_with(
-            **{f"{AREA_ID}/response/register_participant": redis_client_auto_register._on_register,
-               f"{AREA_ID}/response/unregister_participant":
-                   redis_client_auto_register._on_unregister,
+            **{channel_names.register_response: redis_client_auto_register._on_register,
+               channel_names.unregister_response: redis_client_auto_register._on_unregister,
                f"{AREA_ID}/*": redis_client_auto_register._on_event_or_response,
-               "aggregator_response": redis_client_auto_register._aggregator_response_callback})
+               AggregatorChannels().response:
+                   redis_client_auto_register._aggregator_response_callback})
 
     @staticmethod
     def test_aggregator_response_callback(redis_client_auto_register):
@@ -167,7 +169,7 @@ class TestRedisClientBase:
         message = {"data": json.dumps(data)}
         redis_client_auto_register._on_register(message)
 
-        logging_mock.info.assert_called_with(f"{AREA_ID} was registered")
+        logging_mock.info.assert_called_with("%s was registered", AREA_ID)
         redis_client_auto_register.on_register.assert_called()
         assert redis_client_auto_register.is_active is True
         assert redis_client_auto_register.area_uuid == DEVICE_ID
@@ -213,7 +215,7 @@ class TestRedisClientBase:
                 "type": "SELECT",
                 "transaction_id": transaction_id}
         redis_client_auto_register.redis_db.publish.assert_called_once_with(
-            "aggregator", json.dumps(data))
+            AggregatorChannels().commands, json.dumps(data))
 
     @staticmethod
     def test_select_aggregator_area_uuid_none_throws_exception(
@@ -240,7 +242,8 @@ class TestRedisClientBase:
             redis_client_auto_register.select_aggregator(aggregator_uuid=aggregator_uuid)
         mock_wait_until_timeout_blocking.assert_called()
 
-    def test_is_transaction_response_received(self, redis_client_auto_register):
+    @staticmethod
+    def test_is_transaction_response_received(redis_client_auto_register):
         """Check the return value of is_transaction_response_received."""
         transaction_id = str(uuid.uuid4())
         redis_client_auto_register._transaction_id_buffer = [transaction_id]
