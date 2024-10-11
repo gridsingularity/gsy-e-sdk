@@ -128,6 +128,15 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
                                                              transaction_id)
         return None
 
+    # pylint: disable=invalid-name
+    @logging_decorator("set-scm-measurements")
+    def set_scm_measurements(self, scm_measurements: Dict):
+        """Communicate the home and asset measurements to SCM. Applicable only for SCM."""
+        _, posted = self._post_request(
+            f"{self.endpoint_prefix}/set-scm-measurements",
+            {"scm_measurements": scm_measurements})
+        return posted
+
     def _on_event_or_response(self, message):
         logging.debug("A new message was received. Message information: %s", message)
         log_market_progression(message)
