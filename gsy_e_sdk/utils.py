@@ -171,8 +171,17 @@ def logging_decorator(command_name: str):
     return decorator
 
 
+def is_scm_canary_network_with_group_settings_name(cn, scm_group_settings_name):
+    if cn["settingsData"]["spotMarketType"] != "COEFFICIENTS":
+        return False
+    if scm_group_settings_name and cn["settingsData"][
+        "scmGroupSettingsName"] != scm_group_settings_name:
+        return False
+    return True
+
+
 def list_running_canary_networks_and_devices_with_live_data(
-        domain_name: str, is_scm: bool = False) -> dict:
+        domain_name: str, is_scm: bool = False, scm_group_settings_name: str = "") -> dict:
     """Return all canary networks with their forecastStreamAreaMapping setting."""
 
     query_name = "listScmCommunities" if is_scm else "listCanaryNetworks"
@@ -187,6 +196,7 @@ def list_running_canary_networks_and_devices_with_live_data(
           }
           settingsData {
             spotMarketType
+            scmGroupSettingsName
           }
         }
       }
@@ -197,7 +207,8 @@ def list_running_canary_networks_and_devices_with_live_data(
     logging.debug("Received Canary Network data: %s", data)
 
     if is_scm:
-        accepted_cn = lambda cn: cn["settingsData"]["spotMarketType"] == "COEFFICIENTS"
+        accepted_cn = lambda cn: is_scm_canary_network_with_group_settings_name(
+            cn, scm_group_settings_name)
     else:
         accepted_cn = lambda cn: cn["resultsStatus"] == "running" and (
                 cn["settingsData"]["spotMarketType"] in ["ONE_SIDED", "TWO_SIDED"])
