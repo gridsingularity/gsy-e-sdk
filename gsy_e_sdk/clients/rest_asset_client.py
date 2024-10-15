@@ -53,6 +53,11 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
         """Return the prefix of the URL used to connect to the asset's endpoints."""
         return f"{self.domain_name}/external-connection/api/{self.simulation_id}/{self.asset_uuid}"
 
+    @property
+    def simulation_endpoint_prefix(self):
+        """Return the prefix of the URL used to connect to the asset's endpoints."""
+        return f"{self.domain_name}/external-connection/api/{self.simulation_id}/"
+
     def start_websocket_connection(self):
         """Initiate the websocket connection to the exchange."""
         self.dispatcher = DeviceWebsocketMessageReceiver(self)
@@ -127,6 +132,22 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
             return self.dispatcher.wait_for_command_response("set_energy_measurement",
                                                              transaction_id)
         return None
+
+    # pylint: disable=invalid-name
+    @logging_decorator("set-scm-timeseries-and-member-data")
+    def set_scm_timeseries_and_member_data(self, scm_timeseries_members: Dict):
+        """Communicate the home and asset measurements to SCM. Applicable only for SCM."""
+        _, posted = self._post_request(
+            f"{self.endpoint_prefix}/set-scm-timeseries-and-member-data", scm_timeseries_members)
+        return posted
+
+    # pylint: disable=invalid-name
+    @logging_decorator("set-scm-global-data")
+    def set_scm_global_data(self, scm_global_data: Dict):
+        """Communicate the home and asset measurements to SCM. Applicable only for SCM."""
+        _, posted = self._post_request(
+            f"{self.simulation_endpoint_prefix}/set-scm-global-data", scm_global_data)
+        return posted
 
     def _on_event_or_response(self, message):
         logging.debug("A new message was received. Message information: %s", message)
