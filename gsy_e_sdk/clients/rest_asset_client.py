@@ -134,12 +134,11 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
         return None
 
     # pylint: disable=invalid-name
-    @logging_decorator("set-scm-measurements")
-    def set_scm_measurements(self, scm_measurements: Dict):
+    @logging_decorator("set-scm-timeseries-and-member-data")
+    def set_scm_timeseries_and_member_data(self, scm_timeseries_members: Dict):
         """Communicate the home and asset measurements to SCM. Applicable only for SCM."""
         _, posted = self._post_request(
-            f"{self.endpoint_prefix}/set-scm-measurements",
-            {"scm_measurements": scm_measurements})
+            f"{self.endpoint_prefix}/set-scm-timeseries-and-member-data", scm_timeseries_members)
         return posted
 
     # pylint: disable=invalid-name
@@ -147,8 +146,7 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
     def set_scm_global_data(self, scm_global_data: Dict):
         """Communicate the home and asset measurements to SCM. Applicable only for SCM."""
         _, posted = self._post_request(
-            f"{self.simulation_endpoint_prefix}/set-scm-global-data",
-            {"scm_global_data": scm_global_data})
+            f"{self.simulation_endpoint_prefix}/set-scm-global-data", scm_global_data)
         return posted
 
     def _on_event_or_response(self, message):
