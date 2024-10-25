@@ -121,6 +121,16 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
 
         return None
 
+    @logging_decorator("set-live-generation")
+    def set_live_generation(self, live_data: Dict, do_not_wait=False):
+        """Send live generation data to gsy-web."""
+        transaction_id, posted = self._post_request(f"{self.endpoint_prefix}/set-live-generation",
+                                                    {"live_data": live_data})
+        if posted and do_not_wait is False:
+            return self.dispatcher.wait_for_command_response("set-live-generation", transaction_id)
+
+        return None
+
     # pylint: disable=invalid-name
     @logging_decorator("set-energy-measurement")
     def set_energy_measurement(self, energy_measurement_kWh: Dict, do_not_wait=False):
