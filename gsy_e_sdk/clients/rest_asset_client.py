@@ -56,7 +56,7 @@ class RestAssetClient(APIClientInterface, RestCommunicationMixin):
     @property
     def simulation_endpoint_prefix(self):
         """Return the prefix of the URL used to connect to the asset's endpoints."""
-        return f"{self.domain_name}/external-connection/api/{self.simulation_id}/"
+        return f"{self.domain_name}/external-connection/api/{self.simulation_id}"
 
     def start_websocket_connection(self):
         """Initiate the websocket connection to the exchange."""
