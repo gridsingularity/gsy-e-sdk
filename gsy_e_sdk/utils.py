@@ -172,7 +172,7 @@ def logging_decorator(command_name: str):
 
 
 def is_scm_canary_network(cn):
-    return cn["settingsData"]["spotMarketType"] == "COEFFICIENTS"
+    return cn["type"] == "CANARY_NETWORK" and cn["settingsData"]["spotMarketType"] == "COEFFICIENTS"
 
 
 def list_running_canary_networks_and_devices_with_live_data(
@@ -186,6 +186,7 @@ def list_running_canary_networks_and_devices_with_live_data(
         configurations {
           uuid
           resultsStatus
+          type
           scenarioData {
             forecastStreamAreaMapping
           }
@@ -203,7 +204,9 @@ def list_running_canary_networks_and_devices_with_live_data(
     if is_scm:
         accepted_cn = lambda cn: is_scm_canary_network(cn)
     else:
-        accepted_cn = lambda cn: cn["resultsStatus"] == "running" and (
+        accepted_cn = lambda cn: (
+                cn["type"] == "CANARY_NETWORK" and
+                cn["resultsStatus"] == "running" and
                 cn["settingsData"]["spotMarketType"] in ["ONE_SIDED", "TWO_SIDED"])
 
     return {
