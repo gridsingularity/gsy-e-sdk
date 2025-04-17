@@ -74,7 +74,7 @@ def retrieve_jwt_key_from_server(domain_name: str) -> Optional[str]:
         return None
 
     validate_client_up_to_date(resp)
-    return json.loads(resp.text)["token"]
+    return json.loads(resp.text)["access"]
 
 
 def get_aggregator_prefix(domain_name: str,
@@ -171,8 +171,10 @@ def logging_decorator(command_name: str):
     return decorator
 
 
-def is_scm_canary_network(cn):
-    return cn["type"] == "CANARY_NETWORK" and cn["settingsData"]["spotMarketType"] == "COEFFICIENTS"
+def is_scm_canary_network(config):
+    """Return if simulation is SCM canary network"""
+    return (config["type"] == "CANARY_NETWORK"
+            and config["settingsData"]["spotMarketType"]) == "COEFFICIENTS"
 
 
 def list_running_canary_networks_and_devices_with_live_data(
@@ -202,9 +204,9 @@ def list_running_canary_networks_and_devices_with_live_data(
     logging.debug("Received Canary Network data: %s", data)
 
     if is_scm:
-        accepted_cn = lambda cn: is_scm_canary_network(cn)
+        accepted_cn = lambda cn: is_scm_canary_network(cn)  # NOQA: E731
     else:
-        accepted_cn = lambda cn: (
+        accepted_cn = lambda cn: (  # NOQA: E731
                 cn["type"] == "CANARY_NETWORK" and
                 cn["resultsStatus"] == "running" and
                 cn["settingsData"]["spotMarketType"] in ["ONE_SIDED", "TWO_SIDED"])
