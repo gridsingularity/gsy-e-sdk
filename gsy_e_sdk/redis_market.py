@@ -11,7 +11,7 @@ class RedisMarketClient(RedisClientBase):
     def __init__(self, area_id, redis_url=LOCAL_REDIS_URL, autoregister=True):
         # TODO: Homogenize channel names in markets and devices to use either
         #  slugified or normal area names
-        area_id = slugify(area_id, to_lower=True)
+        area_id = slugify(area_id)
 
         super().__init__(area_id, autoregister, redis_url)
 
