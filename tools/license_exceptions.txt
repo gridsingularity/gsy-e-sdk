@@ -1,0 +1,25 @@
+# License-check exceptions for tools/check_licenses.py
+#
+# One package name per line (case-insensitive), '#' starts a comment.
+#
+# Reviewed: 2026-09-16, dev@gridsingularity.com
+#
+# 2026-09-16 update: awesome-slugify/Unidecode are gone (commit 8695c2d,
+# "GSYE-934: Exchange awesome-slugify with python-slugify"; call site in
+# gsy_e_sdk/redis_market.py updated too, dropping the to_lower= kwarg
+# since python-slugify lowercases by default). See
+# tools/LICENSE_STATEMENT.md.
+
+# GPL-licensed static-analysis tool. Declared only in requirements/dev.txt
+# (dev-only, not in base.txt), invoked as a standalone CLI during
+# development, not imported by any gsy_e_sdk module, and not installed as
+# part of the shipped package.
+pylint
+
+# pip-licenses reports this as "Artistic License; GNU General Public
+# License (GPL); GNU General Public License v2 or later (GPLv2+)" because
+# it concatenates all PyPI trove classifiers. The package's actual
+# declared License metadata field is "Artistic License" (permissive),
+# confirmed with `pip-licenses --from=meta`. Transitive runtime dependency
+# via python-slugify (requirements/base.txt).
+text-unidecode
