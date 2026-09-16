@@ -1,3 +1,4 @@
+import atexit
 import json
 import logging
 import uuid
@@ -45,6 +46,7 @@ class RedisAggregator:
         self._transaction_id_response_buffer = {}
         self.device_uuid_list = []
         self._client_command_buffer = ClientCommandBuffer()
+        self._pubsub_thread = None
 
         self._connect_and_subscribe()
 
@@ -65,7 +67,14 @@ class RedisAggregator:
     def _subscribe_to_aggregator_response_and_start_redis_thread(self) -> None:
         channel_dict = {AggregatorChannels().response: self._aggregator_response_callback}
         self.pubsub.psubscribe(**channel_dict)
-        self.pubsub.run_in_thread(daemon=True)
+        self._pubsub_thread = self.pubsub.run_in_thread(daemon=True)
+        atexit.register(self._stop_pubsub_thread)
+
+    def _stop_pubsub_thread(self):
+        # Avoids a fatal interpreter-shutdown crash if this daemon thread is
+        # still mid-reconnect (writing to stderr) when finalization begins.
+        if self._pubsub_thread is not None and self._pubsub_thread.is_alive():
+            self._pubsub_thread.stop()
 
     def _connect_to_simulation(self, is_blocking: bool = True) -> None:
         if self.aggregator_uuid is None:
