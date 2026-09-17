@@ -1,3 +1,4 @@
+import atexit
 import json
 import logging
 import uuid
@@ -33,6 +34,7 @@ class RedisClientBase(APIClientInterface):
         self._blocking_command_responses = {}
         self._transaction_id_buffer = []
         self._subscribed_aggregator_response_cb = None
+        self._pubsub_thread = None
         self._subscribe_to_response_channels(pubsub_thread)
         self.executor = ThreadPoolExecutor(max_workers=MAX_WORKER_THREADS)
 
@@ -52,7 +54,14 @@ class RedisClientBase(APIClientInterface):
 
         self.pubsub.psubscribe(**channel_subs)
         if pubsub_thread is None:
-            self.pubsub.run_in_thread(daemon=True)
+            self._pubsub_thread = self.pubsub.run_in_thread(daemon=True)
+            atexit.register(self._stop_pubsub_thread)
+
+    def _stop_pubsub_thread(self):
+        # Avoids a fatal interpreter-shutdown crash if this daemon thread is
+        # still mid-reconnect (writing to stderr) when finalization begins.
+        if self._pubsub_thread is not None and self._pubsub_thread.is_alive():
+            self._pubsub_thread.stop()
 
     def _aggregator_response_callback(self, message):
         if self._subscribed_aggregator_response_cb is not None:
